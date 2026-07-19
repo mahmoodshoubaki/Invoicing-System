@@ -365,7 +365,7 @@ export default function InvoiceDetailPage() {
                               {boqItem.billingFrequency} · {formatCurrency(boqItem.unitCost)}/unit
                             </p>
                           </div>
-                          <Link href={`/boq/${invoice.projectId}`}>
+                          <Link href={`/projects/${invoice.projectId}/boq`}>
                             <Button variant="outline" size="xs">View BOQ</Button>
                           </Link>
                         </div>

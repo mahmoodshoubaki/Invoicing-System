@@ -8,9 +8,10 @@ export const ROUTES = {
   PROJECT_DETAIL: (id) => `/projects/${id}`,
   PROJECT_EDIT: (id) => `/projects/${id}/edit`,
 
-  // BOQ
-  BOQ: '/boq',
-  BOQ_PROJECT: (projectId) => `/boq/${projectId}`,
+  // BOQ (nested under a project — no standalone BOQ module)
+  PROJECT_BOQ: (id) => `/projects/${id}/boq`,
+  PROJECT_BOQ_NEW: (id) => `/projects/${id}/boq/new`,
+  PROJECT_BOQ_EDIT: (id, itemId) => `/projects/${id}/boq/${itemId}/edit`,
 
   // Invoices
   INVOICES: '/invoices',
@@ -49,8 +50,9 @@ export const ROUTE_PATTERNS = {
   PROJECTS_NEW: '/projects/new',
   PROJECT_DETAIL: '/projects/[id]',
   PROJECT_EDIT: '/projects/[id]/edit',
-  BOQ: '/boq',
-  BOQ_PROJECT: '/boq/[projectId]',
+  PROJECT_BOQ: '/projects/[id]/boq',
+  PROJECT_BOQ_NEW: '/projects/[id]/boq/new',
+  PROJECT_BOQ_EDIT: '/projects/[id]/boq/[itemId]/edit',
   INVOICES: '/invoices',
   INVOICES_NEW: '/invoices/new',
   INVOICE_DETAIL: '/invoices/[id]',

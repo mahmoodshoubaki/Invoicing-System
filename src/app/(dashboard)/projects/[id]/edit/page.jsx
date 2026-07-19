@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useDispatch, useSelector } from 'react-redux';
 import Link from 'next/link';
 import { ChevronLeft, Check } from 'lucide-react';
 
@@ -10,9 +11,11 @@ import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
 import { Input, Select } from '@/components/forms/FormField';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
-import { mockProjects } from '@/mock/projects';
-import { mockUsers } from '@/mock/users';
-import { ROLES } from '@/constants/roles';
+import {
+  fetchProjectById,
+  selectSelectedProject,
+  selectProjectsLoading,
+} from '@/store/slices/projectsSlice';
 
 const BUSINESS_UNITS = [
   'Energy & Resources',
@@ -24,10 +27,12 @@ const BUSINESS_UNITS = [
 ];
 
 const INVOICING_PLATFORMS = ['Etimad', 'Other'];
-const pmUsers = mockUsers.filter((u) => u.roles.includes(ROLES.PROJECT_MANAGER) || u.roles.includes(ROLES.BDM));
-const bdmUsers = mockUsers.filter((u) => u.roles.includes(ROLES.BDM));
-const buHeadUsers = mockUsers.filter((u) => u.roles.includes(ROLES.BU_HEAD));
-const allUsers = mockUsers;
+
+// TODO: replace with real users API when available
+const pmUsers = [];
+const bdmUsers = [];
+const buHeadUsers = [];
+const allUsers = [];
 
 function calcDuration(start, end) {
   if (!start || !end) return '';
@@ -38,49 +43,57 @@ function calcDuration(start, end) {
   return String(months);
 }
 
+function toDateInput(iso) {
+  if (!iso) return '';
+  return iso.split('T')[0];
+}
+
 export default function EditProjectPage() {
-  const { id } = useParams();
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
-  const [form, setForm] = useState(null);
-  const [errors, setErrors] = useState({});
-  const [saving, setSaving] = useState(false);
+  const { id }    = useParams();
+  const router    = useRouter();
+  const dispatch  = useDispatch();
+
+  /** @type {import('@/models/project').Project|null} */
+  const project   = useSelector(selectSelectedProject);
+  const isLoading = useSelector(selectProjectsLoading);
+
+  const [form, setForm]           = useState(null);
+  const [errors, setErrors]       = useState({});
+  const [saving, setSaving]       = useState(false);
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const proj = mockProjects.find((p) => p.id === id);
-      if (proj) {
-        setForm({
-          contractName: proj.contractName || '',
-          contractNumber: proj.contractNumber || '',
-          projectCode: proj.projectCode || '',
-          invoicingPlatform: proj.invoicingPlatform || 'Etimad',
-          projectNameFocus: proj.projectNameFocus || '',
-          projectNameEPM: proj.projectNameEPM || '',
-          clientName: proj.clientName || '',
-          businessUnit: proj.businessUnit || '',
-          projectManager: proj.projectManager || '',
-          bdm: proj.bdm || '',
-          drm: proj.drm || '',
-          crp: proj.crp || '',
-          buHead: proj.buHead || '',
-          projectValue: proj.projectValue !== undefined ? String(proj.projectValue) : '',
-          vatPercent: proj.vatPercent !== undefined ? String(proj.vatPercent) : '15',
-          poNumber: proj.poNumber || '',
-          startDate: proj.startDate || '',
-          endDate: proj.endDate || '',
-          durationMonths: proj.durationMonths !== undefined ? String(proj.durationMonths) : '',
-          revenueSWLic: proj.revenueSWLic !== undefined ? String(proj.revenueSWLic) : '',
-          revenueLogistics: proj.revenueLogistics !== undefined ? String(proj.revenueLogistics) : '',
-          revenueTraining: proj.revenueTraining !== undefined ? String(proj.revenueTraining) : '',
-          revenueExternalSubs: proj.revenueExternalSubs !== undefined ? String(proj.revenueExternalSubs) : '',
-        });
-      }
-      setIsLoading(false);
-    }, 200);
-    return () => clearTimeout(timer);
-  }, [id]);
+    dispatch(fetchProjectById(id));
+  }, [dispatch, id]);
+
+  useEffect(() => {
+    if (!project || project.id !== id) return;
+    setForm({
+      contractName:      project.contractName       || '',
+      contractNumber:    project.contractNumber != null ? String(project.contractNumber) : '',
+      projectCode:       project.projectCode        || '',
+      invoicingPlatform: project.invoicingPlatform  || 'Etimad',
+      projectNameFocus:  project.projectName_Focus  || '',
+      projectNameEPM:    project.projectName        || '',
+      clientName:        project.clientName         || '',
+      businessUnit:      project.businessUnit       || '',
+      projectManager:    '',
+      bdm:               project.bdm    || '',
+      drm:               project.drm    || '',
+      crp:               project.crp    || '',
+      buHead:            project.buHead || '',
+      projectValue:      project.projectValue   != null ? String(project.projectValue)   : '',
+      vatPercent:        project.vatPercentage  != null ? String(project.vatPercentage)  : '15',
+      poNumber:          project.poNumber       || '',
+      startDate:         toDateInput(project.startDate),
+      endDate:           toDateInput(project.endDate),
+      durationMonths:    project.duration       != null ? String(project.duration)       : '',
+      revenueSWLic:      project.revenueSWLicenses  != null ? String(project.revenueSWLicenses)  : '',
+      revenueLogistics:  project.revenueLogistics   != null ? String(project.revenueLogistics)   : '',
+      revenueTraining:   project.revenueTraining    != null ? String(project.revenueTraining)    : '',
+      revenueExternalSubs: project.revenueExternalSubs != null ? String(project.revenueExternalSubs) : '',
+    });
+  }, [project, id]);
 
   const set = (field) => (e) => {
     const val = e.target.value;
@@ -89,7 +102,7 @@ export default function EditProjectPage() {
       if (field === 'startDate' || field === 'endDate') {
         next.durationMonths = calcDuration(
           field === 'startDate' ? val : prev.startDate,
-          field === 'endDate' ? val : prev.endDate
+          field === 'endDate'   ? val : prev.endDate
         );
       }
       return next;
@@ -99,11 +112,10 @@ export default function EditProjectPage() {
 
   const validate = () => {
     const e = {};
-    if (!form.contractName.trim()) e.contractName = 'Contract name is required';
+    if (!form.contractName.trim())  e.contractName  = 'Contract name is required';
     if (!form.contractNumber.trim()) e.contractNumber = 'Contract number is required';
-    if (!form.clientName.trim()) e.clientName = 'Client name is required';
-    if (!form.projectManager) e.projectManager = 'Project manager is required';
-    if (!form.startDate) e.startDate = 'Start date is required';
+    if (!form.clientName.trim())    e.clientName    = 'Client name is required';
+    if (!form.startDate)            e.startDate     = 'Start date is required';
     return e;
   };
 
@@ -115,6 +127,7 @@ export default function EditProjectPage() {
       return;
     }
     setSaving(true);
+    // TODO: dispatch updateProjectById thunk when endpoint is available
     setTimeout(() => {
       setSaving(false);
       setShowToast(true);
@@ -242,7 +255,6 @@ export default function EditProjectPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <Select
               label="Project Manager"
-              required
               placeholder="Select PM"
               value={form.projectManager}
               onChange={set('projectManager')}

@@ -15,8 +15,9 @@ const nextConfig = {
     APP_NAME: 'Enterprise Invoicing & Tracking System',
     APP_VERSION: '1.0.0',
     COMPANY_NAME: 'Devoteam Middle East',
-    DEFAULT_LANGUAGE: 'en',
-    DEFAULT_CURRENCY: 'SAR',
+    DEFAULT_LANGUAGE: 'en', 
+    DEFAULT_CURRENCY: 'USD', // SAR
+    DEFAULT_CURRENCY_Symbol: '\u{0024}', //\u{20C1} for SAR, \u{0024} for USD
     DEFAULT_VAT_PERCENT: '15',
   },
 

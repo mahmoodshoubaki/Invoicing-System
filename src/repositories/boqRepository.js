@@ -1,10 +1,11 @@
-// REAL INTEGRATION POINT: Replace mock import and all method bodies with real
-// API calls to your backend or Azure Functions endpoints.
-import { mockBOQItems } from '@/mock/boq';
 import { BOQ_STATUS } from '@/constants/statuses';
+import { createApiClient } from '@/lib/apiClient';
+import { createBOQ, createBOQItem, createBOQItemHistoryEntry } from '@/models/boq';
 
-/** In-memory mutable store — reset on each server/module reload. */
-let boqItems = [...mockBOQItems];
+const api = createApiClient('/api/Boqs');
+
+/** In-memory mutable store for write operations without real endpoints yet. */
+let boqItems = [];
 
 const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -12,15 +13,31 @@ function generateId() {
   return `boq-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
+/** A project/BOQ with no items yet is a valid empty state, not a failure. */
+function isNotFound(err) {
+  return err.status === 404;
+}
+
 export const boqRepository = {
-  /**
-   * Return all BOQ items for a given project.
-   * @param {string} projectId
-   * @returns {Promise<object[]>}
-   */
-  async getBOQByProject(projectId) {
-    await delay(300);
-    return boqItems.filter((item) => item.projectId === projectId).map((i) => ({ ...i }));
+  // REAL API
+  async getBOQByProjectCode(projectCode) {
+    try {
+      const data = await api.get(`/GetBoqByProjectCode?projectCode=${encodeURIComponent(projectCode)}`);
+      return data ? createBOQ(data) : { projectCode, id: null, boqItems: [] };
+    } catch (err) {
+      if (isNotFound(err)) return { projectCode, id: null, boqItems: [] };
+      throw err;
+    }
+  },
+
+  async getBOQById(boqId) {
+    try {
+      const data = await api.get(`/GetBoqById?ID=${encodeURIComponent(boqId)}`);
+      return data ? createBOQ(data) : null;
+    } catch (err) {
+      if (isNotFound(err)) return null;
+      throw err;
+    }
   },
 
   /**
@@ -35,81 +52,91 @@ export const boqRepository = {
     return { ...item };
   },
 
-  /**
-   * Create a new BOQ item.
-   * Automatically derives totalCost and vatSAR if not provided.
-   * @param {object} data
-   * @returns {Promise<object>}
-   */
-  async createBOQItem(data) {
-    await delay(400);
-
-    const quantity = Number(data.quantity) || 0;
-    const unitCost = Number(data.unitCost) || 0;
-    const totalCost = data.totalCost ?? quantity * unitCost;
-    const vatSAR = data.vatSAR ?? totalCost * 0.15;
-
-    const now = new Date().toISOString();
-    const newItem = {
-      ...data,
-      id: generateId(),
-      totalCost,
-      vatSAR,
-      invoicedQuantity: 0,
-      status: data.status ?? BOQ_STATUS.DRAFT,
-      createdAt: now,
-      updatedAt: now,
+  async createBOQItem(form, boq) {
+    const body = {
+      BoqId:                 boq?.id          ?? '00000000-0000-0000-0000-000000000000',
+      ProjectCode:           boq?.projectCode ?? null,
+      EnglishName:           form.englishName,
+      ArabicName:            form.arabicName,
+      Quantity:              Number(form.quantity),
+      UnitCost:              Number(form.unitCost),
+      ExpectedInvoicingDate: form.expectedInvoicingDate || null,
+      BaselineInvoicingDate: form.baselineInvoicingDate || null,
+      BillingFrequencyId:    Number(form.billingFrequencyId),
+      Notes:                 form.notes                || null,
+      StatusId:              1,
     };
-
-    boqItems.push(newItem);
-    return { ...newItem };
+    const response = await api.post('/InsertBoqItem', body);
+    return createBOQItem(response);
   },
 
+  // REAL API
   /**
-   * Update a BOQ item by id.
-   * Re-derives totalCost/vatSAR if quantity or unitCost changes.
-   * @param {string} id
+   * Update a BOQ item by id. Response is just { isUpdated: boolean } — the
+   * caller refetches the BOQ list to see the change, no item is returned here.
+   * @param {number} id
    * @param {object} data
-   * @returns {Promise<object>}
+   * @returns {Promise<{ isUpdated: boolean }>}
    */
   async updateBOQItem(id, data) {
-    await delay(350);
-
-    const idx = boqItems.findIndex((i) => i.id === id);
-    if (idx === -1) throw new Error(`BOQ item not found: ${id}`);
-
-    const merged = { ...boqItems[idx], ...data, id };
-
-    // Recalculate derived fields if inputs changed
-    if (data.quantity !== undefined || data.unitCost !== undefined) {
-      const quantity = Number(merged.quantity) || 0;
-      const unitCost = Number(merged.unitCost) || 0;
-      merged.totalCost = quantity * unitCost;
-      merged.vatSAR = merged.totalCost * 0.15;
-    }
-
-    merged.updatedAt = new Date().toISOString();
-    boqItems[idx] = merged;
-    return { ...merged };
+    const body = {
+      ID:                    id,
+      BoqId:                 data.boqId ?? null,
+      EnglishName:           data.englishName,
+      ArabicName:            data.arabicName,
+      Quantity:              Number(data.quantity),
+      UnitCost:              Number(data.unitCost),
+      ExpectedInvoicingDate: data.expectedInvoicingDate || null,
+      BillingFrequencyId:    Number(data.billingFrequencyId),
+      Notes:                 data.notes || null,
+      StatusId:              data.statusId,
+    };
+    return await api.post('/UpdateBoqItem', body);
   },
 
+  // REAL API
   /**
    * Delete a BOQ item by id.
    * @param {string} id
+   * @param {string} boqId
    * @returns {Promise<void>}
    */
-  async deleteBOQItem(id) {
-    await delay(300);
+  async deleteBOQItem(id, boqId) {
+    const body = {
+      ItemId: id,
+      BoqId: boqId ?? null,
+    };
+    await api.post('/DeleteBoqItem', body);
+  },
+  // REAL API
+  /**
+   * Bulk delete BOQ items by id.
+   * @param {number[]} ids
+   * @param {string} boqId
+   * @returns {Promise<void>}
+   */
+  async bulkDeleteBOQItems(ids, boqId) {
+    const body = {
+      ItemsId: ids,
+      BoqId: boqId ?? null,
+    };
+    await api.post('/BulkDeleteBoqItems', body);
+  },
 
-    const idx = boqItems.findIndex((i) => i.id === id);
-    if (idx === -1) throw new Error(`BOQ item not found: ${id}`);
-
-    // Cannot delete an invoiced item
-    if (boqItems[idx].status === BOQ_STATUS.INVOICED) {
-      throw new Error('Cannot delete a BOQ item that has already been invoiced.');
+  // REAL API
+  /**
+   * Return the revision history for a BOQ item.
+   * @param {number} boqItemId
+   * @returns {Promise<object[]>}
+   */
+  async getBOQItemHistory(boqItemId) {
+    try {
+      const data = await api.get(`/GetBoqItemHistory?ItemId=${encodeURIComponent(boqItemId)}`);
+      return (data ?? []).map(createBOQItemHistoryEntry);
+    } catch (err) {
+      if (isNotFound(err)) return [];
+      throw err;
     }
-
-    boqItems.splice(idx, 1);
   },
 
   /**

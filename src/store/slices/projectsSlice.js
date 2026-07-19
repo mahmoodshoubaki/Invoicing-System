@@ -16,6 +16,19 @@ export const fetchProjects = createAsyncThunk(
   }
 );
 
+export const fetchProjectById = createAsyncThunk(
+  'projects/fetchProjectById',
+  async (id, { getState, rejectWithValue }) => {
+    const existing = getState().projects.items.find((p) => p.id === id);
+    if (existing) return existing;
+    try {
+      return await projectRepository.getProject(id);
+    } catch (err) {
+      return rejectWithValue(err.message || 'Failed to fetch project.');
+    }
+  }
+);
+
 export const createProject = createAsyncThunk(
   'projects/createProject',
   async (data, { rejectWithValue }) => {
@@ -122,6 +135,22 @@ const projectsSlice = createSlice({
   },
 
   extraReducers: (builder) => {
+    // fetchProjectById
+    builder
+      .addCase(fetchProjectById.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+        state.selectedProject = null;
+      })
+      .addCase(fetchProjectById.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.selectedProject = action.payload;
+      })
+      .addCase(fetchProjectById.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      });
+
     // fetchProjects
     builder
       .addCase(fetchProjects.pending, (state) => {

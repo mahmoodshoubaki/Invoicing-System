@@ -5,11 +5,21 @@ import { boqRepository } from '@/repositories/boqRepository';
 // Async thunks
 // ---------------------------------------------------------------------------
 
-export const fetchBOQByProject = createAsyncThunk(
-  'boq/fetchBOQByProject',
-  async (projectId, { rejectWithValue }) => {
+export const fetchBOQByProjectCode = createAsyncThunk(
+  'boq/fetchBOQByProjectCode',
+  async (projectCode, { rejectWithValue }) => {
     try {
-      return await boqRepository.getBOQByProject(projectId);
+      return await boqRepository.getBOQByProjectCode(projectCode);
+    } catch (err) {
+      return rejectWithValue(err.message || 'Failed to fetch BOQ items.');
+    }
+  }
+);
+export const fetchBOQById = createAsyncThunk(
+  'boq/fetchBOQById',
+  async (boqId, { rejectWithValue }) => {
+    try {
+      return await boqRepository.getBOQById(boqId);
     } catch (err) {
       return rejectWithValue(err.message || 'Failed to fetch BOQ items.');
     }
@@ -18,9 +28,9 @@ export const fetchBOQByProject = createAsyncThunk(
 
 export const addBOQItem = createAsyncThunk(
   'boq/addBOQItem',
-  async (data, { rejectWithValue }) => {
+  async ({ form, boq }, { rejectWithValue }) => {
     try {
-      return await boqRepository.createBOQItem(data);
+      return await boqRepository.createBOQItem(form, boq);
     } catch (err) {
       return rejectWithValue(err.message || 'Failed to create BOQ item.');
     }
@@ -40,12 +50,36 @@ export const updateBOQItem = createAsyncThunk(
 
 export const removeBOQItem = createAsyncThunk(
   'boq/removeBOQItem',
-  async (id, { rejectWithValue }) => {
+  async ({ id, boqId }, { rejectWithValue }) => {
     try {
-      await boqRepository.deleteBOQItem(id);
+      await boqRepository.deleteBOQItem(id, boqId);
       return id;
     } catch (err) {
       return rejectWithValue(err.message || 'Failed to delete BOQ item.');
+    }
+  }
+);
+
+export const bulkRemoveBOQItems = createAsyncThunk(
+  'boq/bulkRemoveBOQItems',
+  async ({ ids, boqId }, { rejectWithValue }) => {
+    try {
+      const idList = Array.from(ids, Number);
+      await boqRepository.bulkDeleteBOQItems(idList, boqId);
+      return idList;
+    } catch (err) {
+      return rejectWithValue(err.message || 'Failed to delete BOQ item.');
+    }
+  }
+);
+
+export const fetchBOQItemHistory = createAsyncThunk(
+  'boq/fetchBOQItemHistory',
+  async (boqItemId, { rejectWithValue }) => {
+    try {
+      return await boqRepository.getBOQItemHistory(boqItemId);
+    } catch (err) {
+      return rejectWithValue(err.message || 'Failed to fetch BOQ item history.');
     }
   }
 );
@@ -66,12 +100,17 @@ export const approveBOQItem = createAsyncThunk(
 // ---------------------------------------------------------------------------
 
 const initialState = {
-  items: [],
+  currentBOQ: null,
   isLoading: false,
   error: null,
   filters: {
-    projectId: null,
+    projectCode: null,
     status: '',
+  },
+  history: {
+    items: [],
+    isLoading: false,
+    error: null,
   },
 };
 
@@ -79,13 +118,13 @@ const boqSlice = createSlice({
   name: 'boq',
   initialState,
   reducers: {
-    setBOQItems(state, action) {
-      state.items = action.payload;
+    setCurrentBOQ(state, action) {
+      state.currentBOQ = action.payload;
       state.error = null;
     },
 
     clearBOQ(state) {
-      state.items = [];
+      state.currentBOQ = null;
       state.error = null;
     },
 
@@ -104,20 +143,41 @@ const boqSlice = createSlice({
     setFilters(state, action) {
       state.filters = { ...state.filters, ...action.payload };
     },
+
+    clearBOQItemHistory(state) {
+      state.history = initialState.history;
+    },
   },
 
   extraReducers: (builder) => {
-    // fetchBOQByProject
+    // fetchBOQByProjectCode
     builder
-      .addCase(fetchBOQByProject.pending, (state) => {
+      .addCase(fetchBOQByProjectCode.pending, (state) => {
         state.isLoading = true;
         state.error = null;
+        state.currentBOQ = null;
       })
-      .addCase(fetchBOQByProject.fulfilled, (state, action) => {
+      .addCase(fetchBOQByProjectCode.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.items = action.payload;
+        state.currentBOQ = action.payload;
       })
-      .addCase(fetchBOQByProject.rejected, (state, action) => {
+      .addCase(fetchBOQByProjectCode.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      });
+    
+      // fetchBOQById
+    builder
+      .addCase(fetchBOQById.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+        state.currentBOQ = null;
+      })
+      .addCase(fetchBOQById.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.currentBOQ = action.payload;
+      })
+      .addCase(fetchBOQById.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
       });
@@ -128,9 +188,8 @@ const boqSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(addBOQItem.fulfilled, (state, action) => {
+      .addCase(addBOQItem.fulfilled, (state) => {
         state.isLoading = false;
-        state.items.push(action.payload);
       })
       .addCase(addBOQItem.rejected, (state, action) => {
         state.isLoading = false;
@@ -143,12 +202,8 @@ const boqSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(updateBOQItem.fulfilled, (state, action) => {
+      .addCase(updateBOQItem.fulfilled, (state) => {
         state.isLoading = false;
-        const idx = state.items.findIndex((item) => item.id === action.payload.id);
-        if (idx !== -1) {
-          state.items[idx] = action.payload;
-        }
       })
       .addCase(updateBOQItem.rejected, (state, action) => {
         state.isLoading = false;
@@ -163,11 +218,47 @@ const boqSlice = createSlice({
       })
       .addCase(removeBOQItem.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.items = state.items.filter((item) => item.id !== action.payload);
+        if (state.currentBOQ) {
+          state.currentBOQ.boqItems = state.currentBOQ.boqItems.filter((item) => item.id !== action.payload);
+        }
       })
       .addCase(removeBOQItem.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
+      });
+    
+    // bulkRemoveBOQItems
+    builder
+      .addCase(bulkRemoveBOQItems.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(bulkRemoveBOQItems.fulfilled, (state, action) => {
+        state.isLoading = false;
+        if (state.currentBOQ) {
+          state.currentBOQ.boqItems = state.currentBOQ.boqItems.filter(
+            (item) => !action.payload.includes(item.id)
+          );
+        }
+      })
+      .addCase(bulkRemoveBOQItems.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      });
+
+    // fetchBOQItemHistory
+    builder
+      .addCase(fetchBOQItemHistory.pending, (state) => {
+        state.history.isLoading = true;
+        state.history.error = null;
+      })
+      .addCase(fetchBOQItemHistory.fulfilled, (state, action) => {
+        state.history.isLoading = false;
+        state.history.items = action.payload;
+      })
+      .addCase(fetchBOQItemHistory.rejected, (state, action) => {
+        state.history.isLoading = false;
+        state.history.error = action.payload;
       });
 
     // approveBOQItem
@@ -190,21 +281,26 @@ const boqSlice = createSlice({
   },
 });
 
-export const { setBOQItems, clearBOQ, setLoading, setError, setFilters } =
+export const { setCurrentBOQ, clearBOQ, setLoading, setError, setFilters, clearBOQItemHistory } =
   boqSlice.actions;
 
 // Selectors
-export const selectBOQItems = (state) => state.boq.items;
-export const selectBOQLoading = (state) => state.boq.isLoading;
-export const selectBOQError = (state) => state.boq.error;
-export const selectBOQFilters = (state) => state.boq.filters;
+export const selectCurrentBOQ  = (state) => state.boq.currentBOQ;
+export const selectBOQItems    = (state) => state.boq.currentBOQ?.boqItems ?? [];
+export const selectBOQLoading  = (state) => state.boq.isLoading;
+export const selectBOQError    = (state) => state.boq.error;
+export const selectBOQFilters  = (state) => state.boq.filters;
+export const selectBOQItemHistory        = (state) => state.boq.history.items;
+export const selectBOQItemHistoryLoading = (state) => state.boq.history.isLoading;
+export const selectBOQItemHistoryError   = (state) => state.boq.history.error;
 
-/** Filtered by current filter state. */
+/** BOQ items filtered by current filter state. */
 export const selectFilteredBOQ = (state) => {
-  const { items, filters } = state.boq;
+  const items   = selectBOQItems(state);
+  const filters = state.boq.filters;
   return items.filter((item) => {
-    if (filters.projectId && item.projectId !== filters.projectId) return false;
-    if (filters.status && item.status !== filters.status) return false;
+    if (filters.projectCode && item.projectCode !== filters.projectCode) return false;
+    if (filters.status      && item.statusId    !== filters.status)      return false;
     return true;
   });
 };

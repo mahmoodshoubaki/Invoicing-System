@@ -8,6 +8,7 @@ import invoicesReducer from '@/store/slices/invoicesSlice';
 import workflowReducer from '@/store/slices/workflowSlice';
 import notificationsReducer from '@/store/slices/notificationsSlice';
 import uiReducer from '@/store/slices/uiSlice';
+import lookupsReducer from '@/store/slices/lookupsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -18,6 +19,7 @@ export const store = configureStore({
     workflow: workflowReducer,
     notifications: notificationsReducer,
     ui: uiReducer,
+    lookups: lookupsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

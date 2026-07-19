@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  LayoutDashboard, FolderKanban, FileText, Receipt,
+  LayoutDashboard, FolderKanban, Receipt,
   GitBranch, Bell, BarChart3, Users, Shield, Settings,
   Building2, X, Menu,
 } from 'lucide-react';
@@ -23,13 +23,6 @@ const NAV_ITEMS = [
     href: '/projects',
     icon: FolderKanban,
     permission: 'project.read',
-  },
-  {
-    label: 'BOQ / Invoicing Plan',
-    labelAr: 'جدول الكميات',
-    href: '/boq',
-    icon: FileText,
-    permission: 'boq.read',
   },
   {
     label: 'Invoice Requests',

@@ -27,20 +27,12 @@ import { mockInvoices } from '@/mock/invoices';
 import { mockBOQItems } from '@/mock/boq';
 import { mockUsers } from '@/mock/users';
 import { INVOICE_STATUS, BOQ_STATUS, PROJECT_STATUS } from '@/constants/statuses';
+import { formatCurrency } from '@/utils';
+import { useSelector } from 'react-redux';
 
 // ---------------------------------------------------------------------------
 // Helper utilities
 // ---------------------------------------------------------------------------
-
-function formatSARM(amount) {
-  return `SAR ${(amount / 1_000_000).toFixed(1)}M`;
-}
-
-function formatSARK(amount) {
-  if (amount >= 1_000_000) return `SAR ${(amount / 1_000_000).toFixed(1)}M`;
-  if (amount >= 1_000) return `SAR ${(amount / 1_000).toFixed(0)}K`;
-  return `SAR ${amount.toLocaleString()}`;
-}
 
 function getUserName(userId) {
   const user = mockUsers.find((u) => u.id === userId);
@@ -189,14 +181,14 @@ const secondaryStats = [
   },
   {
     title: 'Collected Value',
-    value: formatSARK(collectedInvoiceValue),
+    value: (collectedInvoiceValue),
     icon: CheckCircle,
     color: 'success',
     subtitle: 'Approved invoices',
   },
   {
     title: 'Non-Collected',
-    value: formatSARK(nonCollectedInvoiceValue),
+    value: (nonCollectedInvoiceValue),
     icon: BanknoteIcon,
     color: 'warning',
     subtitle: 'Pending collection',
@@ -215,6 +207,7 @@ const secondaryStats = [
 // ---------------------------------------------------------------------------
 
 export default function DashboardPage() {
+  const currency = useSelector((state) => state.ui.currency);
   return (
     <div className="space-y-6">
       <PageHeader
@@ -238,7 +231,7 @@ export default function DashboardPage() {
         />
         <StatCard
           title="Total Revenue"
-          value={formatSARM(totalRevenue)}
+          value={formatCurrency(totalRevenue, currency)}
           icon={TrendingUp}
           color="success"
           subtitle="Across all projects"
@@ -247,7 +240,7 @@ export default function DashboardPage() {
         />
         <StatCard
           title="Total WIP"
-          value={formatSARM(totalWIP)}
+          value={formatCurrency(totalWIP, currency)}
           icon={Activity}
           color="warning"
           subtitle="Work in progress"
@@ -385,7 +378,7 @@ export default function DashboardPage() {
                       {project.clientName} &middot; {getUserName(project.projectManager)}
                     </p>
                     <p className="text-xs font-medium text-primary mt-1">
-                      {formatSARK(project.projectValue)}
+                      {formatCurrency(project.projectValue, currency)}
                     </p>
                   </div>
                   <StatusBadge status={project.status} size="sm" />
@@ -429,7 +422,7 @@ export default function DashboardPage() {
                       </p>
                       <p className="text-xs text-gray-500 mt-0.5 truncate">{inv.projectName}</p>
                       <p className="text-xs font-medium text-primary mt-1">
-                        {formatSARK(inv.invoiceAmount)}
+                        {formatCurrency(inv.invoiceAmount, currency)}
                       </p>
                     </div>
                     <StatusBadge status={inv.status} size="sm" />
@@ -467,12 +460,12 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-4 text-center">
           <p className="text-xs text-gray-500 font-medium">Total Collected</p>
-          <p className="text-xl font-bold text-green-700 mt-1">{formatSARM(totalCollected)}</p>
+          <p className="text-xl font-bold text-green-700 mt-1">{formatCurrency(totalCollected, currency)}</p>
           <p className="text-xs text-gray-400 mt-0.5">Across all projects</p>
         </Card>
         <Card className="p-4 text-center">
           <p className="text-xs text-gray-500 font-medium">Non-Collected</p>
-          <p className="text-xl font-bold text-yellow-700 mt-1">{formatSARM(totalNonCollected)}</p>
+          <p className="text-xl font-bold text-yellow-700 mt-1">{formatCurrency(totalNonCollected, currency)}</p>
           <p className="text-xs text-gray-400 mt-0.5">Receivables outstanding</p>
         </Card>
         <Card className="p-4 text-center">

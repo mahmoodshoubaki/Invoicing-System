@@ -22,21 +22,20 @@ const STATUS_VARIANT_MAP = {
   // BOQ statuses
   Draft: 'default',
   'Pending Verification': 'warning',
-  Approved: 'success',
   'Pending Request': 'info',
-  Invoiced: 'primary',
+  Invoiced: 'success',
   Delayed: 'danger',
   // Invoice statuses
   Submitted: 'info',
   'Under Review': 'warning',
   Rejected: 'danger',
   // Project statuses
-  Active: 'success',
+  'In Progress': 'success',
   'On Hold': 'warning',
   Completed: 'info',
-  Archived: 'default',
   // Workflow statuses
   Inactive: 'default',
+  Approved: 'success',
   // General
   Pending: 'warning',
 };

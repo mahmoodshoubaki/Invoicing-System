@@ -3,6 +3,7 @@
 import { Globe } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { setLanguage } from '@/store/slices/uiSlice';
+import { setCookie } from '@/utils/cookies';
 
 export default function LanguageToggle() {
   const dispatch = useDispatch();
@@ -11,6 +12,7 @@ export default function LanguageToggle() {
   const toggle = () => {
     const next = language === 'en' ? 'ar' : 'en';
     dispatch(setLanguage(next));
+    setCookie('language', next);
     document.documentElement.dir = next === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = next;
   };

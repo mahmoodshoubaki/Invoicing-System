@@ -13,8 +13,11 @@ export default function AppShell({ children }) {
 
       {/* Main content area — shifts right based on sidebar width */}
       <div
-        className="flex-1 flex flex-col min-h-screen transition-all duration-300"
-        style={{ marginLeft: sidebarOpen ? '256px' : '64px' }}
+        className="flex-1 flex flex-col min-h-screen transition-all duration-300 min-w-0"
+        style={{
+          marginLeft: sidebarOpen ? '256px' : '64px',
+          maxWidth: sidebarOpen ? 'calc(100% - 256px)' : 'calc(100% - 64px)',
+        }}
       >
         <Header />
 

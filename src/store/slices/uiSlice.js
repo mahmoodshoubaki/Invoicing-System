@@ -3,6 +3,8 @@ import { createSlice } from '@reduxjs/toolkit';
 const initialState = {
   sidebarOpen: true,
   language: 'en',       // 'en' | 'ar'
+  currency: 'SAR',      // 'SAR' | 'USD'
+  currencySymbol: '\u{0024}', // Default symbol for USD
   theme: 'light',       // 'light' | 'dark'
   activeModal: null,    // string modal ID or null
   toasts: [],           // [{ id, type, title, message, duration }]
@@ -27,6 +29,18 @@ const uiSlice = createSlice({
      */
     setLanguage(state, action) {
       state.language = action.payload;
+    },
+    /**
+     * Payload: 'sar' | 'usd'
+     */
+    setCurrency(state, action) {
+      state.currency = action.payload;
+    },
+    /**
+     * Payload: '0024' USD | '20C1' SAR
+     */
+    setCurrencySymbol(state, action) {
+      state.currencySymbol = action.payload;
     },
 
     /**
@@ -77,6 +91,8 @@ export const {
   toggleSidebar,
   setSidebarOpen,
   setLanguage,
+  setCurrency,
+  setCurrencySymbol,
   setTheme,
   openModal,
   closeModal,
@@ -91,5 +107,7 @@ export const selectTheme = (state) => state.ui.theme;
 export const selectActiveModal = (state) => state.ui.activeModal;
 export const selectToasts = (state) => state.ui.toasts;
 export const selectIsRTL = (state) => state.ui.language === 'ar';
+export const selectCurrency = (state) => state.ui.currency;
+export const selectCurrencySymbol = (state) => state.ui.currencySymbol;
 
 export default uiSlice.reducer;

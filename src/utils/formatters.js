@@ -1,3 +1,5 @@
+import { Currencies_LIST } from "@/constants";
+
 /**
  * Format a numeric amount as a currency string.
  * Defaults to SAR (Saudi Arabian Riyal) with Arabic-Gulf locale.
@@ -11,15 +13,29 @@
  * formatCurrency(250000) // => 'SAR 250,000.00'
  * formatCurrency(75000, 'USD', 'en-US') // => '$75,000.00'
  */
-export function formatCurrency(amount, currency = 'SAR', locale = 'en-SA') {
+export function formatCurrency(amount,currency ='USD',locale = 'en-SA') {
+  const currencySymbol = Currencies_LIST.find(c => c.Key === currency)?.symbol || '';
   if (amount === null || amount === undefined || isNaN(Number(amount))) {
-    return `${currency} 0.00`;
+    return `${currencySymbol}0.00`;
   }
-  return "\u{20C1} " + new Intl.NumberFormat(locale, {
+  return `${currencySymbol}` + new Intl.NumberFormat(locale, {
     style: 'decimal',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(Number(amount));
+}
+
+/**
+ * Format a large number with a display unit (K -> thousands, M -> millions).
+ *
+ * @param {number} amount
+ * @returns {string}
+ */
+function formatDisplayUnit(amount) {
+  if (amount >= 1_000_000_000) return `${(amount / 1_000_000_000).toFixed(1)}B`;
+  if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1)}M`;
+  if (amount >= 1_000) return `${(amount / 1_000).toFixed(0)}K`;
+  return `${amount.toLocaleString()}`;
 }
 
 /**

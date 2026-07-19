@@ -2,17 +2,17 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Search, X, Building2 } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Plus, Search, X } from 'lucide-react';
 import Link from 'next/link';
 
 import PageHeader from '@/components/common/PageHeader';
 import Table from '@/components/common/Table';
 import Button from '@/components/common/Button';
 import { StatusBadge } from '@/components/common/Badge';
-import { mockProjects } from '@/mock/projects';
+import { fetchProjects, selectProjects, selectProjectsLoading } from '@/store/slices/projectsSlice';
 import { PROJECT_STATUS_LIST } from '@/constants/statuses';
 import { formatCurrency } from '@/utils/formatters';
-import { getUserName } from '@/mock/users';
 
 const PAGE_SIZE = 10;
 
@@ -26,38 +26,38 @@ const BUSINESS_UNITS = [
 ];
 
 export default function ProjectsPage() {
-  const router = useRouter();
-  const [projects, setProjects] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const router   = useRouter();
+  const dispatch = useDispatch();
+
+  const projects  = useSelector(selectProjects);
+  const isLoading = useSelector(selectProjectsLoading);
+  const currency  = useSelector((s) => s.ui.currency);
+
+  const [search, setSearch]           = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [buFilter, setBuFilter] = useState('');
-  const [page, setPage] = useState(1);
+  const [buFilter, setBuFilter]       = useState('');
+  const [page, setPage]               = useState(1);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setProjects(mockProjects);
-      setIsLoading(false);
-    }, 200);
-    return () => clearTimeout(timer);
-  }, []);
+    dispatch(fetchProjects());
+  }, [dispatch]);
 
   const filtered = useMemo(() => {
     return projects.filter((p) => {
       const q = search.toLowerCase();
       const matchSearch =
         !q ||
-        p.contractName?.toLowerCase().includes(q) ||
-        p.contractNumber?.toLowerCase().includes(q) ||
+        p.projectName?.toLowerCase().includes(q) ||
+        p.contractNumber?.toString().toLowerCase().includes(q) ||
         p.clientName?.toLowerCase().includes(q) ||
         p.projectCode?.toLowerCase().includes(q);
       const matchStatus = !statusFilter || p.status === statusFilter;
-      const matchBU = !buFilter || p.businessUnit === buFilter;
+      const matchBU     = !buFilter     || p.businessUnit === buFilter;
       return matchSearch && matchStatus && matchBU;
     });
   }, [projects, search, statusFilter, buFilter]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const totalPages    = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginatedData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const handleClearFilters = () => {
@@ -71,7 +71,7 @@ export default function ProjectsPage() {
 
   const columns = [
     {
-      key: 'contractName',
+      key: 'projectName',
       label: 'Project Name',
       render: (val, row) => (
         <div>
@@ -87,9 +87,9 @@ export default function ProjectsPage() {
     },
     { key: 'clientName', label: 'Client' },
     {
-      key: 'projectManager',
-      label: 'PM',
-      render: (val) => <span className="text-sm">{getUserName(val)}</span>,
+      key: 'drm',
+      label: 'DRM',
+      render: (val) => <span className="text-sm">{val}</span>,
     },
     {
       key: 'businessUnit',
@@ -101,9 +101,9 @@ export default function ProjectsPage() {
     {
       key: 'projectValue',
       label: 'Project Value',
-      align: 'right',
+      align: 'center',
       render: (val) => (
-        <span className="font-semibold text-gray-800 text-sm">{formatCurrency(val)}</span>
+        <span className="font-semibold text-gray-800 text-sm">{formatCurrency(val, currency)}</span>
       ),
     },
     {
@@ -111,21 +111,6 @@ export default function ProjectsPage() {
       label: 'Status',
       sortable: false,
       render: (val) => <StatusBadge status={val} />,
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-      sortable: false,
-      render: (_, row) => (
-        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-          <Link href={`/projects/${row.id}`}>
-            <Button variant="ghost" size="xs">View</Button>
-          </Link>
-          <Link href={`/projects/${row.id}/edit`}>
-            <Button variant="outline" size="xs">Edit</Button>
-          </Link>
-        </div>
-      ),
     },
   ];
 
@@ -141,7 +126,6 @@ export default function ProjectsPage() {
         }
       />
 
-      {/* Filter Bar */}
       <div className="bg-white rounded-xl border border-gray-100 p-4 mb-5 flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px]">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -183,7 +167,6 @@ export default function ProjectsPage() {
         )}
       </div>
 
-      {/* Table */}
       <Table
         columns={columns}
         data={paginatedData}

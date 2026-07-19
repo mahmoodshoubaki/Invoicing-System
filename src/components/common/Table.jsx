@@ -48,7 +48,7 @@ export default function Table({
       })
     : data;
 
-  const cellPad = compact ? 'px-3 py-2' : 'px-4 py-3';
+  const cellPad = compact ? 'px-3 py-2' : 'px-7 py-3';
 
   return (
     <div className="flex flex-col gap-0">

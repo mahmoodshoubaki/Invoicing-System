@@ -5,9 +5,9 @@ const PUBLIC_PATHS = ['/login', '/unauthorized', '/_next', '/favicon.ico', '/api
 
 // First match wins — put more-specific prefixes before broader ones.
 const ROUTE_PERMISSIONS = [
-  { prefix: '/projects/new',   permission: 'project.create'      },
-  { prefix: '/projects',       permission: 'project.read'         },
-  { prefix: '/boq',            permission: 'boq.read'             },
+  { prefix: '/projects/new',                                permission: 'project.create' },
+  { test: (path) => /^\/projects\/[^/]+\/boq(\/|$)/.test(path), permission: 'boq.read'    },
+  { prefix: '/projects',                                    permission: 'project.read'    },
   { prefix: '/invoices/new',   permission: 'invoice.submit'       },
   { prefix: '/invoices',       permission: 'invoice.read'         },
   { prefix: '/workflow',       permission: 'workflow.read'        },
@@ -51,7 +51,7 @@ export function proxy(request) {
   }
 
   // Role-based access: check if the user's roles grant the required permission
-  const route = ROUTE_PERMISSIONS.find(({ prefix }) => pathname.startsWith(prefix));
+  const route = ROUTE_PERMISSIONS.find(({ prefix, test }) => (test ? test(pathname) : pathname.startsWith(prefix)));
   if (route) {
     const roles = getRolesFromToken(token);
     if (!canAccess(roles, route.permission)) {

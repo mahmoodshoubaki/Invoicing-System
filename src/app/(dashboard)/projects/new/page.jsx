@@ -9,9 +9,6 @@ import PageHeader from '@/components/common/PageHeader';
 import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
 import { Input, Select, Textarea, FormField } from '@/components/forms/FormField';
-import { mockUsers } from '@/mock/users';
-import { ROLES } from '@/constants/roles';
-
 const BUSINESS_UNITS = [
   'Energy & Resources',
   'Telecom & Media',
@@ -23,10 +20,11 @@ const BUSINESS_UNITS = [
 
 const INVOICING_PLATFORMS = ['Etimad', 'Other'];
 
-const pmUsers = mockUsers.filter((u) => u.roles.includes(ROLES.PROJECT_MANAGER) || u.roles.includes(ROLES.BDM));
-const bdmUsers = mockUsers.filter((u) => u.roles.includes(ROLES.BDM));
-const buHeadUsers = mockUsers.filter((u) => u.roles.includes(ROLES.BU_HEAD));
-const allUsers = mockUsers;
+// TODO: replace with real users API when available
+const pmUsers = [];
+const bdmUsers = [];
+const buHeadUsers = [];
+const allUsers = [];
 
 const INITIAL_FORM = {
   contractName: '',

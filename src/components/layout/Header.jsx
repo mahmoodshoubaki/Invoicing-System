@@ -7,6 +7,8 @@ import { toggleSidebar } from '@/store/slices/uiSlice';
 import { useAuth } from '@/hooks/useAuth';
 import UserMenu from './UserMenu';
 import LanguageToggle from './LanguageToggle';
+import { Currencies } from '@/constants/currencies';
+import CurrencyMenu from './CurrencyMenu';
 
 export default function Header() {
   const dispatch = useDispatch();
@@ -35,7 +37,7 @@ export default function Header() {
 
       <div className="flex items-center gap-2">
         <LanguageToggle />
-
+        <CurrencyMenu />
         <button
           onClick={() => router.push('/notifications')}
           className="relative p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
