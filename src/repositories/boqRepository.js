@@ -87,6 +87,7 @@ export const boqRepository = {
       Quantity:              Number(data.quantity),
       UnitCost:              Number(data.unitCost),
       ExpectedInvoicingDate: data.expectedInvoicingDate || null,
+      baselineInvoicingDate: data.baselineInvoicingDate || null,
       BillingFrequencyId:    Number(data.billingFrequencyId),
       Notes:                 data.notes || null,
       StatusId:              data.statusId,

@@ -44,6 +44,16 @@ export function getBadgeVariant(status) {
   return STATUS_VARIANT_MAP[status] || 'default';
 }
 
+/** Converts a "#rgb" or "#rrggbb" hex string to an "r, g, b" triplet for use in rgba(). */
+function hexToRgbTriplet(hex) {
+  const clean = hex.replace('#', '');
+  const full = clean.length === 3 ? clean.split('').map((c) => c + c).join('') : clean;
+  const r = parseInt(full.substring(0, 2), 16);
+  const g = parseInt(full.substring(2, 4), 16);
+  const b = parseInt(full.substring(4, 6), 16);
+  return `${r}, ${g}, ${b}`;
+}
+
 export default function Badge({
   children,
   variant = 'default',
@@ -74,7 +84,24 @@ export default function Badge({
   );
 }
 
-export function StatusBadge({ status, size = 'md' }) {
+export function StatusBadge({ status, size = 'md', colors }) {
+  if (colors) {
+    const rgb = hexToRgbTriplet(colors);
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 rounded-full font-medium border ${SIZES[size]}`}
+        style={{
+          backgroundColor: `rgba(${rgb}, 0.12)`,
+          borderColor: `rgba(${rgb}, 0.35)`,
+          color: colors,
+        }}
+      >
+        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: colors }} />
+        {status}
+      </span>
+    );
+  }
+
   return (
     <Badge variant={getBadgeVariant(status)} size={size} dot>
       {status}

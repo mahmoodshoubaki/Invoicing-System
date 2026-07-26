@@ -6,9 +6,9 @@ const PUBLIC_PATHS = ['/login', '/unauthorized', '/_next', '/favicon.ico', '/api
 // First match wins — put more-specific prefixes before broader ones.
 const ROUTE_PERMISSIONS = [
   { prefix: '/projects/new',                                permission: 'project.create' },
-  { test: (path) => /^\/projects\/[^/]+\/boq(\/|$)/.test(path), permission: 'boq.read'    },
+  { test: (path) => /^\/projects\/[^/]+\/boq(\/|$)/.test(path),      permission: 'boq.read'     },
+  { test: (path) => /^\/projects\/[^/]+\/invoices\/new(\/|$)/.test(path), permission: 'invoice.submit' },
   { prefix: '/projects',                                    permission: 'project.read'    },
-  { prefix: '/invoices/new',   permission: 'invoice.submit'       },
   { prefix: '/invoices',       permission: 'invoice.read'         },
   { prefix: '/workflow',       permission: 'workflow.read'        },
   { prefix: '/notifications',  permission: 'notification.read'   },

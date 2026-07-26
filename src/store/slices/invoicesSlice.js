@@ -16,6 +16,17 @@ export const fetchInvoices = createAsyncThunk(
   }
 );
 
+export const fetchInvoicesByProjectCode = createAsyncThunk(
+  'invoices/fetchInvoicesByProjectCode',
+  async (projectCode, { rejectWithValue }) => {
+    try {
+      return await invoiceRepository.getInvoicesByProjectCode(projectCode);
+    } catch (err) {
+      return rejectWithValue(err.message || 'Failed to fetch invoices.');
+    }
+  }
+);
+
 export const submitInvoice = createAsyncThunk(
   'invoices/submitInvoice',
   async (id, { rejectWithValue }) => {
@@ -49,6 +60,17 @@ export const rejectInvoice = createAsyncThunk(
   }
 );
 
+export const fetchInvoiceableBOQItems = createAsyncThunk(
+  'invoices/fetchInvoiceableBOQItems',
+  async (projectCode, { rejectWithValue }) => {
+    try {
+      return await invoiceRepository.getInvoiceableBOQItems(projectCode);
+    } catch (err) {
+      return rejectWithValue(err.message || 'Failed to fetch invoiceable BOQ items.');
+    }
+  }
+);
+
 export const createInvoice = createAsyncThunk(
   'invoices/createInvoice',
   async (data, { rejectWithValue }) => {
@@ -69,6 +91,11 @@ const initialState = {
   selectedInvoice: null,
   isLoading: false,
   error: null,
+  invoiceableItems: {
+    items: [],
+    isLoading: false,
+    error: null,
+  },
 };
 
 const invoicesSlice = createSlice({
@@ -113,6 +140,10 @@ const invoicesSlice = createSlice({
     clearError(state) {
       state.error = null;
     },
+
+    clearInvoiceableBOQItems(state) {
+      state.invoiceableItems = initialState.invoiceableItems;
+    },
   },
 
   extraReducers: (builder) => {
@@ -131,6 +162,21 @@ const invoicesSlice = createSlice({
         state.error = action.payload;
       });
 
+    // fetchInvoicesByProjectCode
+    builder
+      .addCase(fetchInvoicesByProjectCode.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchInvoicesByProjectCode.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.items = action.payload;
+      })
+      .addCase(fetchInvoicesByProjectCode.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      });
+
     // createInvoice
     builder
       .addCase(createInvoice.pending, (state) => {
@@ -144,6 +190,21 @@ const invoicesSlice = createSlice({
       .addCase(createInvoice.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
+      });
+
+    // fetchInvoiceableBOQItems
+    builder
+      .addCase(fetchInvoiceableBOQItems.pending, (state) => {
+        state.invoiceableItems.isLoading = true;
+        state.invoiceableItems.error = null;
+      })
+      .addCase(fetchInvoiceableBOQItems.fulfilled, (state, action) => {
+        state.invoiceableItems.isLoading = false;
+        state.invoiceableItems.items = action.payload;
+      })
+      .addCase(fetchInvoiceableBOQItems.rejected, (state, action) => {
+        state.invoiceableItems.isLoading = false;
+        state.invoiceableItems.error = action.payload;
       });
 
     // submitInvoice
@@ -219,6 +280,7 @@ export const {
   setLoading,
   setError,
   clearError,
+  clearInvoiceableBOQItems,
 } = invoicesSlice.actions;
 
 // Selectors
@@ -226,6 +288,9 @@ export const selectInvoices = (state) => state.invoices.items;
 export const selectSelectedInvoice = (state) => state.invoices.selectedInvoice;
 export const selectInvoicesLoading = (state) => state.invoices.isLoading;
 export const selectInvoicesError = (state) => state.invoices.error;
+export const selectInvoiceableBOQItems        = (state) => state.invoices.invoiceableItems.items;
+export const selectInvoiceableBOQItemsLoading = (state) => state.invoices.invoiceableItems.isLoading;
+export const selectInvoiceableBOQItemsError   = (state) => state.invoices.invoiceableItems.error;
 
 export const selectInvoicesByStatus = (status) => (state) =>
   state.invoices.items.filter((inv) => inv.status === status);

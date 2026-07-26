@@ -114,6 +114,7 @@ export default function EditBOQItemPage() {
           quantity:              Number(form.quantity),
           unitCost:               Number(form.unitCost),
           expectedInvoicingDate: form.expectedInvoicingDate ?? null,
+          baselineInvoicingDate: form.baselineInvoicingDate ?? null,
           billingFrequencyId:    Number(form.billingFrequencyId),
           notes:                 form.notes || null,
           statusId:              item.statusId ?? 1,

@@ -18,7 +18,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { ROLES } from '@/constants/roles';
 import { bulkRemoveBOQItems, fetchBOQByProjectCode, removeBOQItem, selectBOQItems, selectBOQLoading, selectCurrentBOQ } from '@/store/slices/boqSlice';
 import { fetchProjectById, selectSelectedProject, selectProjectsLoading } from '@/store/slices/projectsSlice';
-import { selectBillingFrequenciesMap, selectBoqItemStatusesMap } from '@/store/slices/lookupsSlice';
+import {
+  selectBillingFrequenciesMap,
+  selectBoqItemStatusesMap,
+  selectBoqItemStatusColorsMap,
+} from '@/store/slices/lookupsSlice';
 import { useToast } from '@/hooks/useToast';
 
 export default function ProjectBOQPage() {
@@ -35,6 +39,7 @@ export default function ProjectBOQPage() {
   const currency = useSelector((s) => s.ui.currency);
   const billingFrequenciesMap = useSelector(selectBillingFrequenciesMap);
   const boqStatusesMap = useSelector(selectBoqItemStatusesMap);
+  const boqStatusColorsMap = useSelector(selectBoqItemStatusColorsMap);
 
   const [deleteModal, setDeleteModal] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
@@ -160,7 +165,7 @@ export default function ProjectBOQPage() {
       key: 'statusId',
       label: 'Status',
       sortable: false,
-      render: (val) => <StatusBadge status={boqStatusesMap[val] ?? String(val)} />,
+      render: (val) => <StatusBadge status={boqStatusesMap[val] ?? String(val)} colors={boqStatusColorsMap[val]} />,
     },
     {
       key: 'expectedInvoicingDate',

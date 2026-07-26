@@ -27,6 +27,17 @@ export const fetchBoqItemStatuses = createAsyncThunk(
   }
 );
 
+export const fetchInvoiceStatuses = createAsyncThunk(
+  'lookups/fetchInvoiceStatuses',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await lookupsRepository.getInvoiceStatuses();
+    } catch (err) {
+      return rejectWithValue(err.message || 'Failed to fetch invoice statuses.');
+    }
+  }
+);
+
 // ---------------------------------------------------------------------------
 // Slice
 // ---------------------------------------------------------------------------
@@ -34,6 +45,7 @@ export const fetchBoqItemStatuses = createAsyncThunk(
 const initialState = {
   billingFrequencies: [],
   boqItemStatuses: [],
+  invoiceStatuses: [],
   isLoading: false,
   error: null,
 };
@@ -72,6 +84,21 @@ const lookupsSlice = createSlice({
         state.error = action.payload;
       })
       ;
+
+      // invoice statuses
+      builder.addCase(fetchInvoiceStatuses.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchInvoiceStatuses.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.invoiceStatuses = action.payload;
+      })
+      .addCase(fetchInvoiceStatuses.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+      ;
   },
 
 });
@@ -82,6 +109,7 @@ const lookupsSlice = createSlice({
 
 export const selectBillingFrequencies = (state) => state.lookups.billingFrequencies;
 export const selectBoqItemStatuses = (state) => state.lookups.boqItemStatuses;
+export const selectInvoiceStatuses = (state) => state.lookups.invoiceStatuses;
 
 /**
  * Returns a plain object keyed by id for O(1) resolution.
@@ -95,6 +123,32 @@ export const selectBillingFrequenciesMap = (state) =>
 export const selectBoqItemStatusesMap = (state) =>
   Object.fromEntries(
     state.lookups.boqItemStatuses.map((s) => [s.id, s.label])
+  );
+export const selectInvoiceStatusesMap = (state) =>
+  Object.fromEntries(
+    state.lookups.invoiceStatuses.map((s) => [s.id, s.label])
+  );
+
+/**
+ * Returns a plain object keyed by id → hex color, for rendering StatusBadge
+ * with the API-provided color instead of the static variant map.
+ * Usage: const colors = useSelector(selectInvoiceStatusColorsMap);
+ *        <StatusBadge status={label} colors={colors[item.statusId]} />
+ */
+export const selectInvoiceStatusColorsMap = (state) =>
+  Object.fromEntries(
+    state.lookups.invoiceStatuses.map((s) => [s.id, s.colorHex])
+  );
+
+/**
+ * Same as selectInvoiceStatusColorsMap but for BOQ item statuses — kept as
+ * its own selector, not shared, since the two lookups are independent.
+ * Usage: const colors = useSelector(selectBoqItemStatusColorsMap);
+ *        <StatusBadge status={label} colors={colors[item.statusId]} />
+ */
+export const selectBoqItemStatusColorsMap = (state) =>
+  Object.fromEntries(
+    state.lookups.boqItemStatuses.map((s) => [s.id, s.colorHex])
   );
 
 export default lookupsSlice.reducer;

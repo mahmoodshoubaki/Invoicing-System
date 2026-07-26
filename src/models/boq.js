@@ -103,6 +103,32 @@ export function createBOQItemHistoryEntry(raw) {
 }
 
 /**
+ * Maps a raw API entry from GetInvoiceableBoqItemsByProjectCode — a BOQ item
+ * that is currently eligible to be invoiced, with quantity availability
+ * already resolved server-side (no status filtering needed on the client).
+ *
+ * @param {Object} raw
+ * @returns {Object}
+ */
+export function createInvoiceableBOQItem(raw) {
+  const quantity = raw.quantity ?? 0;
+  const unitCost = raw.unitCost ?? 0;
+
+  return {
+    id:                raw.id,
+    englishName:       raw.englishName ?? null,
+    arabicName:        raw.arabicName  ?? null,
+    notes:        raw.notes  ?? null,
+    quantity,
+    committedQuantity: raw.committedQuantity ?? 0,
+    availableQuantity: raw.availableQuantity ?? quantity,
+    unitCost,
+    totalCost:         raw.totalCost ?? quantity * unitCost,
+    billingFrequencyId: raw.billingFrequencyId ?? null,
+  };
+}
+
+/**
  * Returns the default empty form state for a new BOQ item.
  * Import this wherever a "new item" form is initialised — the shape here
  * is the single source of truth for which fields the form owns.

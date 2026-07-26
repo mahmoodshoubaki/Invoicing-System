@@ -7,7 +7,11 @@ import Modal from '@/components/common/Modal';
 import Table from '@/components/common/Table';
 import { StatusBadge } from '@/components/common/Badge';
 import { formatCurrency, formatDate, formatDateTime } from '@/utils/formatters';
-import { selectBillingFrequenciesMap, selectBoqItemStatusesMap } from '@/store/slices/lookupsSlice';
+import {
+  selectBillingFrequenciesMap,
+  selectBoqItemStatusesMap,
+  selectBoqItemStatusColorsMap,
+} from '@/store/slices/lookupsSlice';
 import {
   fetchBOQItemHistory,
   clearBOQItemHistory,
@@ -24,6 +28,7 @@ export default function BOQItemHistoryModal({ open, onClose, boqItemId }) {
   const currency = useSelector((s) => s.ui.currency);
   const billingFrequenciesMap = useSelector(selectBillingFrequenciesMap);
   const boqStatusesMap = useSelector(selectBoqItemStatusesMap);
+  const boqStatusColorsMap = useSelector(selectBoqItemStatusColorsMap);
   const history = useSelector(selectBOQItemHistory);
   const isLoading = useSelector(selectBOQItemHistoryLoading);
 
@@ -64,7 +69,7 @@ export default function BOQItemHistoryModal({ open, onClose, boqItemId }) {
       key: 'statusId',
       label: 'Status',
       sortable: false,
-      render: (val) => <StatusBadge status={boqStatusesMap[val] ?? String(val)} />,
+      render: (val) => <StatusBadge status={boqStatusesMap[val] ?? String(val)} colors={boqStatusColorsMap[val]} />,
     },
     {
       key: 'baselineInvoicingDate',

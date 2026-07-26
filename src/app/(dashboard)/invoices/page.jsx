@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, CheckCircle, XCircle, Eye } from 'lucide-react';
+import { CheckCircle, XCircle, Eye } from 'lucide-react';
 import Link from 'next/link';
 
 import PageHeader from '@/components/common/PageHeader';
@@ -172,11 +172,6 @@ export default function InvoicesPage() {
       <PageHeader
         title="Invoice Requests"
         subtitle={`${filtered.length} record${filtered.length !== 1 ? 's' : ''}`}
-        actions={
-          <Link href="/invoices/new">
-            <Button icon={Plus}>New Request</Button>
-          </Link>
-        }
       />
 
       {/* Tabs */}

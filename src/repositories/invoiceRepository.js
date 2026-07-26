@@ -2,20 +2,20 @@
 // API calls to your backend or Azure Functions endpoints.
 import { mockInvoices } from '@/mock/invoices';
 import { INVOICE_STATUS } from '@/constants/statuses';
+import { createApiClient } from '@/lib/apiClient';
+import { createInvoiceableBOQItem } from '@/models/boq';
+import { createInvoice as mapInvoice } from '@/models/invoice';
+
+const api = createApiClient('/api/Invoices');
 
 /** In-memory mutable store — reset on each server/module reload. */
 let invoices = [...mockInvoices];
 
 const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 
-function generateId() {
-  return `inv-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-}
-
-function generateInvoiceNumber() {
-  const year = new Date().getFullYear();
-  const seq = String(invoices.length + 1).padStart(3, '0');
-  return `INV-${year}-${seq}`;
+/** A project with no invoiceable items yet is a valid empty state, not a failure. */
+function isNotFound(err) {
+  return err.status === 404;
 }
 
 export const invoiceRepository = {
@@ -58,32 +58,32 @@ export const invoiceRepository = {
     return { ...invoice };
   },
 
+  // REAL API
   /**
-   * Create a new draft invoice.
+   * Create and submit a new invoice request.
    * @param {object} data
    * @returns {Promise<object>}
    */
   async createInvoice(data) {
-    await delay(400);
-
-    const now = new Date().toISOString();
-    const newInvoice = {
-      ...data,
-      id: generateId(),
-      invoiceNumber: data.invoiceNumber ?? generateInvoiceNumber(),
-      status: INVOICE_STATUS.DRAFT,
-      submittedBy: null,
-      submittedAt: null,
-      approvedBy: null,
-      approvedAt: null,
-      rejectedBy: null,
-      rejectedAt: null,
-      createdAt: now,
-      updatedAt: now,
+    const body = {
+      invoiceNumber:          data.invoiceNumber,
+      projectCode:            data.projectCode,
+      vat:                    Number(data.vat),
+      wip:                    Number(data.wip) || 0,
+      revenue:                Number(data.revenue) || 0,
+      submittedBy:            data.submittedBy,
+      statusId:               data.statusId,
+      baselineCollectionDate: data.baselineCollectionDate || null,
+      lines: data.lines.map((line) => ({
+        boqItemId:               line.boqItemId,
+        quantity:                Number(line.quantity),
+        billedUnitPrice:         Number(line.billedUnitPrice),
+        itemTitleArSnapshot:     line.itemTitleArSnapshot     ?? null,
+        itemTitleEnSnapshot:     line.itemTitleEnSnapshot     ?? null,
+        itemDescriptionSnapshot: line.itemDescriptionSnapshot ?? null,
+      })),
     };
-
-    invoices.unshift(newInvoice);
-    return { ...newInvoice };
+    return await api.post('/CreateInvoice', body);
   },
 
   /**
@@ -192,5 +192,38 @@ export const invoiceRepository = {
    */
   async getInvoicesByProject(projectId) {
     return invoiceRepository.getInvoices({ projectId });
+  },
+
+  // REAL API
+  /**
+   * Return BOQ items currently eligible to be invoiced for a project, with
+   * committed/available quantity already resolved server-side.
+   * @param {string} projectCode
+   * @returns {Promise<object[]>}
+   */
+  async getInvoiceableBOQItems(projectCode) {
+    try {
+      const data = await api.get(`/GetInvoiceableBoqItemsByProjectCode?projectCode=${encodeURIComponent(projectCode)}`);
+      return (data ?? []).map(createInvoiceableBOQItem);
+    } catch (err) {
+      if (isNotFound(err)) return [];
+      throw err;
+    }
+  },
+
+  // REAL API
+  /**
+   * Return all invoices submitted for a project.
+   * @param {string} projectCode
+   * @returns {Promise<object[]>}
+   */
+  async getInvoicesByProjectCode(projectCode) {
+    try {
+      const data = await api.get(`/GetInvoicesByProjectCode?ProjectCode=${encodeURIComponent(projectCode)}`);
+      return (data ?? []).map(mapInvoice);
+    } catch (err) {
+      if (isNotFound(err)) return [];
+      throw err;
+    }
   },
 };

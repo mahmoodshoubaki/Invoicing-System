@@ -21,14 +21,21 @@ import Table from '@/components/common/Table';
 import { ConfirmModal } from '@/components/common/Modal';
 import BOQItemHistoryModal from '@/components/boq/BOQItemHistoryModal';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
-import { formatCurrency, formatDate } from '@/utils/formatters';
+import { formatCurrency, formatDate, formatDateTime } from '@/utils/formatters';
 import {
   fetchProjectById,
   selectSelectedProject,
   selectProjectsLoading,
 } from '@/store/slices/projectsSlice';
 import { fetchBOQByProjectCode, selectBOQItems, selectCurrentBOQ } from '@/store/slices/boqSlice';
-import { selectBillingFrequenciesMap, selectBoqItemStatusesMap } from '@/store/slices/lookupsSlice';
+import { fetchInvoicesByProjectCode, selectInvoices, selectInvoicesLoading } from '@/store/slices/invoicesSlice';
+import {
+  selectBillingFrequenciesMap,
+  selectBoqItemStatusesMap,
+  selectBoqItemStatusColorsMap,
+  selectInvoiceStatusesMap,
+  selectInvoiceStatusColorsMap,
+} from '@/store/slices/lookupsSlice';
 
 const TABS = ['Overview', 'BOQ', 'Invoices'];
 
@@ -45,7 +52,11 @@ export default function ProjectDetailPage() {
   const currentBOQ            = useSelector(selectCurrentBOQ);
   const billingFrequenciesMap = useSelector(selectBillingFrequenciesMap);
   const boqItemStatusesMap    = useSelector(selectBoqItemStatusesMap);
-  const invoices = [];
+  const boqItemStatusColorsMap = useSelector(selectBoqItemStatusColorsMap);
+  const invoiceStatusesMap    = useSelector(selectInvoiceStatusesMap);
+  const invoiceStatusColorsMap = useSelector(selectInvoiceStatusColorsMap);
+  const invoices              = useSelector(selectInvoices);
+  const invoicesLoading       = useSelector(selectInvoicesLoading);
   const [activeTab, setActiveTab]       = useState('Overview');
   const [archiveModal, setArchiveModal] = useState(false);
   const [archiving, setArchiving]       = useState(false);
@@ -58,6 +69,7 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     if (project?.projectCode && project.id === id) {
       dispatch(fetchBOQByProjectCode(project.projectCode));
+      dispatch(fetchInvoicesByProjectCode(project.projectCode));
     }
   }, [dispatch, id, project?.projectCode]);
 
@@ -94,49 +106,54 @@ export default function ProjectDetailPage() {
       key: 'englishName',
       label: 'Item',
       render: (val, row) => (
-        <div className='w-16'>
+        <div>
           <p className="font-medium text-gray-800 text-sm">{val}</p>
           <p className="text-xs text-gray-400 mt-0.5">{row.arabicName}</p>
         </div>
       ),
     },
-    { key: 'quantity', label: 'Qty', align: 'right' },
+    { key: 'quantity', label: 'Qty', align: 'center' },
     {
       key: 'unitCost',
       label: 'Unit Cost',
-      align: 'right',
+      align: 'center',
       render: (val) => formatCurrency(val, currency),
     },
     {
       key: 'totalCost',
       label: 'Total Cost',
-      align: 'right',
+      align: 'center',
       render: (val) => <span className="font-semibold">{formatCurrency(val, currency)}</span>,
     },
     {
       key: 'statusId',
       label: 'Status',
+      align: 'center',
       sortable: false,
-      render: (val) => <StatusBadge status={boqItemStatusesMap[val] ?? '—'} />,
+      render: (val) => <StatusBadge status={boqItemStatusesMap[val] ?? '—'} colors={boqItemStatusColorsMap[val]} />,
     },
     {
       key: 'baselineInvoicingDate',
       label: 'Baseline Invoicing Date',
+      align: 'center',
       render: (val) => formatDate(val),
     },
     {
       key: 'expectedInvoicingDate',
       label: 'Expected Invoicing Date',
+      align: 'center',
       render: (val) => formatDate(val),
     },
     {
       key: 'billingFrequencyId',
       label: 'Billing Frequency',
+      align: 'center',
       render: (val) => billingFrequenciesMap[val] ?? '—',
     },
     {
       key: 'actions',
       label: 'Actions',
+      align: 'center',
       sortable: false,
       render: (_, row) => (
         <div onClick={(e) => e.stopPropagation()}>
@@ -159,16 +176,18 @@ export default function ProjectDetailPage() {
       render: (val) => <span className="font-mono text-xs font-semibold text-gray-700">{val}</span>,
     },
     {
-      key: 'invoiceAmount',
+      key: 'totalAmount',
       label: 'Amount',
-      align: 'right',
+      align: 'center',
       render: (val) => <span className="font-semibold">{formatCurrency(val, currency)}</span>,
     },
     {
-      key: 'status',
+      key: 'statusId',
       label: 'Status',
       sortable: false,
-      render: (val) => <StatusBadge status={val} />,
+      render: (val) => (
+        <StatusBadge status={invoiceStatusesMap[val] ?? '—'} colors={invoiceStatusColorsMap[val]} />
+      ),
     },
     {
       key: 'submittedBy',
@@ -176,9 +195,9 @@ export default function ProjectDetailPage() {
       render: (val) => val || '—',
     },
     {
-      key: 'submittedAt',
+      key: 'submissionDate',
       label: 'Submitted Date',
-      render: (val) => formatDate(val),
+      render: (val) => formatDateTime(val),
     },
     {
       key: 'actions',
@@ -186,7 +205,7 @@ export default function ProjectDetailPage() {
       sortable: false,
       render: (_, row) => (
         <div onClick={(e) => e.stopPropagation()}>
-          <Link href={`/invoices/${row.id}`}>
+          <Link href={`/invoices/${row.id}?projectId=${id}&projectCode=${encodeURIComponent(project.projectCode)}`}>
             <Button variant="ghost" size="xs">View</Button>
           </Link>
         </div>
@@ -386,14 +405,15 @@ export default function ProjectDetailPage() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-gray-500">{invoices.length} invoice{invoices.length !== 1 ? 's' : ''}</p>
-            <Link href={`/invoices/new?projectId=${id}`}>
+            <Link href={`/projects/${id}/invoices/new`}>
               <Button size="sm">New Invoice Request</Button>
             </Link>
           </div>
           <Table
             columns={invoiceColumns}
             data={invoices}
-            onRowClick={(row) => router.push(`/invoices/${row.id}`)}
+            isLoading={invoicesLoading}
+            onRowClick={(row) => router.push(`/invoices/${row.id}?projectId=${id}&projectCode=${encodeURIComponent(project.projectCode)}`)}
             emptyMessage="No invoice requests for this project"
           />
         </div>
