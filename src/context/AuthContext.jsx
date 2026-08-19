@@ -2,79 +2,105 @@
 
 import { createContext, useCallback, useEffect, useState } from 'react';
 import { authService } from '@/services/authService';
+import { identityRepository } from '@/repositories/identityRepository';
 
 /**
  * AuthContext — provides authentication state and actions to the component tree.
  *
+ * Neither the access nor the refresh token is ever visible here — both are
+ * httpOnly cookies the browser manages. The only way to know who's logged
+ * in (or whether anyone is) is to ask the backend, via Identity/me, which
+ * doubles as the capabilities fetch.
+ *
  * Shape:
- *   user           — the current user object or null
- *   isAuthenticated — boolean derived from user presence + token validity
- *   isLoading      — true while the session is being restored on first mount
- *   error          — last login/logout error string or null
- *   login(email, password) — async, returns { user, token }
- *   logout()       — synchronous, clears state
+ *   user               — the current user object or null
+ *   isAuthenticated    — Boolean(user)
+ *   isLoading          — true while Identity/me is in flight (mount or login)
+ *   error              — last login error string or null
+ *   capabilities       — { [module]: { [action]: boolean } }, from the same call as user
+ *   can(module, action) — reads a single capability, defaults to false
+ *   login(username, password) — async
+ *   logout()           — async
  */
 export const AuthContext = createContext({
   user: null,
   isAuthenticated: false,
   isLoading: false,
   error: null,
+  capabilities: {},
+  can: () => false,
   login: async () => { },
-  logout: () => { },
+  logout: async () => { },
 });
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [capabilities, setCapabilities] = useState({});
+  // Starts true: a client-side route guard consuming isAuthenticated could
+  // render before this component's own mount effect (below) has even run —
+  // it must see "still checking" rather than "checked, and you're logged
+  // out", or it would redirect to /login before Identity/me is even called.
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Restore session from sessionStorage on first mount.
-  useEffect(() => {
+  /**
+   * The single source of truth for "am I logged in" — there's no local
+   * token to inspect, so this always asks the backend. Called on mount and
+   * right after a successful login.
+   */
+  const fetchMe = useCallback(async () => {
+    setIsLoading(true);
     try {
-      if (authService.isAuthenticated()) {
-        const storedUser = authService.getCurrentUser();
-        if (storedUser) {
-          setUser(storedUser);
-        }
-      }
-    } catch (err) {
-      console.error('[AuthContext] Failed to restore session:', err);
+      const { user: me, capabilities: caps } = await identityRepository.getMe();
+      setUser(me);
+      setCapabilities(caps);
+    } catch {
+      // Not logged in (or the session couldn't be refreshed) — not an error to surface.
+      setUser(null);
+      setCapabilities({});
     } finally {
       setIsLoading(false);
     }
   }, []);
 
+  useEffect(() => {
+    fetchMe();
+  }, [fetchMe]);
+
   /**
-   * Attempt to authenticate the user.
-   * On success, updates context state and returns { user, token }.
+   * Attempt to authenticate the user, then load their profile/capabilities.
    * On failure, sets error state and re-throws so callers can react.
    */
-  const login = useCallback(async (email, password) => {
+  const login = useCallback(async (username, password) => {
     setIsLoading(true);
     setError(null);
     try {
-      const result = await authService.login(email, password);
-      setUser(result.user);
-      return result;
+      await authService.login(username, password);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Authentication failed.';
       setError(message);
-      throw err;
-    } finally {
       setIsLoading(false);
+      throw err;
     }
-  }, []);
+    await fetchMe();
+  }, [fetchMe]);
 
   /**
-   * Clear auth state and session storage.
+   * End the session: tell the backend, then clear local state regardless.
    */
-  const logout = useCallback(() => {
-    authService.logout();
+  const logout = useCallback(async () => {
+    await authService.logout();
     setUser(null);
     setError(null);
+    setCapabilities({});
   }, []);
 
-  const isAuthenticated = Boolean(user) && authService.isAuthenticated();
+  const can = useCallback(
+    (module, action) => capabilities?.[module]?.[action] === true,
+    [capabilities]
+  );
+
+  const isAuthenticated = Boolean(user);
 
   return (
     <AuthContext.Provider
@@ -83,6 +109,8 @@ export function AuthProvider({ children }) {
         isAuthenticated,
         isLoading,
         error,
+        capabilities,
+        can,
         login,
         logout,
       }}

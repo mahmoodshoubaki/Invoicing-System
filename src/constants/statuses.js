@@ -26,6 +26,16 @@ export const INVOICE_STATUS = {
   DELAYED: 'Delayed',
 };
 
+// Tracker Cycle Statuses
+// NOTE: label string only — names the single "still editable" cycle status.
+// Every other status (Completed, Delayed, or anything added later) is
+// treated as locked without needing to be enumerated here. IDs/colors come
+// from GetTrackerCycleStatuses via lookupsSlice
+// (selectTrackerCycleStatusesMap / selectTrackerCycleStatusColorsMap).
+export const TRACKER_CYCLE_STATUS = {
+  SCHEDULED: 'Scheduled',
+};
+
 // Project Statuses
 export const PROJECT_STATUS = {
   ACTIVE: 'Active',

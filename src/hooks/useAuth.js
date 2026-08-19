@@ -11,7 +11,7 @@ import { AuthContext } from '@/context/AuthContext';
  *   isAuthenticated {boolean}     — true when a valid session exists
  *   isLoading      {boolean}      — true while session is being restored on mount
  *   error          {string|null}  — last error message from login attempt
- *   login          {Function}     — async (email, password) => { user, token }
+ *   login          {Function}     — async (username, password) => { user, token }
  *   logout         {Function}     — () => void, clears session
  */
 export function useAuth() {

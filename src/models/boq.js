@@ -148,3 +148,101 @@ export function createBOQItemForm() {
     notes:                 '',
   };
 }
+
+/**
+ * Maps a single raw entry from PreviewInvoicingPlan (TrackerCyclePreviewResponse)
+ * into a consistent model. `isCommitted` rows already have an invoice
+ * submitted against them and are read-only in the UI.
+ *
+ * @param {Object} raw
+ * @returns {Object}
+ */
+export function createTrackerCycle(raw) {
+  return {
+    id:          raw.id ?? null,
+    cycleNumber: raw.cycleNumber ?? 0,
+    totalCycles: raw.totalCycles ?? 0,
+    plannedDate: raw.plannedDate ?? null,
+    isCommitted: raw.isCommitted ?? false,
+    statusId:    raw.statusId ?? null,
+  };
+}
+
+/**
+ * Builds the InsertBoqItem request body from the Add BOQ Item form plus the
+ * user's current tracker cycle list. Only non-committed cycles are ever
+ * sent — there's nothing to send for committed ones on create anyway, since
+ * a brand-new item can't have committed cycles yet, but the filter is kept
+ * here so this stays in lockstep with updateBOQItemPayload's rule.
+ *
+ * @param {Object} form
+ * @param {Object} boq
+ * @param {Array} cycles
+ * @returns {Object}
+ */
+export function createBOQItemPayload(form, boq, cycles = []) {
+  return {
+    BoqId:                 boq?.id          ?? '00000000-0000-0000-0000-000000000000',
+    ProjectCode:           boq?.projectCode ?? null,
+    EnglishName:           form.englishName,
+    ArabicName:            form.arabicName,
+    Quantity:              Number(form.quantity),
+    UnitCost:              Number(form.unitCost),
+    ExpectedInvoicingDate: form.expectedInvoicingDate || null,
+    BaselineInvoicingDate: form.baselineInvoicingDate || null,
+    BillingFrequencyId:    Number(form.billingFrequencyId),
+    Notes:                 form.notes || null,
+    StatusId:              1,
+    ContractStartDate:     form.contractStartDate  || null,
+    ContractFinishDate:    form.contractFinishDate || null,
+    TrackerCycles:         createTrackerCyclesPayload(cycles),
+  };
+}
+
+/**
+ * Builds the UpdateBoqItem request body, same idea as createBOQItemPayload
+ * — committed cycles are excluded since the backend already owns them.
+ *
+ * @param {number} id
+ * @param {Object} data
+ * @param {Array} cycles
+ * @returns {Object}
+ */
+export function updateBOQItemPayload(id, data, cycles = []) {
+  return {
+    ID:                    id,
+    BoqId:                 data.boqId ?? null,
+    EnglishName:           data.englishName,
+    ArabicName:            data.arabicName,
+    Quantity:              Number(data.quantity),
+    UnitCost:              Number(data.unitCost),
+    ExpectedInvoicingDate: data.expectedInvoicingDate || null,
+    BaselineInvoicingDate: data.baselineInvoicingDate || null,
+    BillingFrequencyId:    Number(data.billingFrequencyId),
+    Notes:                 data.notes || null,
+    StatusId:              data.statusId,
+    ContractStartDate:     data.contractStartDate  || null,
+    ContractFinishDate:    data.contractFinishDate || null,
+    TrackerCycles:         createTrackerCyclesPayload(cycles),
+  };
+}
+
+/**
+ * Reduces the full (committed + non-committed) cycle list down to the
+ * non-committed ones, in the shape the backend expects for TrackerCycles.
+ * Committed cycles already have a real invoice against them and are
+ * managed entirely by the backend — never sent back.
+ *
+ * @param {Array} cycles
+ * @returns {Array}
+ */
+export function createTrackerCyclesPayload(cycles = []) {
+  return cycles
+    .filter((c) => !c.isCommitted)
+    .map((c) => ({
+      Id:          c.id ?? null,
+      CycleNumber: c.cycleNumber,
+      TotalCycles: c.totalCycles,
+      PlannedDate: c.plannedDate,
+    }));
+}

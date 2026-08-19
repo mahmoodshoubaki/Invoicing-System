@@ -28,9 +28,9 @@ export const fetchBOQById = createAsyncThunk(
 
 export const addBOQItem = createAsyncThunk(
   'boq/addBOQItem',
-  async ({ form, boq }, { rejectWithValue }) => {
+  async ({ form, boq, cycles }, { rejectWithValue }) => {
     try {
-      return await boqRepository.createBOQItem(form, boq);
+      return await boqRepository.createBOQItem(form, boq, cycles);
     } catch (err) {
       return rejectWithValue(err.message || 'Failed to create BOQ item.');
     }
@@ -39,9 +39,9 @@ export const addBOQItem = createAsyncThunk(
 
 export const updateBOQItem = createAsyncThunk(
   'boq/updateBOQItem',
-  async ({ id, data }, { rejectWithValue }) => {
+  async ({ id, data, cycles }, { rejectWithValue }) => {
     try {
-      return await boqRepository.updateBOQItem(id, data);
+      return await boqRepository.updateBOQItem(id, data, cycles);
     } catch (err) {
       return rejectWithValue(err.message || 'Failed to update BOQ item.');
     }
@@ -84,6 +84,17 @@ export const fetchBOQItemHistory = createAsyncThunk(
   }
 );
 
+export const fetchTrackerCycles = createAsyncThunk(
+  'boq/fetchTrackerCycles',
+  async (boqItemId, { rejectWithValue }) => {
+    try {
+      return await boqRepository.getTrackerCycles(boqItemId);
+    } catch (err) {
+      return rejectWithValue(err.message || 'Failed to fetch the invoicing plan.');
+    }
+  }
+);
+
 export const approveBOQItem = createAsyncThunk(
   'boq/approveBOQItem',
   async (id, { rejectWithValue }) => {
@@ -108,6 +119,11 @@ const initialState = {
     status: '',
   },
   history: {
+    items: [],
+    isLoading: false,
+    error: null,
+  },
+  trackerCycles: {
     items: [],
     isLoading: false,
     error: null,
@@ -146,6 +162,10 @@ const boqSlice = createSlice({
 
     clearBOQItemHistory(state) {
       state.history = initialState.history;
+    },
+
+    clearTrackerCycles(state) {
+      state.trackerCycles = initialState.trackerCycles;
     },
   },
 
@@ -261,6 +281,21 @@ const boqSlice = createSlice({
         state.history.error = action.payload;
       });
 
+    // fetchTrackerCycles
+    builder
+      .addCase(fetchTrackerCycles.pending, (state) => {
+        state.trackerCycles.isLoading = true;
+        state.trackerCycles.error = null;
+      })
+      .addCase(fetchTrackerCycles.fulfilled, (state, action) => {
+        state.trackerCycles.isLoading = false;
+        state.trackerCycles.items = action.payload;
+      })
+      .addCase(fetchTrackerCycles.rejected, (state, action) => {
+        state.trackerCycles.isLoading = false;
+        state.trackerCycles.error = action.payload;
+      });
+
     // approveBOQItem
     builder
       .addCase(approveBOQItem.pending, (state) => {
@@ -281,7 +316,7 @@ const boqSlice = createSlice({
   },
 });
 
-export const { setCurrentBOQ, clearBOQ, setLoading, setError, setFilters, clearBOQItemHistory } =
+export const { setCurrentBOQ, clearBOQ, setLoading, setError, setFilters, clearBOQItemHistory, clearTrackerCycles } =
   boqSlice.actions;
 
 // Selectors
@@ -293,6 +328,9 @@ export const selectBOQFilters  = (state) => state.boq.filters;
 export const selectBOQItemHistory        = (state) => state.boq.history.items;
 export const selectBOQItemHistoryLoading = (state) => state.boq.history.isLoading;
 export const selectBOQItemHistoryError   = (state) => state.boq.history.error;
+export const selectTrackerCycles         = (state) => state.boq.trackerCycles.items;
+export const selectTrackerCyclesLoading  = (state) => state.boq.trackerCycles.isLoading;
+export const selectTrackerCyclesError    = (state) => state.boq.trackerCycles.error;
 
 /** BOQ items filtered by current filter state. */
 export const selectFilteredBOQ = (state) => {

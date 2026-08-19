@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { useDispatch } from 'react-redux';
+import { useState, useMemo, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   UserPlus,
   Search,
@@ -9,68 +9,82 @@ import {
   UserX,
   UserCheck,
   Users,
-  ShieldCheck,
   Filter,
 } from 'lucide-react';
 import { addToast } from '@/store/slices/uiSlice';
-import { mockUsers } from '@/mock/users';
-import { ROLES, ROLE_LIST } from '@/constants/roles';
+import {
+  fetchAuthorizedUsers,
+  updateUser,
+  createUser,
+  fetchUnregisteredADUsers,
+  clearAdCandidates,
+  selectUsers,
+  selectUsersLoading,
+  selectAdCandidates,
+  selectAdCandidatesLoading,
+} from '@/store/slices/usersSlice';
+import { fetchAllRoles, selectRoles, selectRolesLoading } from '@/store/slices/rolesSlice';
 import PageHeader from '@/components/common/PageHeader';
 import Button from '@/components/common/Button';
 import Badge from '@/components/common/Badge';
 import Table from '@/components/common/Table';
 import Modal from '@/components/common/Modal';
 import { ConfirmModal } from '@/components/common/Modal';
-import { Input, Select, Checkbox } from '@/components/forms/FormField';
+import { Checkbox } from '@/components/forms/FormField';
 import Card from '@/components/common/Card';
-
-const ROLE_BADGE_VARIANT = {
-  [ROLES.ADMIN]: 'danger',
-  [ROLES.PROJECT_MANAGER]: 'info',
-  [ROLES.INVOICING_TEAM]: 'success',
-  [ROLES.BDM]: 'purple',
-  [ROLES.DRM]: 'warning',
-  [ROLES.CRP]: 'accent',
-  [ROLES.BU_HEAD]: 'dark',
-  [ROLES.VIEWER]: 'default',
-};
+import ADUserSearchInput from '@/components/admin/ADUserSearchInput';
 
 const EMPTY_FORM = {
-  name: '',
-  email: '',
-  employeeNumber: '',
-  department: '',
-  roles: [],
-  isActive: true,
+  displayName: '',
+  roleIds: [],
 };
-
-let nextId = 100;
 
 export default function UsersPage() {
   const dispatch = useDispatch();
-  const [users, setUsers] = useState(() =>
-    mockUsers.map((u) => ({ ...u }))
-  );
+  const fetchedUsers = useSelector(selectUsers);
+  const usersLoading = useSelector(selectUsersLoading);
+  const roles = useSelector(selectRoles);
+  const rolesLoading = useSelector(selectRolesLoading);
+  const adCandidates = useSelector(selectAdCandidates);
+  const adCandidatesLoading = useSelector(selectAdCandidatesLoading);
 
+  const [users, setUsers] = useState([]);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
 
-  const [editModal, setEditModal] = useState(false);
   const [addModal, setAddModal] = useState(false);
+  const [editModal, setEditModal] = useState(false);
   const [deactivateModal, setDeactivateModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [formData, setFormData] = useState(EMPTY_FORM);
+  const [editRoleIds, setEditRoleIds] = useState([]);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    dispatch(fetchAuthorizedUsers());
+    dispatch(fetchAllRoles());
+  }, [dispatch]);
+
+  // Seed the local editable copy once the real list arrives.
+  useEffect(() => {
+    setUsers(fetchedUsers.map((u) => ({ ...u })));
+  }, [fetchedUsers]);
+
+  const roleNameById = useMemo(
+    () => Object.fromEntries(roles.map((r) => [r.id, r.name])),
+    [roles]
+  );
 
   // Stats
   const totalUsers = users.length;
   const activeUsers = users.filter((u) => u.isActive).length;
   const roleCounts = useMemo(() => {
     const counts = {};
-    ROLE_LIST.forEach((r) => (counts[r] = 0));
-    users.forEach((u) => u.roles.forEach((r) => counts[r]++));
+    roles.forEach((r) => (counts[r.id] = 0));
+    users.forEach((u) => u.roleIds.forEach((id) => { if (counts[id] !== undefined) counts[id]++; }));
     return counts;
-  }, [users]);
+  }, [users, roles]);
 
   // Filtered
   const filtered = useMemo(() => {
@@ -78,97 +92,112 @@ export default function UsersPage() {
       const q = search.toLowerCase();
       const matchSearch =
         !q ||
-        u.name.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q) ||
-        u.employeeNumber.toLowerCase().includes(q) ||
-        u.department.toLowerCase().includes(q);
-      const matchRole = !roleFilter || u.roles.includes(roleFilter);
+        u.username?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q) ||
+        u.displayName?.toLowerCase().includes(q);
+      const matchRole = !roleFilter || u.roleIds.includes(roleFilter);
       return matchSearch && matchRole;
     });
   }, [users, search, roleFilter]);
 
   function openAdd() {
     setFormData(EMPTY_FORM);
+    setSelectedCandidate(null);
     setAddModal(true);
+    dispatch(fetchUnregisteredADUsers());
+  }
+
+  function closeAdd() {
+    setAddModal(false);
+    setSelectedCandidate(null);
+    dispatch(clearAdCandidates());
+  }
+
+  function selectCandidate(candidate) {
+    setSelectedCandidate(candidate);
+    setFormData((prev) => ({ ...prev, displayName: candidate.username }));
+  }
+
+  function clearCandidate() {
+    setSelectedCandidate(null);
+    setFormData((prev) => ({ ...prev, displayName: '' }));
+  }
+
+  function toggleRole(roleId) {
+    setFormData((prev) => ({
+      ...prev,
+      roleIds: prev.roleIds.includes(roleId)
+        ? prev.roleIds.filter((id) => id !== roleId)
+        : [...prev.roleIds, roleId],
+    }));
+  }
+
+  async function handleSaveAdd() {
+    if (!selectedCandidate || !formData.roleIds.length) {
+      dispatch(addToast({ type: 'error', title: 'Validation', message: 'Select a user from the list and at least one role.' }));
+      return;
+    }
+    setSaving(true);
+    try {
+      await dispatch(createUser(formData)).unwrap();
+      dispatch(addToast({ type: 'success', title: 'User added', message: `${selectedCandidate.displayName} has been added.` }));
+      closeAdd();
+      dispatch(fetchAuthorizedUsers());
+    } catch (err) {
+      dispatch(addToast({ type: 'error', title: 'Failed to add user', message: err ?? 'Please try again.' }));
+    } finally {
+      setSaving(false);
+    }
   }
 
   function openEdit(user) {
     setSelectedUser(user);
-    setFormData({
-      name: user.name,
-      email: user.email,
-      employeeNumber: user.employeeNumber,
-      department: user.department,
-      roles: [...user.roles],
-      isActive: user.isActive,
-    });
+    setEditRoleIds([...user.roleIds]);
     setEditModal(true);
   }
 
-  function openDeactivate(user) {
-    setSelectedUser(user);
-    setDeactivateModal(true);
+  function closeEdit() {
+    setEditModal(false);
+    setSelectedUser(null);
   }
 
-  function toggleRole(role) {
-    setFormData((prev) => ({
-      ...prev,
-      roles: prev.roles.includes(role)
-        ? prev.roles.filter((r) => r !== role)
-        : [...prev.roles, role],
-    }));
+  function toggleEditRole(roleId) {
+    setEditRoleIds((prev) =>
+      prev.includes(roleId) ? prev.filter((id) => id !== roleId) : [...prev, roleId]
+    );
   }
 
   async function handleSaveEdit() {
-    if (!formData.roles.length) {
+    if (!editRoleIds.length) {
       dispatch(addToast({ type: 'error', title: 'Validation', message: 'At least one role is required.' }));
       return;
     }
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 600));
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === selectedUser.id ? { ...u, ...formData } : u
-      )
-    );
-    setSaving(false);
-    setEditModal(false);
-    dispatch(addToast({ type: 'success', title: 'User updated', message: `${formData.name} has been updated.` }));
-  }
-
-  async function handleSaveAdd() {
-    if (!formData.name || !formData.email || !formData.roles.length) {
-      dispatch(addToast({ type: 'error', title: 'Validation', message: 'Name, email, and at least one role are required.' }));
-      return;
+    try {
+      await dispatch(updateUser({ ...selectedUser, roleIds: editRoleIds })).unwrap();
+      dispatch(addToast({ type: 'success', title: 'Roles updated', message: `${selectedUser.username}'s roles have been updated.` }));
+      closeEdit();
+      dispatch(fetchAuthorizedUsers());
+    } catch (err) {
+      dispatch(addToast({ type: 'error', title: 'Failed to update roles', message: err ?? 'Please try again.' }));
+    } finally {
+      setSaving(false);
     }
-    setSaving(true);
-    await new Promise((r) => setTimeout(r, 600));
-    const newUser = {
-      id: `usr-${++nextId}`,
-      ...formData,
-      avatar: null,
-      lastLogin: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    setUsers((prev) => [...prev, newUser]);
-    setSaving(false);
-    setAddModal(false);
-    dispatch(addToast({ type: 'success', title: 'User added', message: `${formData.name} has been added.` }));
   }
 
   async function handleDeactivate() {
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 500));
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === selectedUser.id ? { ...u, isActive: !u.isActive } : u
-      )
-    );
-    setSaving(false);
-    setDeactivateModal(false);
     const action = selectedUser.isActive ? 'deactivated' : 'activated';
-    dispatch(addToast({ type: 'success', title: `User ${action}`, message: `${selectedUser.name} has been ${action}.` }));
+    try {
+      await dispatch(updateUser({ ...selectedUser, isActive: !selectedUser.isActive })).unwrap();
+      dispatch(addToast({ type: 'success', title: `User ${action}`, message: `${selectedUser.username} has been ${action}.` }));
+      setDeactivateModal(false);
+      dispatch(fetchAuthorizedUsers());
+    } catch (err) {
+      dispatch(addToast({ type: 'error', title: `Failed to change status`, message: err ?? 'Please try again.' }));
+    } finally {
+      setSaving(false);
+    }
   }
 
   function handleToggleStatus(user) {
@@ -178,7 +207,7 @@ export default function UsersPage() {
 
   const columns = [
     {
-      key: 'name',
+      key: 'username',
       label: 'Name',
       render: (val, row) => (
         <div>
@@ -188,25 +217,21 @@ export default function UsersPage() {
       ),
     },
     {
-      key: 'employeeNumber',
-      label: 'Employee #',
+      key: 'displayName',
+      label: 'Username',
       render: (val) => (
         <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded-md text-gray-600">{val}</span>
       ),
     },
     {
-      key: 'department',
-      label: 'Department',
-    },
-    {
-      key: 'roles',
+      key: 'roleIds',
       label: 'Roles',
       sortable: false,
       render: (val) => (
         <div className="flex flex-wrap gap-1">
-          {val.map((r) => (
-            <Badge key={r} variant={ROLE_BADGE_VARIANT[r] || 'default'} size="sm">
-              {r}
+          {val.map((id) => (
+            <Badge key={id} size="sm">
+              {roleNameById[id] ?? id}
             </Badge>
           ))}
         </div>
@@ -230,20 +255,9 @@ export default function UsersPage() {
       label: 'Actions',
       sortable: false,
       render: (_, row) => (
-        <div className="flex items-center gap-1.5">
-          <Button variant="ghost" size="xs" icon={Edit2} onClick={(e) => { e.stopPropagation(); openEdit(row); }}>
-            Edit
-          </Button>
-          <Button
-            variant="ghost"
-            size="xs"
-            icon={row.isActive ? UserX : UserCheck}
-            onClick={(e) => { e.stopPropagation(); openDeactivate(row); }}
-            className={row.isActive ? 'text-red-500 hover:bg-red-50' : 'text-green-600 hover:bg-green-50'}
-          >
-            {row.isActive ? 'Deactivate' : 'Activate'}
-          </Button>
-        </div>
+        <Button variant="ghost" size="xs" icon={Edit2} onClick={(e) => { e.stopPropagation(); openEdit(row); }}>
+          Edit Roles
+        </Button>
       ),
     },
   ];
@@ -285,36 +299,14 @@ export default function UsersPage() {
             </div>
           </div>
         </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center">
-              <ShieldCheck size={18} className="text-primary" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Admins</p>
-              <p className="text-xl font-bold text-primary">{roleCounts[ROLES.ADMIN] || 0}</p>
-            </div>
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
-              <Users size={18} className="text-blue-600" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Project Mgrs</p>
-              <p className="text-xl font-bold text-blue-700">{roleCounts[ROLES.PROJECT_MANAGER] || 0}</p>
-            </div>
-          </div>
-        </Card>
       </div>
 
       {/* Role counts row */}
       <div className="flex flex-wrap gap-2 mb-5">
-        {ROLE_LIST.slice(2).map((role) => (
-          <div key={role} className="flex items-center gap-1.5 text-xs px-2.5 py-1 bg-white border border-gray-100 rounded-lg shadow-sm">
-            <Badge variant={ROLE_BADGE_VARIANT[role] || 'default'} size="sm">{role}</Badge>
-            <span className="font-semibold text-gray-600">{roleCounts[role] || 0}</span>
+        {roles.map((role) => (
+          <div key={role.id} className="flex items-center gap-1.5 text-xs px-2.5 py-1 bg-white border border-gray-100 rounded-lg shadow-sm">
+            <Badge size="sm">{role.name}</Badge>
+            <span className="font-semibold text-gray-600">{roleCounts[role.id] || 0}</span>
           </div>
         ))}
       </div>
@@ -338,8 +330,8 @@ export default function UsersPage() {
             onChange={(e) => setRoleFilter(e.target.value)}
           >
             <option value="">All Roles</option>
-            {ROLE_LIST.map((r) => (
-              <option key={r} value={r}>{r}</option>
+            {roles.map((r) => (
+              <option key={r.id} value={r.id}>{r.name}</option>
             ))}
           </select>
         </div>
@@ -349,90 +341,84 @@ export default function UsersPage() {
       <Table
         columns={columns}
         data={filtered}
+        rowKey="email"
+        isLoading={usersLoading || rolesLoading}
         emptyMessage="No users match your search"
       />
-
-      {/* Edit Modal */}
-      <Modal
-        open={editModal}
-        onClose={() => setEditModal(false)}
-        title={`Edit User — ${selectedUser?.name}`}
-        size="md"
-        footer={
-          <>
-            <Button variant="outline" onClick={() => setEditModal(false)} disabled={saving}>Cancel</Button>
-            <Button onClick={handleSaveEdit} loading={saving}>Save Changes</Button>
-          </>
-        }
-      >
-        <div className="space-y-4">
-          <Input label="Full Name" value={formData.name} onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))} />
-          <Input label="Email" type="email" value={formData.email} onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))} />
-          <div className="grid grid-cols-2 gap-3">
-            <Input label="Employee #" value={formData.employeeNumber} onChange={(e) => setFormData((p) => ({ ...p, employeeNumber: e.target.value }))} />
-            <Input label="Department" value={formData.department} onChange={(e) => setFormData((p) => ({ ...p, department: e.target.value }))} />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">Roles <span className="text-primary">*</span></p>
-            <div className="grid grid-cols-2 gap-2 p-3 border border-gray-200 rounded-lg bg-gray-50">
-              {ROLE_LIST.map((role) => (
-                <Checkbox
-                  key={role}
-                  label={role}
-                  checked={formData.roles.includes(role)}
-                  onChange={() => toggleRole(role)}
-                />
-              ))}
-            </div>
-          </div>
-          <Checkbox
-            label="Active Account"
-            description="User can log in and access the system"
-            checked={formData.isActive}
-            onChange={(e) => setFormData((p) => ({ ...p, isActive: e.target.checked }))}
-          />
-        </div>
-      </Modal>
 
       {/* Add Modal */}
       <Modal
         open={addModal}
-        onClose={() => setAddModal(false)}
+        onClose={closeAdd}
         title="Add New User"
         size="md"
         footer={
           <>
-            <Button variant="outline" onClick={() => setAddModal(false)} disabled={saving}>Cancel</Button>
+            <Button variant="outline" onClick={closeAdd} disabled={saving}>Cancel</Button>
             <Button icon={UserPlus} onClick={handleSaveAdd} loading={saving}>Add User</Button>
           </>
         }
       >
         <div className="space-y-4">
-          <Input label="Full Name" required value={formData.name} onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))} placeholder="e.g. Ahmed Al-Rashidi" />
-          <Input label="Email Address" required type="email" value={formData.email} onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))} placeholder="a.name@devoteam.com" />
-          <div className="grid grid-cols-2 gap-3">
-            <Input label="Employee Number" value={formData.employeeNumber} onChange={(e) => setFormData((p) => ({ ...p, employeeNumber: e.target.value }))} placeholder="EMP-1001" />
-            <Input label="Department" value={formData.department} onChange={(e) => setFormData((p) => ({ ...p, department: e.target.value }))} placeholder="e.g. Finance" />
-          </div>
+          <ADUserSearchInput
+            candidates={adCandidates}
+            loading={adCandidatesLoading}
+            selected={selectedCandidate}
+            onSelect={selectCandidate}
+            onClear={clearCandidate}
+          />
           <div>
             <p className="text-sm font-medium text-gray-700 mb-2">Roles <span className="text-primary">*</span></p>
             <div className="grid grid-cols-2 gap-2 p-3 border border-gray-200 rounded-lg bg-gray-50">
-              {ROLE_LIST.map((role) => (
+              {roles.map((role) => (
                 <Checkbox
-                  key={role}
-                  label={role}
-                  checked={formData.roles.includes(role)}
-                  onChange={() => toggleRole(role)}
+                  key={role.id}
+                  label={role.name}
+                  checked={formData.roleIds.includes(role.id)}
+                  onChange={() => toggleRole(role.id)}
                 />
               ))}
             </div>
           </div>
-          <Checkbox
-            label="Active Account"
-            description="User can log in immediately after creation"
-            checked={formData.isActive}
-            onChange={(e) => setFormData((p) => ({ ...p, isActive: e.target.checked }))}
-          />
+        </div>
+      </Modal>
+
+      {/* Edit Roles Modal */}
+      <Modal
+        open={editModal}
+        onClose={closeEdit}
+        title={`Edit Roles — ${selectedUser?.username}`}
+        size="md"
+        footer={
+          <>
+            <Button variant="outline" onClick={closeEdit} disabled={saving}>Cancel</Button>
+            <Button onClick={handleSaveEdit} loading={saving}>Save Changes</Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 p-2.5 border border-gray-100 bg-gray-50 rounded-lg">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-800 truncate">{selectedUser?.username}</p>
+              <p className="text-xs text-gray-500 truncate">
+                <span className="font-mono">{selectedUser?.displayName}</span>
+                {selectedUser?.email && <span className="text-gray-400"> · {selectedUser.email}</span>}
+              </p>
+            </div>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-700 mb-2">Roles <span className="text-primary">*</span></p>
+            <div className="grid grid-cols-2 gap-2 p-3 border border-gray-200 rounded-lg bg-gray-50">
+              {roles.map((role) => (
+                <Checkbox
+                  key={role.id}
+                  label={role.name}
+                  checked={editRoleIds.includes(role.id)}
+                  onChange={() => toggleEditRole(role.id)}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </Modal>
 
@@ -445,8 +431,8 @@ export default function UsersPage() {
         title={selectedUser?.isActive ? 'Deactivate User' : 'Activate User'}
         message={
           selectedUser?.isActive
-            ? `Are you sure you want to deactivate ${selectedUser?.name}? They will lose access to the system immediately.`
-            : `Are you sure you want to activate ${selectedUser?.name}? They will regain access to the system.`
+            ? `Are you sure you want to deactivate ${selectedUser?.username}? They will lose access to the system immediately.`
+            : `Are you sure you want to activate ${selectedUser?.username}? They will regain access to the system.`
         }
         confirmLabel={selectedUser?.isActive ? 'Deactivate' : 'Activate'}
         confirmVariant={selectedUser?.isActive ? 'danger' : 'success'}

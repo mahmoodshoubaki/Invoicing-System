@@ -7,9 +7,16 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { usePermission } from '@/hooks/usePermission';
 
+/** item.permission is a single { module, action } or an array of them (OR logic). */
+function isAllowed(can, permission) {
+  if (!permission) return true;
+  const checks = Array.isArray(permission) ? permission : [permission];
+  return checks.some(({ module, action }) => can(module, action));
+}
+
 export default function NavItem({ item, depth = 0, collapsed }) {
   const pathname = usePathname();
-  const { hasPermission } = usePermission();
+  const { can } = usePermission();
   const [open, setOpen] = useState(false);
 
   const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
@@ -23,7 +30,7 @@ export default function NavItem({ item, depth = 0, collapsed }) {
     item.badge === 'unread' ? s.notifications.unreadCount : 0
   );
 
-  if (item.permission && !hasPermission(item.permission)) return null;
+  if (!isAllowed(can, item.permission)) return null;
 
   if (hasChildren) {
     return (

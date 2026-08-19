@@ -1,19 +1,27 @@
 'use client';
 
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import Link from 'next/link';
-import { ChevronLeft, FileText, User, Calendar, DollarSign, Percent } from 'lucide-react';
+import {
+  ChevronLeft, FileText, User, Calendar, DollarSign, Percent, Download, Edit2, History,
+} from 'lucide-react';
 
 import PageHeader from '@/components/common/PageHeader';
 import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
 import { StatusBadge } from '@/components/common/Badge';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
-import { formatCurrency, formatDate, formatDateTime, formatPercentage } from '@/utils/formatters';
-import { fetchInvoicesByProjectCode, selectInvoices, selectInvoicesLoading } from '@/store/slices/invoicesSlice';
+import InvoiceHistoryModal from '@/components/invoices/InvoiceHistoryModal';
+import { formatCurrency, formatDate, formatDateTime, formatPercentage, formatFileSize } from '@/utils/formatters';
+import { iconForFileName } from '@/utils/attachmentIcon';
+import { saveBlob } from '@/utils/saveBlob';
+import { fetchInvoiceById, selectSelectedInvoice, selectInvoicesLoading } from '@/store/slices/invoicesSlice';
 import { selectInvoiceStatusesMap, selectInvoiceStatusColorsMap } from '@/store/slices/lookupsSlice';
+import { invoiceRepository } from '@/repositories/invoiceRepository';
+import { useToast } from '@/hooks/useToast';
+import { usePermission } from '@/hooks/usePermission';
 
 const InfoItem = ({ icon: Icon, label, value, valueClass = '' }) => (
   <div className="flex items-start gap-3">
@@ -30,26 +38,43 @@ const InfoItem = ({ icon: Icon, label, value, valueClass = '' }) => (
 function InvoiceDetailContent() {
   const { id } = useParams();
   const searchParams = useSearchParams();
-  const projectId = searchParams.get('projectId');
   const projectCode = searchParams.get('projectCode');
   const dispatch = useDispatch();
+  const toast = useToast();
+  const { can } = usePermission();
 
   const currency = useSelector((s) => s.ui.currency);
-  const invoices = useSelector(selectInvoices);
+  const invoice = useSelector(selectSelectedInvoice);
   const isLoading = useSelector(selectInvoicesLoading);
   const invoiceStatusesMap = useSelector(selectInvoiceStatusesMap);
   const invoiceStatusColorsMap = useSelector(selectInvoiceStatusColorsMap);
+  const [downloadingIds, setDownloadingIds] = useState(new Set());
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   useEffect(() => {
-    if (projectCode) {
-      dispatch(fetchInvoicesByProjectCode(projectCode));
+    dispatch(fetchInvoiceById(id));
+  }, [dispatch, id]);
+
+  const handleDownload = async (attachment) => {
+    setDownloadingIds((prev) => new Set(prev).add(attachment.id));
+    try {
+      const { blob, fileName } = await invoiceRepository.downloadAttachment(
+        invoice.id, attachment.contentId, attachment.fileName
+      );
+      saveBlob(blob, fileName);
+    } catch (err) {
+      toast.error('Download failed', err?.message ?? 'Please try again.');
+    } finally {
+      setDownloadingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(attachment.id);
+        return next;
+      });
     }
-  }, [dispatch, projectCode]);
+  };
 
-  const invoice = invoices.find((inv) => String(inv.id) === String(id));
-
-  const backHref = projectId ? `/projects/${projectId}` : '/invoices';
-  const backLabel = projectId ? 'Back to Project' : 'Back to Invoices';
+  const backHref = projectCode ? `/projects/${encodeURIComponent(projectCode)}` : '/invoices';
+  const backLabel = projectCode ? 'Back to Project' : 'Back to Invoices';
 
   if (isLoading && !invoice) {
     return (
@@ -72,20 +97,37 @@ function InvoiceDetailContent() {
 
   return (
     <div>
+      <InvoiceHistoryModal
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        invoiceId={invoice.id}
+        currency={currency}
+      />
+
       <PageHeader
         title={invoice.invoiceNumber}
-        subtitle={invoice.projectCode}
+        subtitle={projectCode}
         breadcrumbs={[
           { label: 'Home', href: '/' },
-          ...(projectId
-            ? [{ label: 'Projects', href: '/projects' }, { label: invoice.projectCode, href: `/projects/${projectId}` }]
+          ...(projectCode
+            ? [{ label: 'Projects', href: '/projects' }, { label: projectCode, href: `/projects/${encodeURIComponent(projectCode)}` }]
             : [{ label: 'Invoice Requests', href: '/invoices' }]),
           { label: invoice.invoiceNumber },
         ]}
         actions={
-          <Link href={backHref}>
-            <Button variant="ghost" icon={ChevronLeft} size="sm">{backLabel}</Button>
-          </Link>
+          <>
+            <Button variant="ghost" icon={History} size="sm" onClick={() => setHistoryOpen(true)}>
+              History
+            </Button>
+            {can('Invoices', 'Update') && (
+              <Link href={`/invoices/${id}/edit${projectCode ? `?projectCode=${encodeURIComponent(projectCode)}` : ''}`}>
+                <Button variant="outline" icon={Edit2} size="sm">Edit</Button>
+              </Link>
+            )}
+            <Link href={backHref}>
+              <Button variant="ghost" icon={ChevronLeft} size="sm">{backLabel}</Button>
+            </Link>
+          </>
         }
       />
 
@@ -109,8 +151,8 @@ function InvoiceDetailContent() {
               <InfoItem icon={Percent} label="VAT Rate" value={formatPercentage(invoice.vat)} />
               <InfoItem icon={User} label="Submitted By" value={invoice.submittedBy} />
               <InfoItem icon={Calendar} label="Submission Date" value={formatDateTime(invoice.submissionDate)} />
-              <InfoItem icon={Calendar} label="Baseline Collection Date" value={formatDate(invoice.baselineCollectionDate)} />
-              <InfoItem icon={Calendar} label="Expected Invoicing Date" value={formatDate(invoice.expectedCollectionDate)} />
+              <InfoItem icon={Calendar} label="Baseline Expected Collection Date" value={formatDate(invoice.baselineCollectionDate)} />
+              <InfoItem icon={Calendar} label="Updated Expected Collection Date" value={formatDate(invoice.expectedCollectionDate)} />
             </div>
           </Card>
 
@@ -128,7 +170,7 @@ function InvoiceDetailContent() {
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-gray-800">{line.itemTitleEnSnapshot}</p>
                       {line.itemTitleArSnapshot && (
-                        <p className="text-xs text-gray-400 mt-0.5" dir="rtl">{line.itemTitleArSnapshot}</p>
+                        <p className="text-xs text-gray-400 mt-0.5" >{line.itemTitleArSnapshot}</p>
                       )}
                       {line.itemDescriptionSnapshot && (
                         <p className="text-xs text-gray-500 mt-1">{line.itemDescriptionSnapshot}</p>
@@ -145,11 +187,49 @@ function InvoiceDetailContent() {
                       </div>
                       <div>
                         <p className="text-gray-400">Line Total</p>
-                        <p className="font-semibold text-primary">{formatCurrency(line.lineTotal, currency)}</p>
+                        <p className="font-semibold text-primary">{formatCurrency(line.billedUnitPrice * line.quantity, currency)}</p>
                       </div>
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </Card>
+
+          {/* Attachments */}
+          <Card>
+            <h3 className="text-sm font-semibold text-gray-700 mb-4 pb-3 border-b border-gray-100">
+              Attachments ({invoice.attachments.length})
+            </h3>
+            {invoice.attachments.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-6">No attachments on this invoice.</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {invoice.attachments.map((attachment) => {
+                  const Icon = iconForFileName(attachment.fileName);
+                  return (
+                    <div key={attachment.id} className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center shrink-0">
+                        <Icon size={15} className="text-gray-500" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm text-gray-800 truncate">{attachment.fileName}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {formatFileSize(attachment.fileSize)}
+                          {attachment.uploadedBy && ` · Uploaded by ${attachment.uploadedBy}`}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="xs"
+                        icon={Download}
+                        loading={downloadingIds.has(attachment.id)}
+                        onClick={() => handleDownload(attachment)}
+                        title="Download"
+                      />
+                    </div>
+                  );
+                })}
               </div>
             )}
           </Card>
@@ -162,9 +242,9 @@ function InvoiceDetailContent() {
               Project
             </h3>
             <div className="flex flex-col gap-3">
-              <InfoItem icon={FileText} label="Project Code" value={invoice.projectCode} />
-              {projectId && (
-                <Link href={`/projects/${projectId}`}>
+              <InfoItem icon={FileText} label="Project Code" value={projectCode} />
+              {projectCode && (
+                <Link href={`/projects/${encodeURIComponent(projectCode)}`}>
                   <Button variant="outline" size="sm" className="w-full">View Project</Button>
                 </Link>
               )}

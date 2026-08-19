@@ -15,7 +15,7 @@ export function useToast() {
   return {
     success: (title, message) => toast({ type: 'success', title, message }),
     error: (title, message) => toast({ type: 'error', title, message, duration: 10000 }),
-    warning: (title, message) => toast({ type: 'warning', title, message }),
+    warning: (title, message) => toast({ type: 'warning', title, message, duration: 10000 }),
     info: (title, message) => toast({ type: 'info', title, message }),
     toast,
   };

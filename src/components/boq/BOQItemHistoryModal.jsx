@@ -46,10 +46,15 @@ export default function BOQItemHistoryModal({ open, onClose, boqItemId }) {
       key: 'englishName',
       label: 'Item',
       render: (val, row) => (
+        <>
         <div className={row.isDeleted ? 'opacity-50 line-through' : ''}>
           <p className="font-medium text-gray-800">{val}</p>
           <p className="text-xs text-gray-400 mt-0.5" dir="rtl">{row.arabicName}</p>
         </div>
+        <div>
+          <p className="text-xs text-gray-400 mt-0.5">{row.notes}</p>
+        </div>
+        </>
       ),
     },
     { key: 'quantity', label: 'Qty', align: 'right' },

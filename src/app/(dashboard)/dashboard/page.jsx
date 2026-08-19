@@ -27,7 +27,7 @@ import { mockInvoices } from '@/mock/invoices';
 import { mockBOQItems } from '@/mock/boq';
 import { mockUsers } from '@/mock/users';
 import { INVOICE_STATUS, BOQ_STATUS, PROJECT_STATUS } from '@/constants/statuses';
-import { formatCurrency } from '@/utils';
+import { formatCurrency, formatDate } from '@/utils';
 import { useSelector } from 'react-redux';
 
 // ---------------------------------------------------------------------------
@@ -169,50 +169,50 @@ const pendingApprovalList = pendingApprovalInvoices.slice(0, 5).map((inv) => {
 });
 
 // ---------------------------------------------------------------------------
-// Small secondary stat cards data
-// ---------------------------------------------------------------------------
-const secondaryStats = [
-  {
-    title: 'Total Invoices',
-    value: totalInvoices,
-    icon: FileText,
-    color: 'info',
-    subtitle: `${pendingApprovals} awaiting action`,
-  },
-  {
-    title: 'Collected Value',
-    value: (collectedInvoiceValue),
-    icon: CheckCircle,
-    color: 'success',
-    subtitle: 'Approved invoices',
-  },
-  {
-    title: 'Non-Collected',
-    value: (nonCollectedInvoiceValue),
-    icon: BanknoteIcon,
-    color: 'warning',
-    subtitle: 'Pending collection',
-  },
-  {
-    title: 'Delayed BOQ Items',
-    value: delayedBOQCount,
-    icon: CalendarX,
-    color: 'danger',
-    subtitle: 'Require immediate action',
-  },
-];
-
-// ---------------------------------------------------------------------------
 // Page component
 // ---------------------------------------------------------------------------
 
 export default function DashboardPage() {
   const currency = useSelector((state) => state.ui.currency);
+
+  // Small secondary stat cards data — depends on `currency`, so it's built
+  // per-render here rather than as a module-level const.
+  const secondaryStats = [
+    {
+      title: 'Total Invoices',
+      value: totalInvoices,
+      icon: FileText,
+      color: 'info',
+      subtitle: `${pendingApprovals} awaiting action`,
+    },
+    {
+      title: 'Collected Value',
+      value: formatCurrency(collectedInvoiceValue, currency),
+      icon: CheckCircle,
+      color: 'success',
+      subtitle: 'Approved invoices',
+    },
+    {
+      title: 'Non-Collected',
+      value: formatCurrency(nonCollectedInvoiceValue, currency),
+      icon: BanknoteIcon,
+      color: 'warning',
+      subtitle: 'Pending collection',
+    },
+    {
+      title: 'Delayed BOQ Items',
+      value: delayedBOQCount,
+      icon: CalendarX,
+      color: 'danger',
+      subtitle: 'Require immediate action',
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Executive Dashboard"
-        subtitle={`Overview as of ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`}
+        subtitle={`Overview as of ${formatDate(new Date())}`}
         breadcrumbs={[{ label: 'Home', href: '/dashboard' }, { label: 'Dashboard' }]}
       />
 
@@ -222,11 +222,11 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard
           title="Total Projects"
-          value={totalProjects}
+          value={1268}
           icon={FolderKanban}
           color="info"
-          subtitle={`${activeProjects.length} active`}
-          change={`${activeProjects.length} active / ${totalProjects} total`}
+          // subtitle={`${activeProjects.length} active`}
+          // change={`${activeProjects.length} active / ${totalProjects} total`}
           changeType="neutral"
         />
         <StatCard

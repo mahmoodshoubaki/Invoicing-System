@@ -10,12 +10,13 @@ import PageHeader from '@/components/common/PageHeader';
 import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
-import { Input } from '@/components/forms/FormField';
+import { Input, DatePicker } from '@/components/forms/FormField';
 import { ConfirmModal } from '@/components/common/Modal';
+import AttachmentUploader from '@/components/invoices/AttachmentUploader';
 import { formatCurrency } from '@/utils/formatters';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
-import { fetchProjectById, selectSelectedProject, selectProjectsLoading } from '@/store/slices/projectsSlice';
+import { fetchMainProjectDetails, selectMainProjectDetails, selectMainDetailsLoading } from '@/store/slices/projectsSlice';
 import {
   createInvoice,
   fetchInvoiceableBOQItems,
@@ -23,8 +24,7 @@ import {
   selectInvoiceableBOQItems,
   selectInvoiceableBOQItemsLoading,
 } from '@/store/slices/invoicesSlice';
-import { selectBillingFrequenciesMap, selectInvoiceStatuses } from '@/store/slices/lookupsSlice';
-import { INVOICE_STATUS } from '@/constants/statuses';
+import { selectBillingFrequenciesMap } from '@/store/slices/lookupsSlice';
 
 const INITIAL_FORM = {
   // boqLineItems: { [boqItemId]: { quantity: '' } }
@@ -37,37 +37,55 @@ const INITIAL_FORM = {
 };
 
 export default function NewInvoicePage() {
-  const { id } = useParams();
+  // See projects/[id]/boq/page.jsx for why this is decoded defensively.
+  const { id: rawId } = useParams();
+  const projectCode = decodeURIComponent(rawId);
   const router = useRouter();
   const dispatch = useDispatch();
   const { user } = useAuth();
   const toast = useToast();
 
   const currency = useSelector((s) => s.ui.currency);
-  const project = useSelector(selectSelectedProject);
-  const projectLoading = useSelector(selectProjectsLoading);
+  const project = useSelector(selectMainProjectDetails);
+  const projectLoading = useSelector(selectMainDetailsLoading);
   const boqItems = useSelector(selectInvoiceableBOQItems);
   const boqItemsLoading = useSelector(selectInvoiceableBOQItemsLoading);
   const billingFrequenciesMap = useSelector(selectBillingFrequenciesMap);
-  const invoiceStatuses = useSelector(selectInvoiceStatuses);
-  const submittedStatusId = invoiceStatuses.find(
-    (s) => s.label?.toLowerCase() === INVOICE_STATUS.SUBMITTED.toLowerCase()
-  )?.id ?? null;
 
   const [form, setForm] = useState(INITIAL_FORM);
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
+  const [attachments, setAttachments] = useState([]);
 
   useEffect(() => {
-    dispatch(fetchProjectById(id));
-  }, [dispatch, id]);
+    dispatch(fetchMainProjectDetails(projectCode));
+  }, [dispatch, projectCode]);
+
+  // Checked off the resolved fetch result (not the isLoading selector) so
+  // there's no race with isLoading's initial `false` value on first render.
+  useEffect(() => {
+    dispatch(fetchInvoiceableBOQItems(projectCode))
+      .unwrap()
+      .then((items) => {
+        if (items.length === 0) {
+          toast.warning(
+            'No invoiceable BOQ items',
+            "This project has no invoiceable BOQ items, so an invoice request can't be created. Taking you back in a few seconds."
+          );
+          setRedirecting(true);
+        }
+      })
+      .catch(() => {});
+  }, [dispatch, projectCode]);
 
   useEffect(() => {
-    if (project?.projectCode && project.id === id) {
-      dispatch(fetchInvoiceableBOQItems(project.projectCode));
-    }
-  }, [dispatch, id, project?.projectCode]);
+    if (!redirecting) return;
+    if (!redirecting) return;
+    const timer = setTimeout(() => router.back(), 10000);
+    return () => clearTimeout(timer);
+  }, [redirecting, router]);
 
   useEffect(() => {
     return () => { dispatch(clearInvoiceableBOQItems()); };
@@ -149,7 +167,7 @@ export default function NewInvoicePage() {
     if (form.vat === '' || isNaN(Number(form.vat)) || Number(form.vat) < 0) {
       e.vat = 'Valid VAT rate is required';
     }
-    if (!form.baselineCollectionDate) e.baselineCollectionDate = 'Baseline collection date is required';
+    if (!form.baselineCollectionDate) e.baselineCollectionDate = 'Baseline Expected collection date is required';
     return e;
   };
 
@@ -160,10 +178,6 @@ export default function NewInvoicePage() {
   };
 
   const handleConfirmSubmit = async () => {
-    if (submittedStatusId == null) {
-      toast.error('Failed to submit invoice request', 'Invoice statuses have not loaded yet. Please try again in a moment.');
-      return;
-    }
     setSaving(true);
     try {
       const lines = selectedIds.map((itemId) => {
@@ -180,19 +194,24 @@ export default function NewInvoicePage() {
 
       await dispatch(createInvoice({
         invoiceNumber: form.invoiceNumber,
-        projectCode: project.projectCode,
+        projectCode,
         vat: Number(form.vat),
         wip: Number(form.wip) || 0,
         revenue: Number(form.revenue) || 0,
-        submittedBy: user?.email ?? null,
-        statusId: submittedStatusId,
+        submittedBy: user?.username ?? null,
         baselineCollectionDate: form.baselineCollectionDate,
         lines,
+        // Anything still uploading is already blocked by the disabled
+        // submit button below, so every entry here is ready to send.
+        // `file` (a raw File object) is genuinely non-serializable — the
+        // store is configured to allow that specifically for this field,
+        // see store/index.js.
+        attachments,
       })).unwrap();
 
       setConfirmOpen(false);
       toast.success('Invoice request submitted', 'The invoice request was created successfully.');
-      router.push(`/projects/${id}`);
+      router.push(`/projects/${encodeURIComponent(projectCode)}`);
     } catch (err) {
       toast.error('Failed to submit invoice request', err ?? 'Please try again.');
     } finally {
@@ -205,6 +224,7 @@ export default function NewInvoicePage() {
     const boq = boqItems.find((b) => String(b.id) === itemId);
     return sum + (boq?.unitCost ?? 0) * (Number(form.boqLineItems[itemId]?.quantity) || 0);
   }, 0);
+  const attachmentsUploading = attachments.some((a) => a.status === 'uploading');
 
   if (projectLoading || !project) {
     return (
@@ -229,15 +249,15 @@ export default function NewInvoicePage() {
 
       <PageHeader
         title="New Invoice Request"
-        subtitle={`${project.projectName} · ${project.projectCode}`}
+        subtitle={`${project.contractName} · ${projectCode}`}
         breadcrumbs={[
           { label: 'Home', href: '/' },
           { label: 'Projects', href: '/projects' },
-          { label: project.projectName, href: `/projects/${id}` },
+          { label: project.contractName, href: `/projects/${encodeURIComponent(projectCode)}` },
           { label: 'New Request' },
         ]}
         actions={
-          <Link href={`/projects/${id}`}>
+          <Link href={`/projects/${encodeURIComponent(projectCode)}`}>
             <Button variant="outline" icon={ChevronLeft} size="sm">Back</Button>
           </Link>
         }
@@ -250,12 +270,12 @@ export default function NewInvoicePage() {
           </h2>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold text-gray-800">{project.projectName}</p>
+              <p className="text-sm font-semibold text-gray-800">{project.contractName}</p>
               <p className="text-xs text-gray-500 mt-0.5">
-                {project.projectCode} · {project.clientName}
+                {projectCode}
               </p>
             </div>
-            <Link href={`/projects/${id}`}>
+            <Link href={`/projects/${encodeURIComponent(projectCode)}`}>
               <Button variant="ghost" size="xs">View Project</Button>
             </Link>
           </div>
@@ -272,9 +292,14 @@ export default function NewInvoicePage() {
               <LoadingSpinner />
             </div>
           ) : boqItems.length === 0 ? (
-            <p className="text-sm text-gray-400 py-6 text-center">
-              No invoiceable BOQ items found for this project.
-            </p>
+            <div className="py-6 text-center">
+              <p className="text-sm text-gray-500">
+                No invoiceable BOQ items found for this project — an invoice request can't be created.
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                Taking you back automatically in a few seconds...
+              </p>
+            </div>
           ) : (
             <>
               <p className="text-xs text-gray-500 pt-3 mb-3">
@@ -406,6 +431,8 @@ export default function NewInvoicePage() {
         </Card>
 
         {/* Invoice Details */}
+        {!boqItemsLoading && boqItems.length > 0 && 
+        (<>
         <Card>
           <h2 className="text-base font-semibold text-gray-800 mb-4 pb-3 border-b border-gray-100">
             Invoice Details
@@ -419,10 +446,9 @@ export default function NewInvoicePage() {
               onChange={set('invoiceNumber')}
               error={errors.invoiceNumber}
             />
-            <Input
-              label="Baseline Collection Date"
+            <DatePicker
+              label="Baseline Expected Collection Date"
               required
-              type="date"
               value={form.baselineCollectionDate}
               onChange={set('baselineCollectionDate')}
               error={errors.baselineCollectionDate}
@@ -460,16 +486,35 @@ export default function NewInvoicePage() {
           </div>
         </Card>
 
-        {/* Actions */}
+        {/* Attachments */}
+        <Card>
+          <h2 className="text-base font-semibold text-gray-800 mb-4 pb-3 border-b border-gray-100">
+            Attachments
+          </h2>
+          <AttachmentUploader
+            files={attachments}
+            onChange={setAttachments}
+            disabled={saving}
+            onRejected={(rejected) => {
+              rejected.forEach(({ file, reason }) => {
+                toast.error('Attachment not added', `${file.name}: ${reason}`);
+              });
+            }}
+          />
+        </Card>
+
         <div className="flex items-center justify-end gap-3 pb-6">
-          <Link href={`/projects/${id}`}>
+          <Link href={`/projects/${encodeURIComponent(projectCode)}`}>
             <Button variant="outline">Cancel</Button>
           </Link>
-          <Button onClick={handleSubmitClick} loading={saving}>
-            Submit Request
+          <Button onClick={handleSubmitClick} loading={saving} disabled={attachmentsUploading}>
+            {attachmentsUploading ? 'Uploading attachments…' : 'Submit Request'}
           </Button>
         </div>
+        </>
+      )}
       </div>
     </div>
+    
   );
 }

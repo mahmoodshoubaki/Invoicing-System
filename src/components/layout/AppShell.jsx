@@ -23,7 +23,7 @@ export default function AppShell({ children }) {
 
         {/* Page content */}
         <main className="flex-1 pt-16 overflow-auto">
-          <div className="page-container">
+          <div className="max-w-9xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             {children}
           </div>
         </main>

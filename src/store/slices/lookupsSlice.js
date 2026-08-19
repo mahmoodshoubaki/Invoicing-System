@@ -38,6 +38,17 @@ export const fetchInvoiceStatuses = createAsyncThunk(
   }
 );
 
+export const fetchTrackerCycleStatuses = createAsyncThunk(
+  'lookups/fetchTrackerCycleStatuses',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await lookupsRepository.getTrackerCycleStatuses();
+    } catch (err) {
+      return rejectWithValue(err.message || 'Failed to fetch tracker cycle statuses.');
+    }
+  }
+);
+
 // ---------------------------------------------------------------------------
 // Slice
 // ---------------------------------------------------------------------------
@@ -46,6 +57,7 @@ const initialState = {
   billingFrequencies: [],
   boqItemStatuses: [],
   invoiceStatuses: [],
+  trackerCycleStatuses: [],
   isLoading: false,
   error: null,
 };
@@ -99,6 +111,21 @@ const lookupsSlice = createSlice({
         state.error = action.payload;
       })
       ;
+
+      // tracker cycle statuses
+      builder.addCase(fetchTrackerCycleStatuses.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchTrackerCycleStatuses.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.trackerCycleStatuses = action.payload;
+      })
+      .addCase(fetchTrackerCycleStatuses.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+      ;
   },
 
 });
@@ -110,6 +137,7 @@ const lookupsSlice = createSlice({
 export const selectBillingFrequencies = (state) => state.lookups.billingFrequencies;
 export const selectBoqItemStatuses = (state) => state.lookups.boqItemStatuses;
 export const selectInvoiceStatuses = (state) => state.lookups.invoiceStatuses;
+export const selectTrackerCycleStatuses = (state) => state.lookups.trackerCycleStatuses;
 
 /**
  * Returns a plain object keyed by id for O(1) resolution.
@@ -127,6 +155,10 @@ export const selectBoqItemStatusesMap = (state) =>
 export const selectInvoiceStatusesMap = (state) =>
   Object.fromEntries(
     state.lookups.invoiceStatuses.map((s) => [s.id, s.label])
+  );
+export const selectTrackerCycleStatusesMap = (state) =>
+  Object.fromEntries(
+    state.lookups.trackerCycleStatuses.map((s) => [s.id, s.label])
   );
 
 /**
@@ -149,6 +181,16 @@ export const selectInvoiceStatusColorsMap = (state) =>
 export const selectBoqItemStatusColorsMap = (state) =>
   Object.fromEntries(
     state.lookups.boqItemStatuses.map((s) => [s.id, s.colorHex])
+  );
+
+/**
+ * Same idea as selectBoqItemStatusColorsMap but for tracker cycle statuses.
+ * Usage: const colors = useSelector(selectTrackerCycleStatusColorsMap);
+ *        <StatusBadge status={label} colors={colors[cycle.statusId]} />
+ */
+export const selectTrackerCycleStatusColorsMap = (state) =>
+  Object.fromEntries(
+    state.lookups.trackerCycleStatuses.map((s) => [s.id, s.colorHex])
   );
 
 export default lookupsSlice.reducer;

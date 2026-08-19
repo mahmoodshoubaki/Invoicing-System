@@ -1,31 +1,28 @@
 'use client';
 
-import { useState } from 'react';
-import { Building2, Mail, Lock, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import { User, Lock, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import logo from '@/theme/assets/devoteam-logo.png';
 
 export default function LoginPage() {
   const { login, isAuthenticated, isLoading, error } = useAuth();
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [form, setForm] = useState({ username: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [fieldError, setFieldError] = useState({});
 
-  // useEffect(() => {
-  //   if (isAuthenticated) {
-  //     window.location.href = '/dashboard';
-  //   }
-  // }, [isAuthenticated]);
-  const DEMO_ACCOUNTS = [
-    { label: 'Administrator', email: 'ahmed.rashidi@devoteam.com' },
-    { label: 'Project Manager', email: 'sara.otaibi@devoteam.com' },
-    { label: 'Invoicing Team', email: 'khalid.zahrani@devoteam.com' },
-    { label: 'BU Head', email: 'abdullah.malik@devoteam.com' },
-  ];
+  // Already signed in (e.g. valid session restored from sessionStorage) — no need to log in again.
+  useEffect(() => {
+    if (isAuthenticated) {
+      const params = new URLSearchParams(window.location.search);
+      window.location.href = params.get('redirect') || '/dashboard';
+    }
+  }, [isAuthenticated]);
 
   const validate = () => {
     const errors = {};
-    if (!form.email) errors.email = 'Email is required';
-    else if (!form.email.includes('@')) errors.email = 'Enter a valid email address';
+    if (!form.username) errors.username = 'Username is required';
     if (!form.password) errors.password = 'Password is required';
     setFieldError(errors);
     return Object.keys(errors).length === 0;
@@ -35,18 +32,13 @@ export default function LoginPage() {
     e.preventDefault();
     if (!validate()) return;
     try {
-      await login(form.email, form.password);
+      await login(form.username, form.password);
       const params = new URLSearchParams(window.location.search);
       const redirectTo = params.get('redirect') || '/dashboard';
       window.location.href = redirectTo;
     } catch {
       // error state is already set inside AuthContext.login — nothing to do here
     }
-  };
-
-  const fillDemo = (email) => {
-    setForm({ email, password: 'demo123' });
-    setFieldError({});
   };
 
   return (
@@ -60,8 +52,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md relative">
         {/* Logo Card */}
         <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 mb-4 text-center border border-white/10">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-primary rounded-xl mb-3 shadow-lg shadow-primary/30">
-            <Building2 size={28} className="text-white" />
+          <div className="inline-flex items-center justify-center w-14 h-14 mb-3 shadow-lg shadow-primary/30 rounded-full">
+            <Image src={logo} alt="Devoteam logo" width={56} height={56} className="rounded-full" />
           </div>
           <h1 className="text-xl font-bold text-white">Devoteam Middle East</h1>
           <p className="text-white/60 text-sm mt-0.5">Enterprise Invoicing & Tracking System</p>
@@ -71,8 +63,8 @@ export default function LoginPage() {
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
           {/* Header */}
           <div className="gradient-primary px-6 py-5">
-            <h2 className="text-white font-bold text-lg">Active Directory Sign In</h2>
-            <p className="text-white/80 text-sm mt-0.5">Use your corporate credentials to access the system</p>
+            <h2 className="text-white font-bold text-lg">Sign In</h2>
+            <p className="text-white/80 text-sm mt-0.5">Enter your credentials to access the system</p>
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -84,26 +76,26 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Email */}
+            {/* Username */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Corporate Email
+                Username
               </label>
               <div className="relative">
-                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                  placeholder="yourname@devoteam.com"
+                  type="text"
+                  value={form.username}
+                  onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
+                  placeholder="Enter your username"
                   className={`w-full pl-10 pr-4 py-2.5 text-sm border rounded-lg transition-colors
-                    ${fieldError.email ? 'border-red-400 bg-red-50' : 'border-gray-200 focus:border-primary'}
+                    ${fieldError.username ? 'border-red-400 bg-red-50' : 'border-gray-200 focus:border-primary'}
                   `}
                   disabled={isLoading}
                 />
               </div>
-              {fieldError.email && (
-                <p className="text-xs text-red-500 mt-1">{fieldError.email}</p>
+              {fieldError.username && (
+                <p className="text-xs text-red-500 mt-1">{fieldError.username}</p>
               )}
             </div>
 
@@ -149,37 +141,15 @@ export default function LoginPage() {
                   Authenticating...
                 </>
               ) : (
-                'Sign In with Active Directory'
+                'Sign In'
               )}
             </button>
 
             {/* Info */}
             <p className="text-xs text-gray-400 text-center">
-              Authentication is managed by your organization's Active Directory.<br />
-              Contact IT support if you cannot access the system.
+              Contact your Admin if you cannot access the system.
             </p>
           </form>
-
-          {/* Demo accounts */}
-          <div className="px-6 pb-6">
-            <div className="border-t border-gray-100 pt-4">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                Demo Accounts (any password)
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                {DEMO_ACCOUNTS.map((acc) => (
-                  <button
-                    key={acc.email}
-                    onClick={() => fillDemo(acc.email)}
-                    className="text-left p-2 rounded-lg border border-gray-100 hover:border-primary hover:bg-red-50 transition-colors"
-                  >
-                    <p className="text-xs font-medium text-gray-700">{acc.label}</p>
-                    <p className="text-[10px] text-gray-400 truncate">{acc.email}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
         </div>
 
         <p className="text-center text-white/30 text-xs mt-4">

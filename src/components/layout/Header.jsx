@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Bell, Menu } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleSidebar } from '@/store/slices/uiSlice';
@@ -9,6 +10,7 @@ import UserMenu from './UserMenu';
 import LanguageToggle from './LanguageToggle';
 import { Currencies } from '@/constants/currencies';
 import CurrencyMenu from './CurrencyMenu';
+import logo from '@/theme/assets/devoteam-logo.png';
 
 export default function Header() {
   const dispatch = useDispatch();
@@ -18,7 +20,12 @@ export default function Header() {
 
   const handleLogout = async () => {
     await logout();
-    router.push('/login');
+    // Hard reload, not router.push — this wipes the entire Redux store
+    // (invoices/projects/BOQ/users, all still in memory from the logged-out
+    // session) instead of leaving it dangling through a soft navigation,
+    // matching how handleSessionExpired (apiClient.js) already redirects
+    // on session loss.
+    window.location.href = '/login';
   };
 
   return (
@@ -32,6 +39,16 @@ export default function Header() {
       >
         <Menu size={20} />
       </button>
+
+      <div className="flex items-center gap-2 min-w-0">
+        <div className="w-8 h-8 flex items-center justify-center shrink-0">
+          <Image src={logo} alt="Devoteam logo" width={32} height={32} className="rounded-full" />
+        </div>
+        <div className="min-w-0 hidden sm:block">
+          <p className="text-xs font-bold text-dark leading-tight truncate">Devoteam</p>
+          <p className="text-[10px] text-gray-400 leading-tight truncate">Invoicing System</p>
+        </div>
+      </div>
 
       <div className="flex-1" />
 

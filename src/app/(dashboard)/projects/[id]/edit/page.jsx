@@ -9,12 +9,12 @@ import { ChevronLeft, Check } from 'lucide-react';
 import PageHeader from '@/components/common/PageHeader';
 import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
-import { Input, Select } from '@/components/forms/FormField';
+import { Input, DatePicker, Select } from '@/components/forms/FormField';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import {
-  fetchProjectById,
-  selectSelectedProject,
-  selectProjectsLoading,
+  fetchMainProjectDetails,
+  selectMainProjectDetails,
+  selectMainDetailsLoading,
 } from '@/store/slices/projectsSlice';
 
 const BUSINESS_UNITS = [
@@ -43,19 +43,16 @@ function calcDuration(start, end) {
   return String(months);
 }
 
-function toDateInput(iso) {
-  if (!iso) return '';
-  return iso.split('T')[0];
-}
-
 export default function EditProjectPage() {
-  const { id }    = useParams();
+  // See projects/[id]/boq/page.jsx for why this is decoded defensively.
+  const { id: rawId } = useParams();
+  const projectCode = decodeURIComponent(rawId);
   const router    = useRouter();
   const dispatch  = useDispatch();
 
-  /** @type {import('@/models/project').Project|null} */
-  const project   = useSelector(selectSelectedProject);
-  const isLoading = useSelector(selectProjectsLoading);
+  const project   = useSelector(selectMainProjectDetails);
+  const isLoading = useSelector(selectMainDetailsLoading);
+  const currency  = useSelector((s) => s.ui.currency);
 
   const [form, setForm]           = useState(null);
   const [errors, setErrors]       = useState({});
@@ -63,37 +60,40 @@ export default function EditProjectPage() {
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchProjectById(id));
-  }, [dispatch, id]);
+    dispatch(fetchMainProjectDetails(projectCode));
+  }, [dispatch, projectCode]);
 
+  // GetMainProjectDetails currently only returns contractName — everything
+  // below besides that and the route's own projectCode has no backing
+  // endpoint yet, so those fields start blank rather than guessed/faked.
   useEffect(() => {
-    if (!project || project.id !== id) return;
+    if (!project) return;
     setForm({
-      contractName:      project.contractName       || '',
-      contractNumber:    project.contractNumber != null ? String(project.contractNumber) : '',
-      projectCode:       project.projectCode        || '',
-      invoicingPlatform: project.invoicingPlatform  || 'Etimad',
-      projectNameFocus:  project.projectName_Focus  || '',
-      projectNameEPM:    project.projectName        || '',
-      clientName:        project.clientName         || '',
-      businessUnit:      project.businessUnit       || '',
+      contractName:      project.contractName || '',
+      contractNumber:    '',
+      projectCode:       projectCode,
+      invoicingPlatform: 'Etimad',
+      projectNameFocus:  '',
+      projectNameEPM:    '',
+      clientName:        '',
+      businessUnit:      '',
       projectManager:    '',
-      bdm:               project.bdm    || '',
-      drm:               project.drm    || '',
-      crp:               project.crp    || '',
-      buHead:            project.buHead || '',
-      projectValue:      project.projectValue   != null ? String(project.projectValue)   : '',
-      vatPercent:        project.vatPercentage  != null ? String(project.vatPercentage)  : '15',
-      poNumber:          project.poNumber       || '',
-      startDate:         toDateInput(project.startDate),
-      endDate:           toDateInput(project.endDate),
-      durationMonths:    project.duration       != null ? String(project.duration)       : '',
-      revenueSWLic:      project.revenueSWLicenses  != null ? String(project.revenueSWLicenses)  : '',
-      revenueLogistics:  project.revenueLogistics   != null ? String(project.revenueLogistics)   : '',
-      revenueTraining:   project.revenueTraining    != null ? String(project.revenueTraining)    : '',
-      revenueExternalSubs: project.revenueExternalSubs != null ? String(project.revenueExternalSubs) : '',
+      bdm:               '',
+      drm:               '',
+      crp:               '',
+      buHead:            '',
+      projectValue:      '',
+      vatPercent:        '15',
+      poNumber:          '',
+      startDate:         '',
+      endDate:           '',
+      durationMonths:    '',
+      revenueSWLic:      '',
+      revenueLogistics:  '',
+      revenueTraining:   '',
+      revenueExternalSubs: '',
     });
-  }, [project, id]);
+  }, [project, projectCode]);
 
   const set = (field) => (e) => {
     const val = e.target.value;
@@ -131,7 +131,7 @@ export default function EditProjectPage() {
     setTimeout(() => {
       setSaving(false);
       setShowToast(true);
-      setTimeout(() => router.push(`/projects/${id}`), 1200);
+      setTimeout(() => router.push(`/projects/${encodeURIComponent(projectCode)}`), 1200);
     }, 600);
   };
 
@@ -169,11 +169,11 @@ export default function EditProjectPage() {
         breadcrumbs={[
           { label: 'Home', href: '/' },
           { label: 'Projects', href: '/projects' },
-          { label: form.contractName, href: `/projects/${id}` },
+          { label: form.contractName, href: `/projects/${encodeURIComponent(projectCode)}` },
           { label: 'Edit' },
         ]}
         actions={
-          <Link href={`/projects/${id}`}>
+          <Link href={`/projects/${encodeURIComponent(projectCode)}`}>
             <Button variant="outline" icon={ChevronLeft} size="sm">Back</Button>
           </Link>
         }
@@ -299,7 +299,7 @@ export default function EditProjectPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input
-              label="Project Value (SAR)"
+              label={`Project Value (${currency})`}
               type="number"
               min="0"
               step="0.01"
@@ -329,17 +329,15 @@ export default function EditProjectPage() {
             Timeline
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Input
+            <DatePicker
               label="Start Date"
               required
-              type="date"
               value={form.startDate}
               onChange={set('startDate')}
               error={errors.startDate}
             />
-            <Input
+            <DatePicker
               label="End Date"
-              type="date"
               value={form.endDate}
               onChange={set('endDate')}
               min={form.startDate || undefined}
@@ -358,7 +356,7 @@ export default function EditProjectPage() {
         {/* Section 6: Revenue Breakdown */}
         <Card>
           <h2 className="text-base font-semibold text-gray-800 mb-4 pb-3 border-b border-gray-100">
-            Revenue Breakdown (SAR)
+            Revenue Breakdown ({currency})
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Input
@@ -398,7 +396,7 @@ export default function EditProjectPage() {
 
         {/* Actions */}
         <div className="flex items-center justify-end gap-3 pb-6">
-          <Link href={`/projects/${id}`}>
+          <Link href={`/projects/${encodeURIComponent(projectCode)}`}>
             <Button variant="outline">Cancel</Button>
           </Link>
           <Button type="submit" loading={saving}>

@@ -3,8 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
-import { Plus, Search, X } from 'lucide-react';
-import Link from 'next/link';
+import { Search, X } from 'lucide-react';
 
 import PageHeader from '@/components/common/PageHeader';
 import Table from '@/components/common/Table';
@@ -12,18 +11,8 @@ import Button from '@/components/common/Button';
 import { StatusBadge } from '@/components/common/Badge';
 import { fetchProjects, selectProjects, selectProjectsLoading } from '@/store/slices/projectsSlice';
 import { PROJECT_STATUS_LIST } from '@/constants/statuses';
-import { formatCurrency } from '@/utils/formatters';
 
 const PAGE_SIZE = 10;
-
-const BUSINESS_UNITS = [
-  'Energy & Resources',
-  'Telecom & Media',
-  'Government & Public Sector',
-  'Petrochemical & Industrial',
-  'Real Estate & Infrastructure',
-  'Logistics & Transport',
-];
 
 export default function ProjectsPage() {
   const router   = useRouter();
@@ -31,11 +20,9 @@ export default function ProjectsPage() {
 
   const projects  = useSelector(selectProjects);
   const isLoading = useSelector(selectProjectsLoading);
-  const currency  = useSelector((s) => s.ui.currency);
 
   const [search, setSearch]           = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [buFilter, setBuFilter]       = useState('');
   const [page, setPage]               = useState(1);
 
   useEffect(() => {
@@ -50,12 +37,12 @@ export default function ProjectsPage() {
         p.projectName?.toLowerCase().includes(q) ||
         p.contractNumber?.toString().toLowerCase().includes(q) ||
         p.clientName?.toLowerCase().includes(q) ||
+        p.projectNameFocus?.toLowerCase().includes(q) ||
         p.projectCode?.toLowerCase().includes(q);
       const matchStatus = !statusFilter || p.status === statusFilter;
-      const matchBU     = !buFilter     || p.businessUnit === buFilter;
-      return matchSearch && matchStatus && matchBU;
+      return matchSearch && matchStatus;
     });
-  }, [projects, search, statusFilter, buFilter]);
+  }, [projects, search, statusFilter]);
 
   const totalPages    = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginatedData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -63,49 +50,35 @@ export default function ProjectsPage() {
   const handleClearFilters = () => {
     setSearch('');
     setStatusFilter('');
-    setBuFilter('');
     setPage(1);
   };
 
-  const hasFilters = search || statusFilter || buFilter;
+  const hasFilters = search || statusFilter;
 
   const columns = [
     {
-      key: 'projectName',
-      label: 'Project Name',
+      key: 'contractName',
+      label: 'Contract Name',
       render: (val, row) => (
         <div>
-          <p className="font-medium text-gray-800 text-sm leading-tight">{val}</p>
-          <p className="text-xs text-gray-400 mt-0.5">{row.projectCode}</p>
+          <p className="font-medium text-gray-800 text-sm leading-tight">{val ?? '—'}</p>
+          {row.contractNumber != null && (
+            <p className="text-xs text-gray-400 font-mono mt-0.5">{row.contractNumber}</p>
+          )}
+          <p className="text-xs text-gray-400 mt-0.5">
+            {row.projectCode}</p>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {row.projectName ? `EPM: ${row.projectName}` : ''}
+            </p>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {row.projectNameFocus ? `Focus: ${row.projectNameFocus}` : ''}
+          </p>
         </div>
       ),
     },
-    {
-      key: 'contractNumber',
-      label: 'Contract #',
-      render: (val) => <span className="font-mono text-xs text-gray-600">{val}</span>,
-    },
     { key: 'clientName', label: 'Client' },
-    {
-      key: 'drm',
-      label: 'DRM',
-      render: (val) => <span className="text-sm">{val}</span>,
-    },
-    {
-      key: 'businessUnit',
-      label: 'Business Unit',
-      render: (val) => (
-        <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{val}</span>
-      ),
-    },
-    {
-      key: 'projectValue',
-      label: 'Project Value',
-      align: 'center',
-      render: (val) => (
-        <span className="font-semibold text-gray-800 text-sm">{formatCurrency(val, currency)}</span>
-      ),
-    },
+    { key: 'poNumber', label: 'PO Number' },
+    { key: 'invoicingPlatform', label: 'Invoicing Platform' },
     {
       key: 'status',
       label: 'Status',
@@ -119,11 +92,6 @@ export default function ProjectsPage() {
       <PageHeader
         title="Projects"
         subtitle={`${filtered.length} project${filtered.length !== 1 ? 's' : ''} found`}
-        actions={
-          <Link href="/projects/new">
-            <Button icon={Plus}>New Project</Button>
-          </Link>
-        }
       />
 
       <div className="bg-white rounded-xl border border-gray-100 p-4 mb-5 flex flex-wrap items-center gap-3">
@@ -149,17 +117,6 @@ export default function ProjectsPage() {
           ))}
         </select>
 
-        <select
-          value={buFilter}
-          onChange={(e) => { setBuFilter(e.target.value); setPage(1); }}
-          className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-primary bg-gray-50 min-w-[180px]"
-        >
-          <option value="">All Business Units</option>
-          {BUSINESS_UNITS.map((bu) => (
-            <option key={bu} value={bu}>{bu}</option>
-          ))}
-        </select>
-
         {hasFilters && (
           <Button variant="ghost" size="sm" icon={X} onClick={handleClearFilters}>
             Clear Filters
@@ -171,7 +128,8 @@ export default function ProjectsPage() {
         columns={columns}
         data={paginatedData}
         isLoading={isLoading}
-        onRowClick={(row) => router.push(`/projects/${row.id}`)}
+        rowKey="projectCode"
+        onRowClick={(row) => router.push(`/projects/${encodeURIComponent(row.projectCode)}`)}
         sortable
         pagination={
           filtered.length > PAGE_SIZE

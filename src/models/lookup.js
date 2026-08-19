@@ -14,6 +14,7 @@ export function createLookupItem(raw) {
   return {
     id:    raw.key,
     label: raw.value ?? '',
+    colorHex: raw.colorHex ?? '#6b7280',
   };
 }
 
@@ -45,6 +46,23 @@ export function createInvoiceStatus(raw) {
  * @returns {LookupItem & { colorHex: string }}
  */
 export function createBoqItemStatus(raw) {
+  return {
+    id:       raw.key,
+    label:    raw.value ?? '',
+    colorHex: raw.colorHex ?? '#6b7280',
+  };
+}
+
+/**
+ * Maps a raw tracker cycle status lookup entry { key, value, colorHex } to a
+ * LookupItem with its display color attached — same shape as
+ * createBoqItemStatus/createInvoiceStatus, kept separate since this lookup
+ * (GetTrackerCycleStatuses) is independent on the backend.
+ *
+ * @param {Object} raw
+ * @returns {LookupItem & { colorHex: string }}
+ */
+export function createTrackerCycleStatus(raw) {
   return {
     id:       raw.key,
     label:    raw.value ?? '',

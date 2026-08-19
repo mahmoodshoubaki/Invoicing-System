@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   FileBarChart,
   FileText,
@@ -22,10 +22,7 @@ import Button from '@/components/common/Button';
 import Card, { CardHeader } from '@/components/common/Card';
 import Badge, { StatusBadge } from '@/components/common/Badge';
 import Table from '@/components/common/Table';
-
-function formatSAR(amount) {
-  return `SAR ${(amount || 0).toLocaleString('en-SA')}`;
-}
+import { formatCurrency, formatDate } from '@/utils/formatters';
 
 function formatPercent(n, d) {
   if (!d) return '0%';
@@ -126,6 +123,7 @@ function ReportCard({ title, description, icon: Icon, iconColor, lastGenerated, 
 
 export default function ReportsPage() {
   const dispatch = useDispatch();
+  const currency = useSelector((s) => s.ui.currency);
   const [loadingReport, setLoadingReport] = useState(null);
 
   const projectData = buildProjectSummary();
@@ -147,9 +145,9 @@ export default function ReportsPage() {
     { key: 'projectName', label: 'Project', render: (v) => <span className="font-medium text-gray-800 text-xs">{v}</span> },
     { key: 'client', label: 'Client', render: (v) => <span className="text-xs text-gray-600">{v}</span> },
     { key: 'status', label: 'Status', render: (v) => <StatusBadge status={v} size="sm" />, sortable: false },
-    { key: 'projectValue', label: 'Value', align: 'right', render: (v) => <span className="text-xs font-mono">{formatSAR(v)}</span> },
-    { key: 'totalRevenue', label: 'Revenue', align: 'right', render: (v) => <span className="text-xs font-mono text-green-700">{formatSAR(v)}</span> },
-    { key: 'wip', label: 'WIP', align: 'right', render: (v) => <span className="text-xs font-mono text-amber-700">{formatSAR(v)}</span> },
+    { key: 'projectValue', label: 'Value', align: 'right', render: (v) => <span className="text-xs font-mono">{formatCurrency(v, currency)}</span> },
+    { key: 'totalRevenue', label: 'Revenue', align: 'right', render: (v) => <span className="text-xs font-mono text-green-700">{formatCurrency(v, currency)}</span> },
+    { key: 'wip', label: 'WIP', align: 'right', render: (v) => <span className="text-xs font-mono text-amber-700">{formatCurrency(v, currency)}</span> },
     { key: 'collectionRate', label: 'Collection %', align: 'center', render: (v) => (
       <span className={`text-xs font-bold ${parseInt(v) >= 80 ? 'text-green-600' : parseInt(v) >= 50 ? 'text-yellow-600' : 'text-red-500'}`}>{v}</span>
     )},
@@ -159,8 +157,8 @@ export default function ReportsPage() {
     { key: 'item', label: 'BOQ Item', render: (v) => <span className="text-xs font-medium text-gray-800">{v}</span> },
     { key: 'project', label: 'Project', render: (v) => <span className="text-xs text-gray-600">{v}</span> },
     { key: 'status', label: 'Status', sortable: false, render: (v) => <StatusBadge status={v} size="sm" /> },
-    { key: 'totalCost', label: 'Cost', align: 'right', render: (v) => <span className="text-xs font-mono">{formatSAR(v)}</span> },
-    { key: 'expectedDate', label: 'Expected Invoicing Date', render: (v) => <span className="text-xs text-gray-500">{v || '—'}</span> },
+    { key: 'totalCost', label: 'Cost', align: 'right', render: (v) => <span className="text-xs font-mono">{formatCurrency(v, currency)}</span> },
+    { key: 'expectedDate', label: 'Expected Invoicing Date', render: (v) => <span className="text-xs text-gray-500">{v ? formatDate(v) : '—'}</span> },
     { key: 'invoiced', label: 'Invoiced', align: 'center', render: (v) => (
       v === 'Yes'
         ? <CheckCircle size={14} className="text-green-500 mx-auto" />
@@ -171,9 +169,9 @@ export default function ReportsPage() {
   const collectionColumns = [
     { key: 'project', label: 'Project', render: (v) => <span className="text-xs font-medium text-gray-800">{v}</span> },
     { key: 'client', label: 'Client', render: (v) => <span className="text-xs text-gray-600">{v}</span> },
-    { key: 'totalInvoiced', label: 'Invoiced', align: 'right', render: (v) => <span className="text-xs font-mono">{formatSAR(v)}</span> },
-    { key: 'collected', label: 'Collected', align: 'right', render: (v) => <span className="text-xs font-mono text-green-700">{formatSAR(v)}</span> },
-    { key: 'outstanding', label: 'Outstanding', align: 'right', render: (v) => <span className="text-xs font-mono text-red-600">{formatSAR(v)}</span> },
+    { key: 'totalInvoiced', label: 'Invoiced', align: 'right', render: (v) => <span className="text-xs font-mono">{formatCurrency(v, currency)}</span> },
+    { key: 'collected', label: 'Collected', align: 'right', render: (v) => <span className="text-xs font-mono text-green-700">{formatCurrency(v, currency)}</span> },
+    { key: 'outstanding', label: 'Outstanding', align: 'right', render: (v) => <span className="text-xs font-mono text-red-600">{formatCurrency(v, currency)}</span> },
     { key: 'rate', label: 'Rate', align: 'center', render: (v) => {
       const n = parseInt(v);
       return (
@@ -206,9 +204,9 @@ export default function ReportsPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         {[
           { label: 'Total Projects', value: mockProjects.length, icon: FileText, color: 'bg-blue-50 text-blue-600' },
-          { label: 'Total Revenue', value: formatSAR(totalRevenue), icon: TrendingUp, color: 'bg-green-50 text-green-600' },
-          { label: 'Collected', value: formatSAR(totalCollected), icon: CheckCircle, color: 'bg-green-50 text-green-600' },
-          { label: 'Outstanding', value: formatSAR(totalOutstanding), icon: Clock, color: 'bg-red-50 text-red-500' },
+          { label: 'Total Revenue', value: formatCurrency(totalRevenue, currency), icon: TrendingUp, color: 'bg-green-50 text-green-600' },
+          { label: 'Collected', value: formatCurrency(totalCollected, currency), icon: CheckCircle, color: 'bg-green-50 text-green-600' },
+          { label: 'Outstanding', value: formatCurrency(totalOutstanding, currency), icon: Clock, color: 'bg-red-50 text-red-500' },
         ].map(({ label, value, icon: Icon, color }) => (
           <Card key={label} className="p-4">
             <div className="flex items-start gap-3">
@@ -258,9 +256,9 @@ export default function ReportsPage() {
             <tfoot>
               <tr className="bg-gray-50 border-t-2 border-gray-200">
                 <td className="px-3 py-2.5 text-xs font-bold text-gray-700" colSpan={3}>Totals</td>
-                <td className="px-3 py-2.5 text-right text-xs font-bold font-mono">{formatSAR(mockProjects.reduce((s, p) => s + p.projectValue, 0))}</td>
-                <td className="px-3 py-2.5 text-right text-xs font-bold text-green-700 font-mono">{formatSAR(totalRevenue)}</td>
-                <td className="px-3 py-2.5 text-right text-xs font-bold text-amber-700 font-mono">{formatSAR(mockProjects.reduce((s, p) => s + p.wip, 0))}</td>
+                <td className="px-3 py-2.5 text-right text-xs font-bold font-mono">{formatCurrency(mockProjects.reduce((s, p) => s + p.projectValue, 0), currency)}</td>
+                <td className="px-3 py-2.5 text-right text-xs font-bold text-green-700 font-mono">{formatCurrency(totalRevenue, currency)}</td>
+                <td className="px-3 py-2.5 text-right text-xs font-bold text-amber-700 font-mono">{formatCurrency(mockProjects.reduce((s, p) => s + p.wip, 0), currency)}</td>
                 <td className="px-3 py-2.5 text-center text-xs font-bold text-gray-700">{overallRate}</td>
               </tr>
             </tfoot>
@@ -333,9 +331,9 @@ export default function ReportsPage() {
             <tfoot>
               <tr className="bg-gray-50 border-t-2 border-gray-200">
                 <td className="px-3 py-2.5 text-xs font-bold text-gray-700" colSpan={2}>Overall</td>
-                <td className="px-3 py-2.5 text-right text-xs font-bold font-mono">{formatSAR(mockInvoices.reduce((s, i) => s + (i.invoiceAmount || 0), 0))}</td>
-                <td className="px-3 py-2.5 text-right text-xs font-bold text-green-700 font-mono">{formatSAR(totalCollected)}</td>
-                <td className="px-3 py-2.5 text-right text-xs font-bold text-red-600 font-mono">{formatSAR(totalOutstanding)}</td>
+                <td className="px-3 py-2.5 text-right text-xs font-bold font-mono">{formatCurrency(mockInvoices.reduce((s, i) => s + (i.invoiceAmount || 0), 0), currency)}</td>
+                <td className="px-3 py-2.5 text-right text-xs font-bold text-green-700 font-mono">{formatCurrency(totalCollected, currency)}</td>
+                <td className="px-3 py-2.5 text-right text-xs font-bold text-red-600 font-mono">{formatCurrency(totalOutstanding, currency)}</td>
                 <td className="px-3 py-2.5 text-center text-xs font-bold text-gray-700">{overallRate}</td>
                 <td className="px-3 py-2.5 text-center text-xs font-bold text-gray-700">{mockInvoices.length}</td>
               </tr>

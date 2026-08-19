@@ -29,6 +29,28 @@ export const fetchProjectById = createAsyncThunk(
   }
 );
 
+export const fetchMainProjectDetails = createAsyncThunk(
+  'projects/fetchMainProjectDetails',
+  async (projectCode, { rejectWithValue }) => {
+    try {
+      return await projectRepository.getMainProjectDetails(projectCode);
+    } catch (err) {
+      return rejectWithValue(err.message || 'Failed to fetch project details.');
+    }
+  }
+);
+
+export const fetchSubProjectsSummary = createAsyncThunk(
+  'projects/fetchSubProjectsSummary',
+  async (projectCode, { rejectWithValue }) => {
+    try {
+      return await projectRepository.getSubProjectsSummary(projectCode);
+    } catch (err) {
+      return rejectWithValue(err.message || 'Failed to fetch sub-projects.');
+    }
+  }
+);
+
 export const createProject = createAsyncThunk(
   'projects/createProject',
   async (data, { rejectWithValue }) => {
@@ -77,6 +99,11 @@ const initialState = {
     status: '',
     businessUnit: '',
   },
+
+  mainProjectDetails: null,
+  mainDetailsLoading: false,
+  subProjects: [],
+  subProjectsLoading: false,
 };
 
 const projectsSlice = createSlice({
@@ -148,6 +175,36 @@ const projectsSlice = createSlice({
       })
       .addCase(fetchProjectById.rejected, (state, action) => {
         state.isLoading = false;
+        state.error = action.payload;
+      });
+
+    // fetchMainProjectDetails
+    builder
+      .addCase(fetchMainProjectDetails.pending, (state) => {
+        state.mainDetailsLoading = true;
+        state.error = null;
+        state.mainProjectDetails = null;
+      })
+      .addCase(fetchMainProjectDetails.fulfilled, (state, action) => {
+        state.mainDetailsLoading = false;
+        state.mainProjectDetails = action.payload;
+      })
+      .addCase(fetchMainProjectDetails.rejected, (state, action) => {
+        state.mainDetailsLoading = false;
+        state.error = action.payload;
+      });
+
+    // fetchSubProjectsSummary
+    builder
+      .addCase(fetchSubProjectsSummary.pending, (state) => {
+        state.subProjectsLoading = true;
+      })
+      .addCase(fetchSubProjectsSummary.fulfilled, (state, action) => {
+        state.subProjectsLoading = false;
+        state.subProjects = action.payload;
+      })
+      .addCase(fetchSubProjectsSummary.rejected, (state, action) => {
+        state.subProjectsLoading = false;
         state.error = action.payload;
       });
 
@@ -240,6 +297,11 @@ export const selectSelectedProject = (state) => state.projects.selectedProject;
 export const selectProjectsLoading = (state) => state.projects.isLoading;
 export const selectProjectsError = (state) => state.projects.error;
 export const selectProjectFilters = (state) => state.projects.filters;
+
+export const selectMainProjectDetails = (state) => state.projects.mainProjectDetails;
+export const selectMainDetailsLoading = (state) => state.projects.mainDetailsLoading;
+export const selectSubProjects = (state) => state.projects.subProjects;
+export const selectSubProjectsLoading = (state) => state.projects.subProjectsLoading;
 
 /** Returns projects filtered by the current filters state. */
 export const selectFilteredProjects = (state) => {

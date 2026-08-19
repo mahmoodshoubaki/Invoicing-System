@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSelector } from 'react-redux';
 import Link from 'next/link';
 import { ChevronLeft, Check } from 'lucide-react';
 
 import PageHeader from '@/components/common/PageHeader';
 import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
-import { Input, Select, Textarea, FormField } from '@/components/forms/FormField';
+import { Input, DatePicker, Select, Textarea, FormField } from '@/components/forms/FormField';
 const BUSINESS_UNITS = [
   'Energy & Resources',
   'Telecom & Media',
@@ -63,6 +64,7 @@ function calcDuration(start, end) {
 
 export default function NewProjectPage() {
   const router = useRouter();
+  const currency = useSelector((s) => s.ui.currency);
   const [form, setForm] = useState(INITIAL_FORM);
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
@@ -261,7 +263,7 @@ export default function NewProjectPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input
-              label="Project Value (SAR)"
+              label={`Project Value (${currency})`}
               type="number"
               min="0"
               step="0.01"
@@ -294,17 +296,15 @@ export default function NewProjectPage() {
             Timeline
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Input
+            <DatePicker
               label="Start Date"
               required
-              type="date"
               value={form.startDate}
               onChange={set('startDate')}
               error={errors.startDate}
             />
-            <Input
+            <DatePicker
               label="End Date"
-              type="date"
               value={form.endDate}
               onChange={set('endDate')}
               min={form.startDate || undefined}
@@ -323,7 +323,7 @@ export default function NewProjectPage() {
         {/* Section 6: Revenue Breakdown */}
         <Card>
           <h2 className="text-base font-semibold text-gray-800 mb-4 pb-3 border-b border-gray-100">
-            Revenue Breakdown (SAR)
+            Revenue Breakdown ({currency})
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Input

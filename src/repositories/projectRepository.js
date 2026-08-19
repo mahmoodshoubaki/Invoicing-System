@@ -1,5 +1,5 @@
 import { createApiClient } from '@/lib/apiClient';
-import { createProject } from '@/models/project';
+import { createProject, mapProjectListItem, mapMainProjectDetails, mapSubProjectSummary } from '@/models/project';
 
 const api = createApiClient('/api/Projects');
 
@@ -12,9 +12,21 @@ export const projectRepository = {
   },
 
   // REAL API
+  async getMainProjectDetails(projectCode) {
+    const raw = await api.get(`/GetMainProjectDetails?${new URLSearchParams({ projectCode }).toString()}`);
+    return mapMainProjectDetails(raw);
+  },
+
+  // REAL APIS
+  async getSubProjectsSummary(projectCode) {
+    const data = await api.get(`/GetSubProjectsSummary?${new URLSearchParams({ projectCode }).toString()}`);
+    return data.map(mapSubProjectSummary);
+  },
+
+  // REAL API
   async getProjects(filters = {}) {
-    const data = await api.get('/GetAllProjectsDetails');
-    let result = data.map(createProject);
+    const data = await api.get('/GetProjectsList');
+    let result = data.map(mapProjectListItem);
     if (filters.search) {
       const q = filters.search.toLowerCase();
       result = result.filter(
@@ -25,8 +37,7 @@ export const projectRepository = {
           String(p.contractNumber ?? '').toLowerCase().includes(q)
       );
     }
-    if (filters.status)       result = result.filter((p) => p.status === filters.status);
-    if (filters.businessUnit) result = result.filter((p) => p.businessUnit === filters.businessUnit);
+    if (filters.status) result = result.filter((p) => p.status === filters.status);
     return result;
   },
 

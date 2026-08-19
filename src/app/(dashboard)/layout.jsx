@@ -7,6 +7,8 @@ import AppShell from '@/components/layout/AppShell';
 import ToastContainer from '@/components/common/Toast';
 import PreferencesSync from '@/components/layout/PreferencesSync';
 import LookupsSync from '@/components/layout/LookupsSync';
+import CapabilityGuard from '@/components/layout/CapabilityGuard';
+import AuthGuard from '@/components/layout/AuthGuard';
 
 export default function DashboardLayout({ children }) {
   return (
@@ -14,9 +16,13 @@ export default function DashboardLayout({ children }) {
       <PreferencesSync />
       <LookupsSync />
       <AuthProvider>
-        <AppShell>
-          {children}
-        </AppShell>
+        <AuthGuard>
+          <CapabilityGuard>
+            <AppShell>
+              {children}
+            </AppShell>
+          </CapabilityGuard>
+        </AuthGuard>
         <ToastContainer />
       </AuthProvider>
     </Provider>

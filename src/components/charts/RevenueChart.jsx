@@ -1,5 +1,6 @@
 'use client';
 
+import { useSelector } from 'react-redux';
 import {
   AreaChart,
   Area,
@@ -10,14 +11,9 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import { formatCurrency } from '@/utils/formatters';
 
-function formatSAR(value) {
-  if (value >= 1000000) return `SAR ${(value / 1000000).toFixed(1)}M`;
-  if (value >= 1000) return `SAR ${(value / 1000).toFixed(0)}K`;
-  return `SAR ${value}`;
-}
-
-function CustomTooltip({ active, payload, label }) {
+function CustomTooltip({ active, payload, label, currency }) {
   if (!active || !payload || !payload.length) return null;
   return (
     <div className="bg-white border border-gray-100 rounded-xl shadow-lg p-3 text-sm">
@@ -29,7 +25,7 @@ function CustomTooltip({ active, payload, label }) {
             style={{ backgroundColor: entry.color }}
           />
           <span className="text-gray-500 capitalize">{entry.name}:</span>
-          <span className="font-medium text-gray-800">{formatSAR(entry.value)}</span>
+          <span className="font-medium text-gray-800">{formatCurrency(entry.value, currency)}</span>
         </div>
       ))}
     </div>
@@ -42,6 +38,8 @@ function CustomTooltip({ active, payload, label }) {
  * @param {{ data: Array<{month: string, revenue: number, invoiced: number, collected: number}> }} props
  */
 export default function RevenueChart({ data = [] }) {
+  const currency = useSelector((s) => s.ui.currency);
+
   return (
     <ResponsiveContainer width="100%" height={300}>
       <AreaChart data={data} margin={{ top: 8, right: 16, left: 8, bottom: 0 }}>
@@ -78,7 +76,7 @@ export default function RevenueChart({ data = [] }) {
           tickLine={false}
           width={52}
         />
-        <Tooltip content={<CustomTooltip />} />
+        <Tooltip content={<CustomTooltip currency={currency} />} />
         <Legend
           wrapperStyle={{ fontSize: '12px', fontFamily: 'Montserrat, sans-serif', paddingTop: '12px' }}
           iconType="circle"

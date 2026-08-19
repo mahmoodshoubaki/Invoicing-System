@@ -6,6 +6,7 @@
 
 import { notificationRepository } from '@/repositories/notificationRepository';
 import { NOTIFICATION_TRIGGERS, NOTIFICATION_TYPES } from '@/mock/notifications';
+import { formatCurrency, formatDate } from '@/utils/formatters';
 
 /**
  * notificationService — orchestrates in-app notification records and stubs for
@@ -29,7 +30,7 @@ export const notificationService = {
       title: 'SLA Warning: BOQ Item Due in 7 Days',
       message:
         `BOQ item "${displayName}" for project "${project.projectName || project.clientName}" ` +
-        `is due for invoicing in 7 days on ${boqItem.expectedInvoicingDate}. ` +
+        `is due for invoicing in 7 days on ${formatDate(boqItem.expectedInvoicingDate)}. ` +
         `Please prepare the invoice request.`,
     };
 
@@ -56,7 +57,7 @@ export const notificationService = {
       title: 'Reminder: BOQ Item Due Today',
       message:
         `BOQ item "${displayName}" for project "${project.projectName || project.clientName}" ` +
-        `is due for invoicing today (${boqItem.expectedInvoicingDate}). ` +
+        `is due for invoicing today (${formatDate(boqItem.expectedInvoicingDate)}). ` +
         `Please submit the invoice request immediately.`,
     };
 
@@ -78,7 +79,7 @@ export const notificationService = {
       userId,
       title: 'Invoice Submitted for Review',
       message:
-        `Invoice ${invoice.invoiceNumber} (SAR ${Number(invoice.invoiceAmount).toLocaleString()}) ` +
+        `Invoice ${invoice.invoiceNumber} (${formatCurrency(invoice.invoiceAmount, 'SAR')}) ` +
         `has been submitted and is awaiting your review.`,
     }));
 
@@ -102,7 +103,7 @@ export const notificationService = {
       userId: recipientUserId,
       title: 'Invoice Approved',
       message:
-        `Invoice ${invoice.invoiceNumber} (SAR ${Number(invoice.invoiceAmount).toLocaleString()}) ` +
+        `Invoice ${invoice.invoiceNumber} (${formatCurrency(invoice.invoiceAmount, 'SAR')}) ` +
         `has been approved and is ready for client submission.`,
     });
   },
@@ -178,7 +179,7 @@ export const notificationService = {
       userId: recipientUserId,
       title: `Action Required: ${step.name}`,
       message:
-        `Invoice ${invoice.invoiceNumber} (SAR ${Number(invoice.invoiceAmount).toLocaleString()}) ` +
+        `Invoice ${invoice.invoiceNumber} (${formatCurrency(invoice.invoiceAmount, 'SAR')}) ` +
         `requires your action as part of the "${step.name}" step. SLA: ${step.slaHours ?? 48} hours.`,
     });
   },

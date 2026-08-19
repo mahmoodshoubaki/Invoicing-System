@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSelector } from 'react-redux';
 import { CheckCircle, XCircle, Eye } from 'lucide-react';
 import Link from 'next/link';
 
@@ -15,8 +16,7 @@ import { mockBOQItems } from '@/mock/boq';
 import { INVOICE_STATUS } from '@/constants/statuses';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import { getUserName } from '@/mock/users';
-import { useAuth } from '@/hooks/useAuth';
-import { ROLES } from '@/constants/roles';
+import { usePermission } from '@/hooks/usePermission';
 
 const TABS = [
   { label: 'All', value: '' },
@@ -28,12 +28,14 @@ const TABS = [
 
 export default function InvoicesPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { can } = usePermission();
+  const currency = useSelector((s) => s.ui.currency);
   const [invoices, setInvoices] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('');
 
-  const canApprove = user?.roles?.includes(ROLES.INVOICING_TEAM) || user?.roles?.includes(ROLES.ADMIN) || user?.roles?.includes(ROLES.BU_HEAD);
+  const canApprove = can('Invoices', 'Approve');
+  const canReject = can('Invoices', 'Reject');
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -107,7 +109,7 @@ export default function InvoicesPage() {
       key: 'invoiceAmount',
       label: 'Amount',
       align: 'right',
-      render: (val) => <span className="font-semibold text-gray-800">{formatCurrency(val)}</span>,
+      render: (val) => <span className="font-semibold text-gray-800">{formatCurrency(val, currency)}</span>,
     },
     {
       key: 'status',
@@ -134,32 +136,36 @@ export default function InvoicesPage() {
           <Link href={`/invoices/${row.id}`}>
             <Button variant="ghost" size="xs" icon={Eye}>View</Button>
           </Link>
-          {canApprove && row.status === INVOICE_STATUS.SUBMITTED && (
+          {row.status === INVOICE_STATUS.SUBMITTED && (
             <>
-              <Button
-                variant="success"
-                size="xs"
-                icon={CheckCircle}
-                onClick={() => {
-                  setInvoices((prev) =>
-                    prev.map((i) => i.id === row.id ? { ...i, status: INVOICE_STATUS.APPROVED } : i)
-                  );
-                }}
-              >
-                Approve
-              </Button>
-              <Button
-                variant="danger"
-                size="xs"
-                icon={XCircle}
-                onClick={() => {
-                  setInvoices((prev) =>
-                    prev.map((i) => i.id === row.id ? { ...i, status: INVOICE_STATUS.REJECTED } : i)
-                  );
-                }}
-              >
-                Reject
-              </Button>
+              {canApprove && (
+                <Button
+                  variant="success"
+                  size="xs"
+                  icon={CheckCircle}
+                  onClick={() => {
+                    setInvoices((prev) =>
+                      prev.map((i) => i.id === row.id ? { ...i, status: INVOICE_STATUS.APPROVED } : i)
+                    );
+                  }}
+                >
+                  Approve
+                </Button>
+              )}
+              {canReject && (
+                <Button
+                  variant="danger"
+                  size="xs"
+                  icon={XCircle}
+                  onClick={() => {
+                    setInvoices((prev) =>
+                      prev.map((i) => i.id === row.id ? { ...i, status: INVOICE_STATUS.REJECTED } : i)
+                    );
+                  }}
+                >
+                  Reject
+                </Button>
+              )}
             </>
           )}
         </div>

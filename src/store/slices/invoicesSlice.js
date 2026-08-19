@@ -27,6 +27,17 @@ export const fetchInvoicesByProjectCode = createAsyncThunk(
   }
 );
 
+export const fetchInvoiceById = createAsyncThunk(
+  'invoices/fetchInvoiceById',
+  async (id, { rejectWithValue }) => {
+    try {
+      return await invoiceRepository.getInvoiceById(id);
+    } catch (err) {
+      return rejectWithValue(err.message || 'Failed to fetch invoice.');
+    }
+  }
+);
+
 export const submitInvoice = createAsyncThunk(
   'invoices/submitInvoice',
   async (id, { rejectWithValue }) => {
@@ -82,6 +93,28 @@ export const createInvoice = createAsyncThunk(
   }
 );
 
+export const updateInvoice = createAsyncThunk(
+  'invoices/updateInvoice',
+  async (data, { rejectWithValue }) => {
+    try {
+      return await invoiceRepository.updateInvoice(data);
+    } catch (err) {
+      return rejectWithValue(err.message || 'Failed to update invoice.');
+    }
+  }
+);
+
+export const fetchInvoiceHistory = createAsyncThunk(
+  'invoices/fetchInvoiceHistory',
+  async (invoiceId, { rejectWithValue }) => {
+    try {
+      return await invoiceRepository.getInvoiceHistory(invoiceId);
+    } catch (err) {
+      return rejectWithValue(err.message || 'Failed to fetch invoice history.');
+    }
+  }
+);
+
 // ---------------------------------------------------------------------------
 // Slice
 // ---------------------------------------------------------------------------
@@ -92,6 +125,11 @@ const initialState = {
   isLoading: false,
   error: null,
   invoiceableItems: {
+    items: [],
+    isLoading: false,
+    error: null,
+  },
+  history: {
     items: [],
     isLoading: false,
     error: null,
@@ -144,6 +182,10 @@ const invoicesSlice = createSlice({
     clearInvoiceableBOQItems(state) {
       state.invoiceableItems = initialState.invoiceableItems;
     },
+
+    clearInvoiceHistory(state) {
+      state.history = initialState.history;
+    },
   },
 
   extraReducers: (builder) => {
@@ -177,6 +219,22 @@ const invoicesSlice = createSlice({
         state.error = action.payload;
       });
 
+    // fetchInvoiceById
+    builder
+      .addCase(fetchInvoiceById.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+        state.selectedInvoice = null;
+      })
+      .addCase(fetchInvoiceById.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.selectedInvoice = action.payload;
+      })
+      .addCase(fetchInvoiceById.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      });
+
     // createInvoice
     builder
       .addCase(createInvoice.pending, (state) => {
@@ -190,6 +248,37 @@ const invoicesSlice = createSlice({
       .addCase(createInvoice.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
+      });
+
+    // updateInvoice — response shape isn't a full mapped invoice, so the
+    // caller re-fetches via fetchInvoiceById after a successful update
+    // instead of this trying to merge an unknown shape into state.
+    builder
+      .addCase(updateInvoice.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateInvoice.fulfilled, (state) => {
+        state.isLoading = false;
+      })
+      .addCase(updateInvoice.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      });
+
+    // fetchInvoiceHistory
+    builder
+      .addCase(fetchInvoiceHistory.pending, (state) => {
+        state.history.isLoading = true;
+        state.history.error = null;
+      })
+      .addCase(fetchInvoiceHistory.fulfilled, (state, action) => {
+        state.history.isLoading = false;
+        state.history.items = action.payload;
+      })
+      .addCase(fetchInvoiceHistory.rejected, (state, action) => {
+        state.history.isLoading = false;
+        state.history.error = action.payload;
       });
 
     // fetchInvoiceableBOQItems
@@ -281,6 +370,7 @@ export const {
   setError,
   clearError,
   clearInvoiceableBOQItems,
+  clearInvoiceHistory,
 } = invoicesSlice.actions;
 
 // Selectors
@@ -291,6 +381,9 @@ export const selectInvoicesError = (state) => state.invoices.error;
 export const selectInvoiceableBOQItems        = (state) => state.invoices.invoiceableItems.items;
 export const selectInvoiceableBOQItemsLoading = (state) => state.invoices.invoiceableItems.isLoading;
 export const selectInvoiceableBOQItemsError   = (state) => state.invoices.invoiceableItems.error;
+export const selectInvoiceHistory        = (state) => state.invoices.history.items;
+export const selectInvoiceHistoryLoading = (state) => state.invoices.history.isLoading;
+export const selectInvoiceHistoryError   = (state) => state.invoices.history.error;
 
 export const selectInvoicesByStatus = (status) => (state) =>
   state.invoices.items.filter((inv) => inv.status === status);

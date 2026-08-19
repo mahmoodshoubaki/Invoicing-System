@@ -21,6 +21,7 @@ import PageHeader from '@/components/common/PageHeader';
 import Button from '@/components/common/Button';
 import Badge from '@/components/common/Badge';
 import EmptyState from '@/components/common/EmptyState';
+import { formatDateTime } from '@/utils/formatters';
 
 const TRIGGER_ICONS = {
   [NOTIFICATION_TRIGGERS.INVOICE_SUBMITTED]: FileCheck,
@@ -203,10 +204,7 @@ export default function NotificationsPage() {
                       {notif.message}
                     </p>
                     <p className="text-xs text-gray-400 mt-1.5">
-                      {new Date(notif.createdAt).toLocaleDateString('en-GB', {
-                        day: 'numeric', month: 'short', year: 'numeric',
-                        hour: '2-digit', minute: '2-digit',
-                      })}
+                      {formatDateTime(notif.createdAt)}
                     </p>
                   </div>
                 </div>

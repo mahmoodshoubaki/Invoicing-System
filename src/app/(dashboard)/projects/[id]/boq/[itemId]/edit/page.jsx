@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import Link from 'next/link';
@@ -10,17 +10,25 @@ import PageHeader from '@/components/common/PageHeader';
 import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
-import { Input, Select, Textarea } from '@/components/forms/FormField';
-import { formatCurrency } from '@/utils';
+import { Input, NumberInput, DatePicker, Select, Textarea } from '@/components/forms/FormField';
+import InvoicingPlanTracker from '@/components/boq/InvoicingPlanTracker';
+import { formatCurrency, formatDate } from '@/utils';
 import { selectBillingFrequencies } from '@/store/slices/lookupsSlice';
+import { boqRepository } from '@/repositories/boqRepository';
 import {
   updateBOQItem,
   fetchBOQByProjectCode,
+  fetchTrackerCycles,
+  clearTrackerCycles,
   selectBOQItems,
   selectBOQLoading,
   selectCurrentBOQ,
+  selectTrackerCyclesLoading,
 } from '@/store/slices/boqSlice';
-import { fetchProjectById, selectSelectedProject, selectProjectsLoading } from '@/store/slices/projectsSlice';
+import {
+  fetchMainProjectDetails, selectMainProjectDetails, selectMainDetailsLoading,
+  fetchSubProjectsSummary, selectSubProjects, selectSubProjectsLoading,
+} from '@/store/slices/projectsSlice';
 import { useToast } from '@/hooks/useToast';
 
 function toDateInput(iso) {
@@ -29,17 +37,23 @@ function toDateInput(iso) {
 }
 
 export default function EditBOQItemPage() {
-  const { id, itemId } = useParams();
+  // See boq/page.jsx for why this is decoded defensively.
+  const { id: rawId, itemId } = useParams();
+  const projectCode = decodeURIComponent(rawId);
   const router = useRouter();
   const dispatch = useDispatch();
   const toast = useToast();
 
   const billingFrequencies = useSelector(selectBillingFrequencies);
-  const currentProject = useSelector(selectSelectedProject);
-  const projectLoading = useSelector(selectProjectsLoading);
+  const currentProject = useSelector(selectMainProjectDetails);
+  const projectLoading = useSelector(selectMainDetailsLoading);
   const currentBOQ = useSelector(selectCurrentBOQ);
   const boqItems = useSelector(selectBOQItems);
   const boqLoading = useSelector(selectBOQLoading);
+  const subProjects = useSelector(selectSubProjects);
+  const subProjectsLoading = useSelector(selectSubProjectsLoading);
+  const currency = useSelector((s) => s.ui.currency);
+  const trackerCyclesLoading = useSelector(selectTrackerCyclesLoading);
 
   const item = boqItems.find((i) => String(i.id) === String(itemId));
 
@@ -48,14 +62,10 @@ export default function EditBOQItemPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchProjectById(id));
-  }, [dispatch, id]);
-
-  useEffect(() => {
-    if (currentProject?.projectCode && currentProject.id === id) {
-      dispatch(fetchBOQByProjectCode(currentProject.projectCode));
-    }
-  }, [dispatch, id, currentProject?.projectCode]);
+    dispatch(fetchMainProjectDetails(projectCode));
+    dispatch(fetchSubProjectsSummary(projectCode));
+    dispatch(fetchBOQByProjectCode(projectCode));
+  }, [dispatch, projectCode]);
 
   useEffect(() => {
     if (item && !form) {
@@ -72,6 +82,98 @@ export default function EditBOQItemPage() {
       });
     }
   }, [item, form]);
+
+  // Every sub-project under the same main project shares the same contract
+  // start/finish date — any one of them is a valid source, so the first is
+  // fine. These bound the tracker's editable dates but are never user-entered.
+  const contractStartDate  = subProjects[0]?.contractStartDate  ?? null;
+  const contractFinishDate = subProjects[0]?.contractFinishDate ?? null;
+  const missingContractDates = !subProjectsLoading && subProjects.length > 0
+    && (!contractStartDate || !contractFinishDate);
+
+  const [cycles, setCycles]               = useState([]);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError]     = useState(null);
+
+  // Seed the tracker from the item's existing plan (GetTrackerCycles) once
+  // on mount — this is independent of the preview logic below entirely.
+  useEffect(() => {
+    let cancelled = false;
+    dispatch(fetchTrackerCycles(itemId)).unwrap()
+      .then((result) => { if (!cancelled) setCycles(result); })
+      .catch((err) => { if (!cancelled) toast.error('Failed to load the invoicing plan', err ?? 'Please try again.'); });
+    return () => {
+      cancelled = true;
+      dispatch(clearTrackerCycles());
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, itemId]);
+
+  // The exact values the item loaded with — captured once, the first time
+  // `form` exists. Comparing the live form against this (rather than any
+  // "first ready" timing trick) is what decides whether the user has
+  // actually touched the schedule: unambiguous and doesn't depend on the
+  // order async fetches happen to resolve in.
+  const originalScheduleRef = useRef(null);
+  useEffect(() => {
+    if (form && !originalScheduleRef.current) {
+      originalScheduleRef.current = {
+        expectedInvoicingDate: form.expectedInvoicingDate,
+        billingFrequencyId:    form.billingFrequencyId,
+      };
+    }
+  }, [form]);
+
+  // Once the user has changed Expected Invoicing Date or Billing Frequency
+  // away from what the item loaded with, every further change to either
+  // (including switching back) regenerates the plan via
+  // GetTrackerCyclesPreview. Untouched, the seeded plan from GetTrackerCycles
+  // above is left alone.
+  const hasDivergedRef = useRef(false);
+  const previewReady = Boolean(
+    form?.expectedInvoicingDate && form?.billingFrequencyId && contractStartDate && contractFinishDate
+  );
+
+  useEffect(() => {
+    const original = originalScheduleRef.current;
+    if (!form || !original) return;
+
+    if (!hasDivergedRef.current) {
+      const changed = form.expectedInvoicingDate !== original.expectedInvoicingDate
+        || form.billingFrequencyId !== original.billingFrequencyId;
+      if (!changed) return;
+      hasDivergedRef.current = true;
+    }
+
+    if (!previewReady) {
+      setPreviewLoading(false);
+      return;
+    }
+
+    setPreviewLoading(true);
+    setPreviewError(null);
+    const timer = setTimeout(async () => {
+      try {
+        const result = await boqRepository.previewInvoicingPlan({
+          anchorDate:         form.expectedInvoicingDate,
+          billingFrequencyId: form.billingFrequencyId,
+          contractStartDate,
+          contractFinishDate,
+          boqItemId:          itemId,
+        });
+        setCycles(result);
+        setPreviewLoading(false);
+      } catch (err) {
+        setPreviewError(err.message || 'Failed to generate the invoicing plan.');
+        setPreviewLoading(false);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  // `form` itself is intentionally omitted — it changes on every keystroke
+  // across all fields, and only expectedInvoicingDate/billingFrequencyId
+  // (already listed below) should cause this effect to re-run.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form?.expectedInvoicingDate, form?.billingFrequencyId, contractStartDate, contractFinishDate, itemId, previewReady]);
 
   const set = (field) => (e) => {
     const val = e.target.value;
@@ -94,8 +196,18 @@ export default function EditBOQItemPage() {
     if (!form.quantity || Number(form.quantity) <= 0)       e.quantity           = 'Valid quantity is required';
     if (form.unitCost === '' || Number(form.unitCost) < 0)  e.unitCost           = 'Valid unit cost is required';
     if (!form.billingFrequencyId)                           e.billingFrequencyId = 'Billing frequency is required';
-    if (!form.baselineInvoicingDate)                        e.baselineInvoicingDate = 'Baseline invoicing date is required';
     if (!form.expectedInvoicingDate)                        e.expectedInvoicingDate = 'Expected invoicing date is required';
+    if (!contractStartDate || !contractFinishDate) {
+      e.trackerCycles = 'Contract start/finish dates are not available for this project yet — cycles cannot be generated.';
+    }
+
+    const outOfRange = cycles.some((c) => !c.isCommitted && (
+      !c.plannedDate || c.plannedDate < contractStartDate || c.plannedDate > contractFinishDate
+    ));
+    if (outOfRange) {
+      e.trackerCycles = 'Every cycle needs a planned date between the contract start and finish dates';
+    }
+
     return e;
   };
 
@@ -118,10 +230,13 @@ export default function EditBOQItemPage() {
           billingFrequencyId:    Number(form.billingFrequencyId),
           notes:                 form.notes || null,
           statusId:              item.statusId ?? 1,
+          contractStartDate,
+          contractFinishDate,
         },
+        cycles,
       })).unwrap();
       toast.success('BOQ item updated', 'The item was updated successfully.');
-      router.push(`/projects/${id}/boq`);
+      router.push(`/projects/${encodeURIComponent(projectCode)}/boq`);
     } catch (err) {
       toast.error('Failed to update BOQ item', err ?? 'Please try again.');
     } finally {
@@ -141,7 +256,7 @@ export default function EditBOQItemPage() {
     return (
       <div className="text-center py-20">
         <p className="text-gray-500">BOQ item not found.</p>
-        <Link href={`/projects/${id}/boq`}>
+        <Link href={`/projects/${encodeURIComponent(projectCode)}/boq`}>
           <Button variant="outline" className="mt-4">Back to BOQ</Button>
         </Link>
       </div>
@@ -152,16 +267,16 @@ export default function EditBOQItemPage() {
     <div className="max-w-5xl mx-auto">
       <PageHeader
         title="Edit BOQ Item"
-        subtitle={currentProject?.projectCode}
+        subtitle={projectCode}
         breadcrumbs={[
           { label: 'Home', href: '/' },
           { label: 'Projects', href: '/projects' },
-          { label: currentProject?.projectName, href: `/projects/${id}` },
-          { label: 'BOQ', href: `/projects/${id}/boq` },
+          { label: currentProject?.contractName, href: `/projects/${encodeURIComponent(projectCode)}` },
+          { label: 'BOQ', href: `/projects/${encodeURIComponent(projectCode)}/boq` },
           { label: 'Edit Item' },
         ]}
         actions={
-          <Link href={`/projects/${id}/boq`}>
+          <Link href={`/projects/${encodeURIComponent(projectCode)}/boq`}>
             <Button variant="outline" icon={ChevronLeft} size="sm">Back</Button>
           </Link>
         }
@@ -197,21 +312,19 @@ export default function EditBOQItemPage() {
               onChange={set('quantity')}
               error={errors.quantity}
             />
-            <Input
-              label="Unit Cost (SAR)"
+            <NumberInput
+              label={`Unit Cost (${currency})`}
               required
-              type="number"
-              min="0"
-              step="0.01"
+              placeholder="0.00"
               value={form.unitCost}
               onChange={set('unitCost')}
               error={errors.unitCost}
             />
             <Input
-              label="Total Cost (SAR)"
+              label="Total Cost"
               type="text"
               readOnly
-              value={formatCurrency(form.totalCost)}
+              value={formatCurrency(form.totalCost, currency)}
               hint="Auto-calculated from quantity × unit cost"
               className="bg-gray-50 cursor-not-allowed"
             />
@@ -225,20 +338,35 @@ export default function EditBOQItemPage() {
               error={errors.billingFrequencyId}
             />
             <Input
-              label="Baseline Invoicing Date"
-              type="date"
+              label="Baseline Expected Invoicing Date"
+              type="text"
               readOnly
-              disabled
-              value={form.baselineInvoicingDate}
-              error={errors.baselineInvoicingDate}
+              value={formatDate(form.baselineInvoicingDate) || '—'}
+              hint="Set once at creation — can't be changed on update"
+              className="bg-gray-50 cursor-not-allowed"
             />
-            <Input
-              label="Expected Invoicing Date"
-              type="date"
+            <DatePicker
+              label="Updated Expected Invoicing Date"
               required
               value={form.expectedInvoicingDate}
               onChange={set('expectedInvoicingDate')}
               error={errors.expectedInvoicingDate}
+            />
+            <Input
+              label="Contract Start Date"
+              type="text"
+              readOnly
+              value={subProjectsLoading ? 'Loading…' : (formatDate(contractStartDate) || '—')}
+              hint="minimum allowed date for invoicing cycles"
+              className="bg-gray-50 cursor-not-allowed"
+            />
+            <Input
+              label="Contract Finish Date"
+              type="text"
+              readOnly
+              value={subProjectsLoading ? 'Loading…' : (formatDate(contractFinishDate) || '—')}
+              hint="maximum allowed date for invoicing cycles"
+              className="bg-gray-50 cursor-not-allowed"
             />
             <div className="md:col-span-2">
               <Textarea
@@ -251,11 +379,40 @@ export default function EditBOQItemPage() {
           </div>
         </Card>
 
+        <Card>
+          <h2 className="text-base font-semibold text-gray-800 mb-1 pb-3 border-b border-gray-100">
+            Invoicing Plan Tracker
+          </h2>
+          <p className="text-xs text-gray-400 mb-4">
+            Cycles already invoiced are locked and read-only. Changing the expected invoicing date or billing frequency regenerates the remaining cycles.
+          </p>
+          {missingContractDates ? (
+            <p className="text-sm text-red-500 text-center py-8">
+              This project has no start/finish dates set on its sub-projects yet — invoicing cycles can't be generated.
+            </p>
+          ) : (
+            <InvoicingPlanTracker
+              cycles={cycles}
+              onChange={setCycles}
+              minDate={contractStartDate}
+              maxDate={contractFinishDate}
+              loading={previewLoading || trackerCyclesLoading}
+              error={previewError}
+              ready={previewReady}
+              disabled={saving}
+              anchorDateLabel="Expected Invoicing Date"
+            />
+          )}
+          {errors.trackerCycles && (
+            <p className="text-xs text-red-500 mt-3">{errors.trackerCycles}</p>
+          )}
+        </Card>
+
         <div className="flex items-center justify-end gap-3 pb-6">
-          <Link href={`/projects/${id}/boq`}>
+          <Link href={`/projects/${encodeURIComponent(projectCode)}/boq`}>
             <Button variant="outline">Cancel</Button>
           </Link>
-          <Button type="submit" loading={saving}>Save Changes</Button>
+          <Button type="submit" loading={saving} disabled={subProjectsLoading || missingContractDates}>Save Changes</Button>
         </div>
       </form>
     </div>

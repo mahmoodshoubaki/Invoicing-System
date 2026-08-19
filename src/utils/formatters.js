@@ -156,6 +156,27 @@ export function formatCompactNumber(value, locale = 'en-SA') {
 }
 
 /**
+ * Format a byte count as a human-readable file size (B, KB, MB, GB).
+ *
+ * @param {number} bytes
+ * @returns {string}
+ *
+ * @example
+ * formatFileSize(15_728_640) // => '15.0 MB'
+ */
+export function formatFileSize(bytes) {
+  if (bytes === null || bytes === undefined || isNaN(Number(bytes))) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let size = Number(bytes);
+  let unitIndex = 0;
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex++;
+  }
+  return `${size.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+}
+
+/**
  * Format a plain number with thousands separators.
  *
  * @param {number} value

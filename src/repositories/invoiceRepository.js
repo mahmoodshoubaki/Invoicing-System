@@ -4,7 +4,7 @@ import { mockInvoices } from '@/mock/invoices';
 import { INVOICE_STATUS } from '@/constants/statuses';
 import { createApiClient } from '@/lib/apiClient';
 import { createInvoiceableBOQItem } from '@/models/boq';
-import { createInvoice as mapInvoice } from '@/models/invoice';
+import { createInvoice as mapInvoice, createInvoiceFormData, createUpdateInvoiceFormData } from '@/models/invoice';
 
 const api = createApiClient('/api/Invoices');
 
@@ -60,30 +60,34 @@ export const invoiceRepository = {
 
   // REAL API
   /**
+   * Return a single invoice by id, including its lines and attachments.
+   * @param {string} id
+   * @returns {Promise<object>}
+   */
+  async getInvoiceById(id) {
+    const raw = await api.get(`/GetInvoiceById?Id=${encodeURIComponent(id)}`);
+    return mapInvoice(raw);
+  },
+
+  // REAL API
+  /**
    * Create and submit a new invoice request.
    * @param {object} data
    * @returns {Promise<object>}
    */
   async createInvoice(data) {
-    const body = {
-      invoiceNumber:          data.invoiceNumber,
-      projectCode:            data.projectCode,
-      vat:                    Number(data.vat),
-      wip:                    Number(data.wip) || 0,
-      revenue:                Number(data.revenue) || 0,
-      submittedBy:            data.submittedBy,
-      statusId:               data.statusId,
-      baselineCollectionDate: data.baselineCollectionDate || null,
-      lines: data.lines.map((line) => ({
-        boqItemId:               line.boqItemId,
-        quantity:                Number(line.quantity),
-        billedUnitPrice:         Number(line.billedUnitPrice),
-        itemTitleArSnapshot:     line.itemTitleArSnapshot     ?? null,
-        itemTitleEnSnapshot:     line.itemTitleEnSnapshot     ?? null,
-        itemDescriptionSnapshot: line.itemDescriptionSnapshot ?? null,
-      })),
-    };
-    return await api.post('/CreateInvoice', body);
+    return await api.post('/CreateInvoice', createInvoiceFormData(data));
+  },
+
+  // REAL API
+  /**
+   * Update an invoice's reason/expected invoicing date and attachments.
+   * Every other invoice field is read-only once created.
+   * @param {object} data
+   * @returns {Promise<object>}
+   */
+  async updateInvoice(data) {
+    return await api.post('/UpdateInvoice', createUpdateInvoiceFormData(data));
   },
 
   /**
@@ -225,5 +229,32 @@ export const invoiceRepository = {
       if (isNotFound(err)) return [];
       throw err;
     }
+  },
+
+  // REAL API
+  /**
+   * Download a single invoice attachment.
+   * @param {string} invoiceId
+   * @param {string} contentId - the attachment's contentId, not its record id.
+   * @param {string} fallbackFileName - used if the response has no filename header.
+   * @returns {Promise<{blob: Blob, fileName: string}>}
+   */
+  async downloadAttachment(invoiceId, contentId, fallbackFileName) {
+    return await api.download('/DownloadInvoiceAttachment', {
+      ContentId: contentId,
+      InvoiceId: invoiceId,
+    }, fallbackFileName);
+  },
+
+  // REAL API
+  /**
+   * Return the revision history for an invoice — each entry is a full
+   * snapshot with the same shape as getInvoiceById's response.
+   * @param {string} invoiceId
+   * @returns {Promise<object[]>}
+   */
+  async getInvoiceHistory(invoiceId) {
+    const data = await api.get(`/GetInvoiceHistory?InvoiceId=${encodeURIComponent(invoiceId)}`);
+    return (data ?? []).map(mapInvoice);
   },
 };

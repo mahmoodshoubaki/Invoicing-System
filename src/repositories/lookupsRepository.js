@@ -1,5 +1,5 @@
 import { createApiClient } from '@/lib/apiClient';
-import { createLookupItem, createInvoiceStatus, createBoqItemStatus } from '@/models/lookup';
+import { createLookupItem, createInvoiceStatus, createBoqItemStatus, createTrackerCycleStatus } from '@/models/lookup';
 
 const boqApi = createApiClient('/api/Boqs');
 const invoicesApi = createApiClient('/api/Invoices');
@@ -21,6 +21,12 @@ export const lookupsRepository = {
   async getInvoiceStatuses() {
     const data = await invoicesApi.get('/GetInvoiceStatuses');
     return (data ?? []).map(createInvoiceStatus);
+  },
+
+  // REAL API
+  async getTrackerCycleStatuses() {
+    const data = await boqApi.get('/GetTrackerCycleStatuses');
+    return (data ?? []).map(createTrackerCycleStatus);
   },
 
   // TODO: add more lookup methods here as new endpoints become available

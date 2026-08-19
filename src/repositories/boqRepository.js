@@ -1,6 +1,9 @@
 import { BOQ_STATUS } from '@/constants/statuses';
 import { createApiClient } from '@/lib/apiClient';
-import { createBOQ, createBOQItem, createBOQItemHistoryEntry } from '@/models/boq';
+import {
+  createBOQ, createBOQItem, createBOQItemHistoryEntry, createTrackerCycle,
+  createBOQItemPayload, updateBOQItemPayload,
+} from '@/models/boq';
 
 const api = createApiClient('/api/Boqs');
 
@@ -22,7 +25,7 @@ export const boqRepository = {
   // REAL API
   async getBOQByProjectCode(projectCode) {
     try {
-      const data = await api.get(`/GetBoqByProjectCode?projectCode=${encodeURIComponent(projectCode)}`);
+      const data = await api.get(`/GetBoqByProjectCode?${new URLSearchParams({ projectCode }).toString()}`);
       return data ? createBOQ(data) : { projectCode, id: null, boqItems: [] };
     } catch (err) {
       if (isNotFound(err)) return { projectCode, id: null, boqItems: [] };
@@ -52,21 +55,8 @@ export const boqRepository = {
     return { ...item };
   },
 
-  async createBOQItem(form, boq) {
-    const body = {
-      BoqId:                 boq?.id          ?? '00000000-0000-0000-0000-000000000000',
-      ProjectCode:           boq?.projectCode ?? null,
-      EnglishName:           form.englishName,
-      ArabicName:            form.arabicName,
-      Quantity:              Number(form.quantity),
-      UnitCost:              Number(form.unitCost),
-      ExpectedInvoicingDate: form.expectedInvoicingDate || null,
-      BaselineInvoicingDate: form.baselineInvoicingDate || null,
-      BillingFrequencyId:    Number(form.billingFrequencyId),
-      Notes:                 form.notes                || null,
-      StatusId:              1,
-    };
-    const response = await api.post('/InsertBoqItem', body);
+  async createBOQItem(form, boq, cycles = []) {
+    const response = await api.post('/InsertBoqItem', createBOQItemPayload(form, boq, cycles));
     return createBOQItem(response);
   },
 
@@ -78,21 +68,8 @@ export const boqRepository = {
    * @param {object} data
    * @returns {Promise<{ isUpdated: boolean }>}
    */
-  async updateBOQItem(id, data) {
-    const body = {
-      ID:                    id,
-      BoqId:                 data.boqId ?? null,
-      EnglishName:           data.englishName,
-      ArabicName:            data.arabicName,
-      Quantity:              Number(data.quantity),
-      UnitCost:              Number(data.unitCost),
-      ExpectedInvoicingDate: data.expectedInvoicingDate || null,
-      baselineInvoicingDate: data.baselineInvoicingDate || null,
-      BillingFrequencyId:    Number(data.billingFrequencyId),
-      Notes:                 data.notes || null,
-      StatusId:              data.statusId,
-    };
-    return await api.post('/UpdateBoqItem', body);
+  async updateBOQItem(id, data, cycles = []) {
+    return await api.post('/UpdateBoqItem', updateBOQItemPayload(id, data, cycles));
   },
 
   // REAL API
@@ -138,6 +115,47 @@ export const boqRepository = {
       if (isNotFound(err)) return [];
       throw err;
     }
+  },
+
+  // REAL API
+  /**
+   * Preview the generated invoicing cycle plan for the given schedule
+   * inputs. Pass `boqItemId` in edit mode so the response includes the
+   * item's already-committed cycles alongside freshly generated ones.
+   * `anchorDate` is the Baseline Invoicing Date when adding a new item, or
+   * the Expected Invoicing Date when editing one (baseline can't be changed
+   * after creation, so it can't drive regeneration on update).
+   * @param {object} params
+   * @param {string} params.anchorDate
+   * @param {number|string} params.billingFrequencyId
+   * @param {string} params.contractStartDate
+   * @param {string} params.contractFinishDate
+   * @param {string} [params.boqItemId]
+   * @returns {Promise<object[]>}
+   */
+  async previewInvoicingPlan({ anchorDate, billingFrequencyId, contractStartDate, contractFinishDate, boqItemId }) {
+    const query = {
+      AnchorDate:          anchorDate,
+      BillingFrequencyId:  billingFrequencyId,
+      ContractStartDate:   contractStartDate,
+      ContractFinishDate:  contractFinishDate,
+    };
+    if (boqItemId) query.BoqItemId = boqItemId;
+    const data = await api.get('/GetTrackerCyclesPreview', query);
+    return (data ?? []).map(createTrackerCycle);
+  },
+
+  // REAL API
+  /**
+   * Return the already-generated invoicing cycles for a BOQ item, as
+   * persisted by the backend — used to seed the Invoicing Plan Tracker in
+   * edit mode instead of calling the preview endpoint on page load.
+   * @param {string} boqItemId
+   * @returns {Promise<object[]>}
+   */
+  async getTrackerCycles(boqItemId) {
+    const data = await api.get('/GetTrackerCycles', { BoqItemId: boqItemId });
+    return (data ?? []).map(createTrackerCycle);
   },
 
   /**

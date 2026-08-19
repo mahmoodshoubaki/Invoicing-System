@@ -14,10 +14,9 @@ import { ConfirmModal } from '@/components/common/Modal';
 import BOQItemHistoryModal from '@/components/boq/BOQItemHistoryModal';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { formatCurrency, formatDate } from '@/utils/formatters';
-import { useAuth } from '@/hooks/useAuth';
-import { ROLES } from '@/constants/roles';
+import { usePermission } from '@/hooks/usePermission';
 import { bulkRemoveBOQItems, fetchBOQByProjectCode, removeBOQItem, selectBOQItems, selectBOQLoading, selectCurrentBOQ } from '@/store/slices/boqSlice';
-import { fetchProjectById, selectSelectedProject, selectProjectsLoading } from '@/store/slices/projectsSlice';
+import { fetchMainProjectDetails, selectMainProjectDetails, selectMainDetailsLoading } from '@/store/slices/projectsSlice';
 import {
   selectBillingFrequenciesMap,
   selectBoqItemStatusesMap,
@@ -26,13 +25,18 @@ import {
 import { useToast } from '@/hooks/useToast';
 
 export default function ProjectBOQPage() {
-  const { id } = useParams();
-  const { user } = useAuth();
+  // The route param is the project code — client-side navigations don't
+  // decode %2F etc. back out of the segment the way SSR does, so decode it
+  // ourselves. Safe either way: an already-decoded value passes through
+  // decodeURIComponent unchanged.
+  const { id: rawId } = useParams();
+  const projectCode = decodeURIComponent(rawId);
+  const { can } = usePermission();
   const toast = useToast();
 
   const dispatch = useDispatch();
-  const project = useSelector(selectSelectedProject);
-  const projectLoading = useSelector(selectProjectsLoading);
+  const project = useSelector(selectMainProjectDetails);
+  const projectLoading = useSelector(selectMainDetailsLoading);
   const currentBOQ = useSelector(selectCurrentBOQ);
   const boqItems = useSelector(selectBOQItems);
   const boqLoading = useSelector(selectBOQLoading);
@@ -48,17 +52,15 @@ export default function ProjectBOQPage() {
   const [saving, setSaving] = useState(false);
   const [historyItemId, setHistoryItemId] = useState(null);
 
-  const canApprove = user?.roles?.includes(ROLES.INVOICING_TEAM) || user?.roles?.includes(ROLES.ADMIN);
+  const canCreate = can('Boqs', 'Create');
+  const canUpdate = can('Boqs', 'Update');
+  const canDelete = can('Boqs', 'Delete');
+  const canApprove = can('Boqs', 'Approve');
 
   useEffect(() => {
-    dispatch(fetchProjectById(id));
-  }, [dispatch, id]);
-
-  useEffect(() => {
-    if (project?.projectCode && project.id === id) {
-      dispatch(fetchBOQByProjectCode(project.projectCode));
-    }
-  }, [dispatch, id, project?.projectCode]);
+    dispatch(fetchMainProjectDetails(projectCode));
+    dispatch(fetchBOQByProjectCode(projectCode));
+  }, [dispatch, projectCode]);
 
   const toggleSelect = (id) => {
     setSelected((prev) => {
@@ -190,9 +192,11 @@ export default function ProjectBOQPage() {
             onClick={() => setHistoryItemId(row.id)}
             title="History"
           />
-          <Link href={`/projects/${id}/boq/${row.id}/edit`}>
-            <Button variant="ghost" size="xs" icon={Edit2} title="Edit" />
-          </Link>
+          {canUpdate && (
+            <Link href={`/projects/${encodeURIComponent(projectCode)}/boq/${row.id}/edit`}>
+              <Button variant="ghost" size="xs" icon={Edit2} title="Edit" />
+            </Link>
+          )}
           {canApprove && (
             <Button
               variant="ghost"
@@ -203,14 +207,16 @@ export default function ProjectBOQPage() {
               title="Approve"
             />
           )}
-          <Button
-            variant="ghost"
-            size="xs"
-            icon={Trash2}
-            className="text-red-500 hover:bg-red-50"
-            onClick={() => { setDeletingId(row.id); setDeleteModal(true); }}
-            title="Delete"
-          />
+          {canDelete && (
+            <Button
+              variant="ghost"
+              size="xs"
+              icon={Trash2}
+              className="text-red-500 hover:bg-red-50"
+              onClick={() => { setDeletingId(row.id); setDeleteModal(true); }}
+              title="Delete"
+            />
+          )}
         </div>
       ),
     },
@@ -265,21 +271,23 @@ export default function ProjectBOQPage() {
 
       <PageHeader
         title="BOQ Management"
-        subtitle={`Project Code: ${project.projectCode}`}
+        subtitle={`Project Code: ${projectCode}`}
         breadcrumbs={[
           { label: 'Home', href: '/' },
           { label: 'Projects', href: '/projects' },
-          { label: project.projectName, href: `/projects/${id}` },
+          { label: project.contractName, href: `/projects/${encodeURIComponent(projectCode)}` },
           { label: 'BOQ' },
         ]}
         actions={
           <>
-            <Link href={`/projects/${id}`}>
+            <Link href={`/projects/${encodeURIComponent(projectCode)}`}>
               <Button variant="ghost" icon={ChevronLeft} size="sm">Back</Button>
             </Link>
-            <Link href={`/projects/${id}/boq/new`}>
-              <Button icon={Plus}>Add Item</Button>
-            </Link>
+            {canCreate && (
+              <Link href={`/projects/${encodeURIComponent(projectCode)}/boq/new`}>
+                <Button icon={Plus}>Add Item</Button>
+              </Link>
+            )}
           </>
         }
       />
@@ -288,9 +296,11 @@ export default function ProjectBOQPage() {
       {selected.size > 0 && (
         <div className="bg-primary/10 border border-primary/20 rounded-xl p-3 mb-4 flex items-center gap-3">
           <span className="text-sm font-medium text-primary">{selected.size} item(s) selected</span>
-          <Button variant="danger" size="sm" icon={Trash2} onClick={() => setBulkDeleteModal(true)}>
-            Delete Selected
-          </Button>
+          {canDelete && (
+            <Button variant="danger" size="sm" icon={Trash2} onClick={() => setBulkDeleteModal(true)}>
+              Delete Selected
+            </Button>
+          )}
           <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>
             Clear Selection
           </Button>

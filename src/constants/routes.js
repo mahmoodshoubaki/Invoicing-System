@@ -22,7 +22,6 @@ export const ROUTES = {
   ADMIN: '/admin',
   ADMIN_USERS: '/admin/users',
   ADMIN_ROLES: '/admin/roles',
-  ADMIN_PERMISSIONS: '/admin/permissions',
   ADMIN_WORKFLOW: '/admin/workflow',
   ADMIN_SETTINGS: '/admin/settings',
 
@@ -59,7 +58,6 @@ export const ROUTE_PATTERNS = {
   ADMIN: '/admin',
   ADMIN_USERS: '/admin/users',
   ADMIN_ROLES: '/admin/roles',
-  ADMIN_PERMISSIONS: '/admin/permissions',
   ADMIN_WORKFLOW: '/admin/workflow',
   ADMIN_SETTINGS: '/admin/settings',
   WORKFLOW: '/workflow',

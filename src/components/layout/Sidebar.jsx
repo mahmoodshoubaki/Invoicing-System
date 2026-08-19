@@ -3,7 +3,7 @@
 import {
   LayoutDashboard, FolderKanban, Receipt,
   GitBranch, Bell, BarChart3, Users, Shield, Settings,
-  Building2, X, Menu,
+  X, Menu,
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleSidebar } from '@/store/slices/uiSlice';
@@ -22,28 +22,28 @@ const NAV_ITEMS = [
     labelAr: 'المشاريع',
     href: '/projects',
     icon: FolderKanban,
-    permission: 'project.read',
+    permission: { module: 'Projects', action: 'View' },
   },
   {
     label: 'Invoice Requests',
     labelAr: 'طلبات الفاتورة',
     href: '/invoices',
     icon: Receipt,
-    permission: 'invoice.read',
+    permission: { module: 'Invoices', action: 'View' },
   },
   {
     label: 'Workflow',
     labelAr: 'سير العمل',
     href: '/workflow',
     icon: GitBranch,
-    permission: 'workflow.read',
+    permission: { module: 'Workflow', action: 'View' },
   },
   {
     label: 'Notifications',
     labelAr: 'الإشعارات',
     href: '/notifications',
     icon: Bell,
-    permission: 'notification.read',
+    permission: null,
     badge: 'unread',
   },
   {
@@ -51,19 +51,23 @@ const NAV_ITEMS = [
     labelAr: 'التقارير',
     href: '/reports',
     icon: BarChart3,
-    permission: 'report.read',
+    permission: null,
   },
   {
     label: 'Admin',
     labelAr: 'الإدارة',
     href: '/admin',
     icon: Shield,
-    permission: 'admin.manage',
+    permission: [
+      { module: 'System', action: 'Administrator' },
+      { module: 'Role', action: 'View' },
+      { module: 'Workflow', action: 'Manage' },
+    ],
     children: [
-      { label: 'Users', labelAr: 'المستخدمون', href: '/admin/users', icon: Users },
-      { label: 'Roles & Permissions', labelAr: 'الأدوار والصلاحيات', href: '/admin/roles', icon: Shield },
-      { label: 'Workflow Management', labelAr: 'إدارة سير العمل', href: '/admin/workflow', icon: GitBranch },
-      { label: 'System Settings', labelAr: 'إعدادات النظام', href: '/admin/settings', icon: Settings },
+      { label: 'Users', labelAr: 'المستخدمون', href: '/admin/users', icon: Users, permission: { module: 'System', action: 'Administrator' } },
+      { label: 'Roles & Permissions', labelAr: 'الأدوار والصلاحيات', href: '/admin/roles', icon: Shield, permission: { module: 'Role', action: 'View' } },
+      { label: 'Workflow Management', labelAr: 'إدارة سير العمل', href: '/admin/workflow', icon: GitBranch, permission: { module: 'Workflow', action: 'Manage' } },
+      { label: 'System Settings', labelAr: 'إعدادات النظام', href: '/admin/settings', icon: Settings, permission: { module: 'System', action: 'Administrator' } },
     ],
   },
 ];
@@ -82,29 +86,14 @@ export default function Sidebar() {
       )}
 
       <aside
-        className={`fixed top-0 left-0 h-full bg-white z-30 flex flex-col
+        className={`fixed top-16 left-0 h-full bg-white z-30 flex flex-col
           transition-all duration-300 ease-in-out border-r border-gray-100
           ${sidebarOpen ? 'w-64' : 'w-16'}
           lg:translate-x-0
         `}
         style={{ boxShadow: '2px 0 8px rgba(0,0,0,0.06)' }}
       >
-        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-100 shrink-0">
-          {sidebarOpen ? (
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
-                <Building2 size={16} className="text-white" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-dark leading-tight truncate">Devoteam</p>
-                <p className="text-[10px] text-gray-400 leading-tight truncate">Invoicing System</p>
-              </div>
-            </div>
-          ) : (
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center mx-auto">
-              <Building2 size={16} className="text-white" />
-            </div>
-          )}
+        <div className={`flex items-center h-12 px-4 border-b border-gray-100 shrink-0 ${sidebarOpen ? 'justify-end' : 'justify-center'}`}>
           <button
             onClick={() => dispatch(toggleSidebar())}
             className="p-1 rounded-md hover:bg-gray-100 text-gray-500 shrink-0"
