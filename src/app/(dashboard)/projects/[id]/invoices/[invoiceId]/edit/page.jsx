@@ -1,7 +1,7 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import Link from 'next/link';
 import {
@@ -21,6 +21,7 @@ import { iconForFileName } from '@/utils/attachmentIcon';
 import { saveBlob } from '@/utils/saveBlob';
 import { fetchInvoiceById, selectSelectedInvoice, selectInvoicesLoading, updateInvoice } from '@/store/slices/invoicesSlice';
 import { selectInvoiceStatusesMap, selectInvoiceStatusColorsMap } from '@/store/slices/lookupsSlice';
+import { fetchMainProjectDetails, selectMainProjectDetails } from '@/store/slices/projectsSlice';
 import { invoiceRepository } from '@/repositories/invoiceRepository';
 import { useToast } from '@/hooks/useToast';
 
@@ -41,15 +42,16 @@ const InfoItem = ({ icon: Icon, label, value, valueClass = '' }) => (
   </div>
 );
 
-function EditInvoiceContent() {
-  const { id } = useParams();
+export default function EditInvoicePage() {
+  // See boq/page.jsx for why the project code segment is decoded defensively.
+  const { id: rawId, invoiceId } = useParams();
+  const projectCode = decodeURIComponent(rawId);
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const projectCode = searchParams.get('projectCode');
   const dispatch = useDispatch();
   const toast = useToast();
 
   const currency = useSelector((s) => s.ui.currency);
+  const project = useSelector(selectMainProjectDetails);
   const invoice = useSelector(selectSelectedInvoice);
   const isLoading = useSelector(selectInvoicesLoading);
   const invoiceStatusesMap = useSelector(selectInvoiceStatusesMap);
@@ -65,14 +67,18 @@ function EditInvoiceContent() {
   const [downloadingIds, setDownloadingIds] = useState(new Set());
 
   useEffect(() => {
-    dispatch(fetchInvoiceById(id));
-  }, [dispatch, id]);
+    dispatch(fetchMainProjectDetails(projectCode));
+  }, [dispatch, projectCode]);
 
   useEffect(() => {
-    if (invoice?.id === id) {
+    dispatch(fetchInvoiceById(invoiceId));
+  }, [dispatch, invoiceId]);
+
+  useEffect(() => {
+    if (invoice?.id === invoiceId) {
       setexpectedCollectionDate(toDateInput(invoice.expectedCollectionDate));
     }
-  }, [invoice, id]);
+  }, [invoice, invoiceId]);
 
   const toggleDeleteAttachment = (attachmentId) => {
     setAttachmentIdsToDelete((prev) => {
@@ -100,7 +106,9 @@ function EditInvoiceContent() {
     }
   };
 
-  const viewInvoiceHref = `/invoices/${id}${projectCode ? `?projectCode=${encodeURIComponent(projectCode)}` : ''}`;
+  // The detail page isn't nested under the project route, so it's still
+  // reached with the project code passed along as a query param.
+  const viewInvoiceHref = `/invoices/${invoiceId}?projectCode=${encodeURIComponent(projectCode)}`;
   const attachmentsUploading = attachmentsToAdd.some((a) => a.status === 'uploading');
 
   const validate = () => {
@@ -117,7 +125,7 @@ function EditInvoiceContent() {
     setSaving(true);
     try {
       await dispatch(updateInvoice({
-        invoiceId: id,
+        invoiceId,
         reasonsForUpdate,
         expectedCollectionDate,
         attachmentIdsToDelete: Array.from(attachmentIdsToDelete),
@@ -125,7 +133,7 @@ function EditInvoiceContent() {
       })).unwrap();
 
       toast.success('Invoice updated', 'The invoice was updated successfully.');
-      await dispatch(fetchInvoiceById(id));
+      await dispatch(fetchInvoiceById(invoiceId));
       router.push(viewInvoiceHref);
     } catch (err) {
       toast.error('Failed to update invoice', err ?? 'Please try again.');
@@ -146,8 +154,8 @@ function EditInvoiceContent() {
     return (
       <div className="text-center py-20">
         <p className="text-gray-500">Invoice not found.</p>
-        <Link href="/invoices">
-          <Button variant="outline" className="mt-4">Back to Invoices</Button>
+        <Link href={`/projects/${encodeURIComponent(projectCode)}`}>
+          <Button variant="outline" className="mt-4">Back to Project</Button>
         </Link>
       </div>
     );
@@ -167,9 +175,8 @@ function EditInvoiceContent() {
         subtitle={projectCode}
         breadcrumbs={[
           { label: 'Home', href: '/' },
-          ...(projectCode
-            ? [{ label: 'Projects', href: '/projects' }, { label: projectCode, href: `/projects/${encodeURIComponent(projectCode)}` }]
-            : [{ label: 'Invoice Requests', href: '/invoices' }]),
+          { label: 'Projects', href: '/projects' },
+          { label: project?.contractName ?? projectCode, href: `/projects/${encodeURIComponent(projectCode)}` },
           { label: invoice.invoiceNumber, href: viewInvoiceHref },
           { label: 'Edit' },
         ]}
@@ -178,7 +185,7 @@ function EditInvoiceContent() {
             <Button variant="ghost" icon={History} size="sm" onClick={() => setHistoryOpen(true)}>
               History
             </Button>
-            <Link href="" onClick={()=>router.back()}>
+            <Link href="" onClick={() => router.back()}>
               <Button variant="ghost" icon={ChevronLeft} size="sm">Back</Button>
             </Link>
           </>
@@ -204,6 +211,7 @@ function EditInvoiceContent() {
             <InfoItem icon={User} label="Submitted By" value={invoice.submittedBy} />
             <InfoItem icon={Calendar} label="Submission Date" value={formatDateTime(invoice.submissionDate)} />
             <InfoItem icon={Calendar} label="Baseline Expected Collection Date" value={formatDate(invoice.baselineCollectionDate)} />
+            <InfoItem icon={Calendar} label="Updated Expected Collection Date" value={formatDate(invoice.expectedCollectionDate)} />
           </div>
         </Card>
 
@@ -341,7 +349,7 @@ function EditInvoiceContent() {
 
         {/* Actions */}
         <div className="flex items-center justify-end gap-3 pb-6">
-          <Link href="" onClick={()=>router.back()}>
+          <Link href="" onClick={() => router.back()}>
             <Button variant="outline">Cancel</Button>
           </Link>
           <Button type="submit" loading={saving} disabled={attachmentsUploading}>
@@ -350,17 +358,5 @@ function EditInvoiceContent() {
         </div>
       </form>
     </div>
-  );
-}
-
-export default function EditInvoicePage() {
-  return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center h-64">
-        <LoadingSpinner />
-      </div>
-    }>
-      <EditInvoiceContent />
-    </Suspense>
   );
 }

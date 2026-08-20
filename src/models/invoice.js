@@ -36,7 +36,6 @@ export function createInvoiceFormData(data) {
   const request = {
     invoiceNumber:          data.invoiceNumber,
     projectCode:            data.projectCode,
-    vat:                    Number(data.vat),
     wip:                    Number(data.wip) || 0,
     revenue:                Number(data.revenue) || 0,
     submittedBy:            data.submittedBy,

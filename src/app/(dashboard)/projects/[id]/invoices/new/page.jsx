@@ -16,7 +16,11 @@ import AttachmentUploader from '@/components/invoices/AttachmentUploader';
 import { formatCurrency } from '@/utils/formatters';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
-import { fetchMainProjectDetails, selectMainProjectDetails, selectMainDetailsLoading } from '@/store/slices/projectsSlice';
+import {
+  fetchMainProjectDetails, selectMainProjectDetails, selectMainDetailsLoading,
+  fetchSubProjectsSummary, selectSubProjects,
+} from '@/store/slices/projectsSlice';
+import { aggregateSubProjectFinancials } from '@/models/project';
 import {
   createInvoice,
   fetchInvoiceableBOQItems,
@@ -31,8 +35,6 @@ const INITIAL_FORM = {
   boqLineItems: {},
   invoiceNumber: '',
   vat: '0.15',
-  revenue: '',
-  wip: '',
   baselineCollectionDate: '',
 };
 
@@ -48,9 +50,16 @@ export default function NewInvoicePage() {
   const currency = useSelector((s) => s.ui.currency);
   const project = useSelector(selectMainProjectDetails);
   const projectLoading = useSelector(selectMainDetailsLoading);
+  const subProjects = useSelector(selectSubProjects);
   const boqItems = useSelector(selectInvoiceableBOQItems);
   const boqItemsLoading = useSelector(selectInvoiceableBOQItemsLoading);
   const billingFrequenciesMap = useSelector(selectBillingFrequenciesMap);
+
+  // Same source as the project card's Financial Summary — shown here as
+  // reference context while filling out an invoice, not fed into the
+  // invoice's own Revenue/WIP fields below (project-to-date totals aren't
+  // this invoice's revenue/WIP contribution).
+  const projectFinancials = aggregateSubProjectFinancials(subProjects);
 
   const [form, setForm] = useState(INITIAL_FORM);
   const [errors, setErrors] = useState({});
@@ -61,6 +70,7 @@ export default function NewInvoicePage() {
 
   useEffect(() => {
     dispatch(fetchMainProjectDetails(projectCode));
+    dispatch(fetchSubProjectsSummary(projectCode));
   }, [dispatch, projectCode]);
 
   // Checked off the resolved fetch result (not the isLoading selector) so
@@ -90,25 +100,6 @@ export default function NewInvoicePage() {
   useEffect(() => {
     return () => { dispatch(clearInvoiceableBOQItems()); };
   }, [dispatch]);
-
-  // Recompute WIP whenever any line item quantity changes
-  const boqLineItemsKey = JSON.stringify(form.boqLineItems);
-  useEffect(() => {
-    const entries = Object.entries(form.boqLineItems);
-    if (entries.length === 0) {
-      setForm((prev) => ({ ...prev, wip: '' }));
-      return;
-    }
-    const total = entries.reduce((sum, [itemId, { quantity }]) => {
-      const boq = boqItems.find((b) => String(b.id) === itemId);
-      return sum + (boq?.unitCost ?? 0) * (Number(quantity) || 0);
-    }, 0);
-    setForm((prev) => ({
-      ...prev,
-      wip: total > 0 ? '0' : '',
-    }));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [boqLineItemsKey, boqItems]);
 
   const toggleBOQItem = (boqId) => {
     setForm((prev) => {
@@ -164,9 +155,9 @@ export default function NewInvoicePage() {
     }
 
     if (!form.invoiceNumber.trim()) e.invoiceNumber = 'Invoice number is required';
-    if (form.vat === '' || isNaN(Number(form.vat)) || Number(form.vat) < 0) {
-      e.vat = 'Valid VAT rate is required';
-    }
+    // if (form.vat === '' || isNaN(Number(form.vat)) || Number(form.vat) < 0) {
+    //   e.vat = 'Valid VAT rate is required';
+    // }
     if (!form.baselineCollectionDate) e.baselineCollectionDate = 'Baseline Expected collection date is required';
     return e;
   };
@@ -195,9 +186,8 @@ export default function NewInvoicePage() {
       await dispatch(createInvoice({
         invoiceNumber: form.invoiceNumber,
         projectCode,
-        vat: Number(form.vat),
-        wip: Number(form.wip) || 0,
-        revenue: Number(form.revenue) || 0,
+        wip: projectFinancials.wip,
+        revenue: projectFinancials.totalRevenue,
         submittedBy: user?.username ?? null,
         baselineCollectionDate: form.baselineCollectionDate,
         lines,
@@ -278,6 +268,20 @@ export default function NewInvoicePage() {
             <Link href={`/projects/${encodeURIComponent(projectCode)}`}>
               <Button variant="ghost" size="xs">View Project</Button>
             </Link>
+          </div>
+          <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-100">
+            <div>
+              <p className="text-xs text-gray-400 uppercase tracking-wide">Project Revenue</p>
+              <p className="text-sm font-semibold text-gray-800 mt-0.5">
+                {formatCurrency(projectFinancials.totalRevenue, currency)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 uppercase tracking-wide">Project WIP</p>
+              <p className="text-sm font-semibold text-gray-800 mt-0.5">
+                {formatCurrency(projectFinancials.wip, currency)}
+              </p>
+            </div>
           </div>
         </Card>
 
@@ -453,7 +457,7 @@ export default function NewInvoicePage() {
               onChange={set('baselineCollectionDate')}
               error={errors.baselineCollectionDate}
             />
-            <Input
+            {/* <Input
               label="VAT Rate"
               required
               type="number"
@@ -464,25 +468,7 @@ export default function NewInvoicePage() {
               onChange={set('vat')}
               error={errors.vat}
               hint="Enter as a decimal, e.g. 0.15 for 15%"
-            />
-            <Input
-              label={`Revenue (${currency})`}
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="0.00"
-              value={form.revenue}
-              onChange={set('revenue')}
-            />
-            <Input
-              label={`WIP (${currency})`}
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="0.00"
-              value={form.wip}
-              onChange={set('wip')}
-            />
+            /> */}
           </div>
         </Card>
 

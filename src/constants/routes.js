@@ -13,9 +13,12 @@ export const ROUTES = {
   PROJECT_BOQ_NEW: (id) => `/projects/${id}/boq/new`,
   PROJECT_BOQ_EDIT: (id, itemId) => `/projects/${id}/boq/${itemId}/edit`,
 
-  // Invoices (creation nested under a project — no standalone "new" route)
+  // Invoices (creation and editing nested under a project — no standalone
+  // "new"/"edit" routes; detail stays top-level since it's also reachable
+  // from the global invoices list)
   INVOICES: '/invoices',
   PROJECT_INVOICE_NEW: (id) => `/projects/${id}/invoices/new`,
+  PROJECT_INVOICE_EDIT: (id, invoiceId) => `/projects/${id}/invoices/${invoiceId}/edit`,
   INVOICE_DETAIL: (id) => `/invoices/${id}`,
 
   // Admin
@@ -54,6 +57,7 @@ export const ROUTE_PATTERNS = {
   PROJECT_BOQ_EDIT: '/projects/[id]/boq/[itemId]/edit',
   INVOICES: '/invoices',
   PROJECT_INVOICE_NEW: '/projects/[id]/invoices/new',
+  PROJECT_INVOICE_EDIT: '/projects/[id]/invoices/[invoiceId]/edit',
   INVOICE_DETAIL: '/invoices/[id]',
   ADMIN: '/admin',
   ADMIN_USERS: '/admin/users',

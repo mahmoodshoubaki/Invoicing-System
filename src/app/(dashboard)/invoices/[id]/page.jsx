@@ -38,7 +38,7 @@ const InfoItem = ({ icon: Icon, label, value, valueClass = '' }) => (
 function InvoiceDetailContent() {
   const { id } = useParams();
   const searchParams = useSearchParams();
-  const projectCode = searchParams.get('projectCode');
+  const queryProjectCode = searchParams.get('projectCode');
   const dispatch = useDispatch();
   const toast = useToast();
   const { can } = usePermission();
@@ -50,6 +50,12 @@ function InvoiceDetailContent() {
   const invoiceStatusColorsMap = useSelector(selectInvoiceStatusColorsMap);
   const [downloadingIds, setDownloadingIds] = useState(new Set());
   const [historyOpen, setHistoryOpen] = useState(false);
+
+  // The invoice itself carries its project code once loaded — prefer that
+  // over the query param so this page (and the links it builds, including
+  // Edit) works regardless of how it was navigated to, not only when a
+  // caller happened to pass ?projectCode=.
+  const projectCode = invoice?.projectCode ?? queryProjectCode;
 
   useEffect(() => {
     dispatch(fetchInvoiceById(id));
@@ -119,8 +125,8 @@ function InvoiceDetailContent() {
             <Button variant="ghost" icon={History} size="sm" onClick={() => setHistoryOpen(true)}>
               History
             </Button>
-            {can('Invoices', 'Update') && (
-              <Link href={`/invoices/${id}/edit${projectCode ? `?projectCode=${encodeURIComponent(projectCode)}` : ''}`}>
+            {can('Invoices', 'Update') && projectCode && (
+              <Link href={`/projects/${encodeURIComponent(projectCode)}/invoices/${id}/edit`}>
                 <Button variant="outline" icon={Edit2} size="sm">Edit</Button>
               </Link>
             )}

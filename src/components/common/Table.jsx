@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useRef, useState } from 'react';
+import { memo, useLayoutEffect, useRef, useState } from 'react';
 import { ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import Button from './Button';
 
@@ -12,7 +12,7 @@ function SortIcon({ direction }) {
   return <ChevronsUpDown size={13} className="opacity-40" />;
 }
 
-export default function Table({
+function Table({
   columns,
   data,
   isLoading = false,
@@ -25,8 +25,14 @@ export default function Table({
   compact = false,
   resizable = true,
 }) {
-  const [sortCol, setSortCol] = useState(null);
-  const [sortDir, setSortDir] = useState('asc');
+  // sortCol/sortDir were previously two separate useState slots updated
+  // together on every real sort change — splitting state that always
+  // changes as a unit across multiple useState calls invites exactly the
+  // "toggle gets stuck" class of bug (any path that updates one without the
+  // other leaves them inconsistent). One state object updated atomically
+  // removes that possibility entirely.
+  const [sort, setSort] = useState({ col: null, dir: 'asc' });
+  const { col: sortCol, dir: sortDir } = sort;
   const [colWidths, setColWidths] = useState({});
   const [measured, setMeasured] = useState(false);
   const resizeState = useRef(null);
@@ -79,13 +85,13 @@ export default function Table({
   };
 
   const handleSort = (col) => {
-    if (!col.sortable && !sortable) return;
-    if (sortCol === col.key) {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setSortCol(col.key);
-      setSortDir('asc');
-    }
+    if (col.sortable === false) return;
+    if (!sortable && col.sortable !== true) return;
+    setSort((prev) => (
+      prev.col === col.key
+        ? { col: col.key, dir: prev.dir === 'asc' ? 'desc' : 'asc' }
+        : { col: col.key, dir: 'asc' }
+    ));
   };
 
   const sortedData = sortCol
@@ -236,3 +242,5 @@ export default function Table({
     </div>
   );
 }
+
+export default memo(Table);

@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, createSelector } from '@reduxjs/toolkit';
 import { lookupsRepository } from '@/repositories/lookupsRepository';
 
 // ---------------------------------------------------------------------------
@@ -143,23 +143,32 @@ export const selectTrackerCycleStatuses = (state) => state.lookups.trackerCycleS
  * Returns a plain object keyed by id for O(1) resolution.
  * Usage: const map = useSelector(selectBillingFrequenciesMap);
  *        map[item.billingFrequencyId] → "Monthly"
+ *
+ * Built with createSelector (not a plain `(state) => ...` function) so it
+ * only recomputes — and only returns a new object — when
+ * `state.lookups.billingFrequencies` itself changes. A plain function here
+ * would call Object.fromEntries fresh on every single invocation, handing
+ * out a new object reference to every render regardless of whether the data
+ * actually changed, which silently defeats React.memo on any component that
+ * receives it as a prop (memo's shallow-equality check sees "changed" every
+ * time). Same reasoning for every other Map/color selector below.
  */
-export const selectBillingFrequenciesMap = (state) =>
-  Object.fromEntries(
-    state.lookups.billingFrequencies.map((f) => [f.id, f.label])
-  );
-export const selectBoqItemStatusesMap = (state) =>
-  Object.fromEntries(
-    state.lookups.boqItemStatuses.map((s) => [s.id, s.label])
-  );
-export const selectInvoiceStatusesMap = (state) =>
-  Object.fromEntries(
-    state.lookups.invoiceStatuses.map((s) => [s.id, s.label])
-  );
-export const selectTrackerCycleStatusesMap = (state) =>
-  Object.fromEntries(
-    state.lookups.trackerCycleStatuses.map((s) => [s.id, s.label])
-  );
+export const selectBillingFrequenciesMap = createSelector(
+  [selectBillingFrequencies],
+  (billingFrequencies) => Object.fromEntries(billingFrequencies.map((f) => [f.id, f.label]))
+);
+export const selectBoqItemStatusesMap = createSelector(
+  [selectBoqItemStatuses],
+  (boqItemStatuses) => Object.fromEntries(boqItemStatuses.map((s) => [s.id, s.label]))
+);
+export const selectInvoiceStatusesMap = createSelector(
+  [selectInvoiceStatuses],
+  (invoiceStatuses) => Object.fromEntries(invoiceStatuses.map((s) => [s.id, s.label]))
+);
+export const selectTrackerCycleStatusesMap = createSelector(
+  [selectTrackerCycleStatuses],
+  (trackerCycleStatuses) => Object.fromEntries(trackerCycleStatuses.map((s) => [s.id, s.label]))
+);
 
 /**
  * Returns a plain object keyed by id → hex color, for rendering StatusBadge
@@ -167,10 +176,10 @@ export const selectTrackerCycleStatusesMap = (state) =>
  * Usage: const colors = useSelector(selectInvoiceStatusColorsMap);
  *        <StatusBadge status={label} colors={colors[item.statusId]} />
  */
-export const selectInvoiceStatusColorsMap = (state) =>
-  Object.fromEntries(
-    state.lookups.invoiceStatuses.map((s) => [s.id, s.colorHex])
-  );
+export const selectInvoiceStatusColorsMap = createSelector(
+  [selectInvoiceStatuses],
+  (invoiceStatuses) => Object.fromEntries(invoiceStatuses.map((s) => [s.id, s.colorHex]))
+);
 
 /**
  * Same as selectInvoiceStatusColorsMap but for BOQ item statuses — kept as
@@ -178,19 +187,19 @@ export const selectInvoiceStatusColorsMap = (state) =>
  * Usage: const colors = useSelector(selectBoqItemStatusColorsMap);
  *        <StatusBadge status={label} colors={colors[item.statusId]} />
  */
-export const selectBoqItemStatusColorsMap = (state) =>
-  Object.fromEntries(
-    state.lookups.boqItemStatuses.map((s) => [s.id, s.colorHex])
-  );
+export const selectBoqItemStatusColorsMap = createSelector(
+  [selectBoqItemStatuses],
+  (boqItemStatuses) => Object.fromEntries(boqItemStatuses.map((s) => [s.id, s.colorHex]))
+);
 
 /**
  * Same idea as selectBoqItemStatusColorsMap but for tracker cycle statuses.
  * Usage: const colors = useSelector(selectTrackerCycleStatusColorsMap);
  *        <StatusBadge status={label} colors={colors[cycle.statusId]} />
  */
-export const selectTrackerCycleStatusColorsMap = (state) =>
-  Object.fromEntries(
-    state.lookups.trackerCycleStatuses.map((s) => [s.id, s.colorHex])
-  );
+export const selectTrackerCycleStatusColorsMap = createSelector(
+  [selectTrackerCycleStatuses],
+  (trackerCycleStatuses) => Object.fromEntries(trackerCycleStatuses.map((s) => [s.id, s.colorHex]))
+);
 
 export default lookupsSlice.reducer;

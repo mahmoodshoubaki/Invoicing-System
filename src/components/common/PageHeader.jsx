@@ -1,9 +1,18 @@
 'use client';
 
+import { memo } from 'react';
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
-export default function PageHeader({ title, subtitle, breadcrumbs, actions, children }) {
+/**
+ * Memoized since it's rendered at the top of nearly every page and its
+ * content is almost always static across a page's internal state changes
+ * (e.g. switching tabs) — but this only pays off if the caller passes
+ * stable `breadcrumbs`/`actions` references (wrap them in useMemo rather
+ * than inline array/JSX literals), otherwise memo's shallow prop check
+ * still sees "changed" every render and re-renders anyway.
+ */
+function PageHeader({ title, subtitle, breadcrumbs, actions, children }) {
   return (
     <div className="mb-6">
       {breadcrumbs && breadcrumbs.length > 0 && (
@@ -40,3 +49,5 @@ export default function PageHeader({ title, subtitle, breadcrumbs, actions, chil
     </div>
   );
 }
+
+export default memo(PageHeader);

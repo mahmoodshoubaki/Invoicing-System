@@ -1,5 +1,7 @@
 'use client';
 
+import { memo } from 'react';
+
 const VARIANTS = {
   default: 'bg-gray-100 text-gray-700',
   primary: 'bg-red-50 text-primary',
@@ -54,7 +56,7 @@ function hexToRgbTriplet(hex) {
   return `${r}, ${g}, ${b}`;
 }
 
-export default function Badge({
+function Badge({
   children,
   variant = 'default',
   size = 'md',
@@ -84,7 +86,9 @@ export default function Badge({
   );
 }
 
-export function StatusBadge({ status, size = 'md', colors }) {
+export default memo(Badge);
+
+function StatusBadgeImpl({ status, size = 'md', colors }) {
   if (colors) {
     const rgb = hexToRgbTriplet(colors);
     return (
@@ -108,3 +112,5 @@ export function StatusBadge({ status, size = 'md', colors }) {
     </Badge>
   );
 }
+
+export const StatusBadge = memo(StatusBadgeImpl);

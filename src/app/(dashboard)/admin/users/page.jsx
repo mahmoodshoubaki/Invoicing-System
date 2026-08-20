@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   UserPlus,
@@ -15,13 +15,8 @@ import { addToast } from '@/store/slices/uiSlice';
 import {
   fetchAuthorizedUsers,
   updateUser,
-  createUser,
-  fetchUnregisteredADUsers,
-  clearAdCandidates,
   selectUsers,
   selectUsersLoading,
-  selectAdCandidates,
-  selectAdCandidatesLoading,
 } from '@/store/slices/usersSlice';
 import { fetchAllRoles, selectRoles, selectRolesLoading } from '@/store/slices/rolesSlice';
 import PageHeader from '@/components/common/PageHeader';
@@ -32,12 +27,7 @@ import Modal from '@/components/common/Modal';
 import { ConfirmModal } from '@/components/common/Modal';
 import { Checkbox } from '@/components/forms/FormField';
 import Card from '@/components/common/Card';
-import ADUserSearchInput from '@/components/admin/ADUserSearchInput';
-
-const EMPTY_FORM = {
-  displayName: '',
-  roleIds: [],
-};
+import AddUserModal from '@/components/admin/AddUserModal';
 
 export default function UsersPage() {
   const dispatch = useDispatch();
@@ -45,8 +35,6 @@ export default function UsersPage() {
   const usersLoading = useSelector(selectUsersLoading);
   const roles = useSelector(selectRoles);
   const rolesLoading = useSelector(selectRolesLoading);
-  const adCandidates = useSelector(selectAdCandidates);
-  const adCandidatesLoading = useSelector(selectAdCandidatesLoading);
 
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState('');
@@ -56,8 +44,6 @@ export default function UsersPage() {
   const [editModal, setEditModal] = useState(false);
   const [deactivateModal, setDeactivateModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [selectedCandidate, setSelectedCandidate] = useState(null);
-  const [formData, setFormData] = useState(EMPTY_FORM);
   const [editRoleIds, setEditRoleIds] = useState([]);
   const [saving, setSaving] = useState(false);
 
@@ -100,55 +86,12 @@ export default function UsersPage() {
     });
   }, [users, search, roleFilter]);
 
-  function openAdd() {
-    setFormData(EMPTY_FORM);
-    setSelectedCandidate(null);
-    setAddModal(true);
-    dispatch(fetchUnregisteredADUsers());
-  }
-
-  function closeAdd() {
-    setAddModal(false);
-    setSelectedCandidate(null);
-    dispatch(clearAdCandidates());
-  }
-
-  function selectCandidate(candidate) {
-    setSelectedCandidate(candidate);
-    setFormData((prev) => ({ ...prev, displayName: candidate.username }));
-  }
-
-  function clearCandidate() {
-    setSelectedCandidate(null);
-    setFormData((prev) => ({ ...prev, displayName: '' }));
-  }
-
-  function toggleRole(roleId) {
-    setFormData((prev) => ({
-      ...prev,
-      roleIds: prev.roleIds.includes(roleId)
-        ? prev.roleIds.filter((id) => id !== roleId)
-        : [...prev.roleIds, roleId],
-    }));
-  }
-
-  async function handleSaveAdd() {
-    if (!selectedCandidate || !formData.roleIds.length) {
-      dispatch(addToast({ type: 'error', title: 'Validation', message: 'Select a user from the list and at least one role.' }));
-      return;
-    }
-    setSaving(true);
-    try {
-      await dispatch(createUser(formData)).unwrap();
-      dispatch(addToast({ type: 'success', title: 'User added', message: `${selectedCandidate.displayName} has been added.` }));
-      closeAdd();
-      dispatch(fetchAuthorizedUsers());
-    } catch (err) {
-      dispatch(addToast({ type: 'error', title: 'Failed to add user', message: err ?? 'Please try again.' }));
-    } finally {
-      setSaving(false);
-    }
-  }
+  // Stable references — AddUserModal is memoized, and without useCallback
+  // here it would get a brand-new function on every UsersPage render (e.g.
+  // typing in the search box below while the modal happens to be open),
+  // which defeats that memo just as surely as not memoizing at all.
+  const closeAddModal = useCallback(() => setAddModal(false), []);
+  const handleUserCreated = useCallback(() => { dispatch(fetchAuthorizedUsers()); }, [dispatch]);
 
   function openEdit(user) {
     setSelectedUser(user);
@@ -269,7 +212,7 @@ export default function UsersPage() {
         subtitle="Manage system users, roles, and access control"
         breadcrumbs={[{ label: 'Admin' }, { label: 'Users' }]}
         actions={
-          <Button icon={UserPlus} onClick={openAdd}>
+          <Button icon={UserPlus} onClick={() => setAddModal(true)}>
             Add User
           </Button>
         }
@@ -346,42 +289,11 @@ export default function UsersPage() {
         emptyMessage="No users match your search"
       />
 
-      {/* Add Modal */}
-      <Modal
+      <AddUserModal
         open={addModal}
-        onClose={closeAdd}
-        title="Add New User"
-        size="md"
-        footer={
-          <>
-            <Button variant="outline" onClick={closeAdd} disabled={saving}>Cancel</Button>
-            <Button icon={UserPlus} onClick={handleSaveAdd} loading={saving}>Add User</Button>
-          </>
-        }
-      >
-        <div className="space-y-4">
-          <ADUserSearchInput
-            candidates={adCandidates}
-            loading={adCandidatesLoading}
-            selected={selectedCandidate}
-            onSelect={selectCandidate}
-            onClear={clearCandidate}
-          />
-          <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">Roles <span className="text-primary">*</span></p>
-            <div className="grid grid-cols-2 gap-2 p-3 border border-gray-200 rounded-lg bg-gray-50">
-              {roles.map((role) => (
-                <Checkbox
-                  key={role.id}
-                  label={role.name}
-                  checked={formData.roleIds.includes(role.id)}
-                  onChange={() => toggleRole(role.id)}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </Modal>
+        onClose={closeAddModal}
+        onCreated={handleUserCreated}
+      />
 
       {/* Edit Roles Modal */}
       <Modal

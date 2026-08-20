@@ -1,6 +1,8 @@
 'use client';
 
-export default function Card({ children, className = '', padding = true, hover = false, onClick }) {
+import { memo } from 'react';
+
+function Card({ children, className = '', padding = true, hover = false, onClick }) {
   return (
     <div
       className={`
@@ -17,7 +19,9 @@ export default function Card({ children, className = '', padding = true, hover =
   );
 }
 
-export function CardHeader({ title, subtitle, action, icon: Icon, className = '' }) {
+export default memo(Card);
+
+function CardHeaderImpl({ title, subtitle, action, icon: Icon, className = '' }) {
   return (
     <div className={`flex items-start justify-between gap-3 mb-4 ${className}`}>
       <div className="flex items-center gap-3 min-w-0">
@@ -36,7 +40,9 @@ export function CardHeader({ title, subtitle, action, icon: Icon, className = ''
   );
 }
 
-export function StatCard({ title, value, change, changeType = 'positive', icon: Icon, color = 'primary', subtitle }) {
+export const CardHeader = memo(CardHeaderImpl);
+
+function StatCardImpl({ title, value, change, changeType = 'positive', icon: Icon, color = 'primary', subtitle }) {
   const colorMap = {
     primary: { bg: 'bg-red-50', text: 'text-primary', icon: 'text-primary' },
     success: { bg: 'bg-green-50', text: 'text-green-700', icon: 'text-green-600' },
@@ -70,3 +76,5 @@ export function StatCard({ title, value, change, changeType = 'positive', icon: 
     </Card>
   );
 }
+
+export const StatCard = memo(StatCardImpl);
