@@ -12,6 +12,7 @@ import PageHeader from '@/components/common/PageHeader';
 import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
 import { StatusBadge } from '@/components/common/Badge';
+import VarianceBadge from '@/components/common/VarianceBadge';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import InvoiceHistoryModal from '@/components/invoices/InvoiceHistoryModal';
 import { formatCurrency, formatDate, formatDateTime, formatPercentage, formatFileSize } from '@/utils/formatters';
@@ -182,7 +183,7 @@ function InvoiceDetailContent() {
                         <p className="text-xs text-gray-500 mt-1">{line.itemDescriptionSnapshot}</p>
                       )}
                     </div>
-                    <div className="mt-2 pt-2 border-t border-gray-200 grid grid-cols-3 gap-2 text-xs">
+                    <div className="mt-2 pt-2 border-t border-gray-200 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                       <div>
                         <p className="text-gray-400">Quantity</p>
                         <p className="font-semibold text-gray-700">{line.quantity}</p>
@@ -194,6 +195,10 @@ function InvoiceDetailContent() {
                       <div>
                         <p className="text-gray-400">Line Total</p>
                         <p className="font-semibold text-primary">{formatCurrency(line.billedUnitPrice * line.quantity, currency)}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400">Submission Variance</p>
+                        <div className="mt-0.5"><VarianceBadge days={line.varianceDays} size="sm" /></div>
                       </div>
                     </div>
                   </div>

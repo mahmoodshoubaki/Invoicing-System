@@ -5,6 +5,7 @@ import { Plus, Trash2, Lock } from 'lucide-react';
 import Button from '@/components/common/Button';
 import { DatePicker } from '@/components/forms/FormField';
 import { StatusBadge } from '@/components/common/Badge';
+import VarianceBadge from '@/components/common/VarianceBadge';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { formatDate } from '@/utils/formatters';
 import { selectTrackerCycleStatusesMap, selectTrackerCycleStatusColorsMap } from '@/store/slices/lookupsSlice';
@@ -163,16 +164,29 @@ export default function InvoicingPlanTracker({
 
   return (
     <div>
-      {cycles.length === 0 ? (
-        <p className="text-sm text-gray-400 text-center py-8">No cycles generated yet.</p>
-      ) : (
-        <div className="overflow-x-auto rounded-xl border border-gray-100">
-          <table className="w-full text-sm border-collapse">
+      <div className="relative">
+        {loading && (
+          // Covers the existing table (or empty-state message) rather than
+          // replacing it, so a regeneration in progress is obvious at a
+          // glance instead of hiding behind a small line of text down by the
+          // Add Cycle button — that was too easy to miss, especially since
+          // the table above it kept showing the stale plan with no visual
+          // cue anything was happening.
+          <div className="absolute inset-0 z-10 bg-white/75 backdrop-blur-[1px] flex items-center justify-center rounded-xl">
+            <LoadingSpinner size="sm" message="Regenerating invoicing plan…" />
+          </div>
+        )}
+        {cycles.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-8">No cycles generated yet.</p>
+        ) : (
+          <div className="overflow-x-auto rounded-xl border border-gray-100">
+            <table className="w-full text-sm border-collapse">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
                 <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Cycle</th>
                 <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Planned Date</th>
                 <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Variance</th>
                 <th className="px-3 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
               </tr>
             </thead>
@@ -206,6 +220,9 @@ export default function InvoicingPlanTracker({
                         <span className="text-xs text-gray-300">—</span>
                       )}
                     </td>
+                    <td className="px-3 py-2.5">
+                      <VarianceBadge days={cycle.varianceDays} size="sm" />
+                    </td>
                     <td className="px-3 py-2.5 text-center">
                       {locked ? (
                         <span className="inline-flex items-center justify-center text-gray-300" title="Locked">
@@ -231,9 +248,9 @@ export default function InvoicingPlanTracker({
           </table>
         </div>
       )}
+      </div>
 
       <div className="mt-3 flex items-center justify-end gap-3">
-        {loading && <span className="text-xs text-gray-400">Regenerating plan…</span>}
         {!canAddRow && cycles.length > 0 && (
           <span className="text-xs text-gray-400">
             {lastCycle?.plannedDate

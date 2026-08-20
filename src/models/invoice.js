@@ -17,6 +17,12 @@ export function createInvoiceLine(raw) {
     itemTitleEnSnapshot:     raw.itemTitleEnSnapshot     ?? null,
     itemDescriptionSnapshot: raw.itemDescriptionSnapshot ?? null,
     lineTotal:               raw.lineTotal ?? 0,
+    // null when this line's BOQ item has no tracker plan, or no cycle was
+    // associated with this invoice line — not every line necessarily maps
+    // to a tracker cycle.
+    trackerCycleNumber:      raw.trackerCycleNumber ?? null,
+    trackerCycleStatusId:    raw.trackerCycleStatusId ?? null,
+    varianceDays:            raw.varianceDays ?? null,
   };
 }
 

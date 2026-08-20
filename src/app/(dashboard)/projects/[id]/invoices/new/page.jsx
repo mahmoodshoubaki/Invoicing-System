@@ -12,6 +12,8 @@ import Card from '@/components/common/Card';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { Input, DatePicker } from '@/components/forms/FormField';
 import { ConfirmModal } from '@/components/common/Modal';
+import { StatusBadge } from '@/components/common/Badge';
+import VarianceBadge from '@/components/common/VarianceBadge';
 import AttachmentUploader from '@/components/invoices/AttachmentUploader';
 import { formatCurrency } from '@/utils/formatters';
 import { useAuth } from '@/hooks/useAuth';
@@ -28,7 +30,11 @@ import {
   selectInvoiceableBOQItems,
   selectInvoiceableBOQItemsLoading,
 } from '@/store/slices/invoicesSlice';
-import { selectBillingFrequenciesMap } from '@/store/slices/lookupsSlice';
+import {
+  selectBillingFrequenciesMap,
+  selectTrackerCycleStatusesMap,
+  selectTrackerCycleStatusColorsMap,
+} from '@/store/slices/lookupsSlice';
 
 const INITIAL_FORM = {
   // boqLineItems: { [boqItemId]: { quantity: '' } }
@@ -54,6 +60,8 @@ export default function NewInvoicePage() {
   const boqItems = useSelector(selectInvoiceableBOQItems);
   const boqItemsLoading = useSelector(selectInvoiceableBOQItemsLoading);
   const billingFrequenciesMap = useSelector(selectBillingFrequenciesMap);
+  const trackerCycleStatusesMap = useSelector(selectTrackerCycleStatusesMap);
+  const trackerCycleStatusColorsMap = useSelector(selectTrackerCycleStatusColorsMap);
 
   // Same source as the project card's Financial Summary — shown here as
   // reference context while filling out an invoice, not fed into the
@@ -347,6 +355,16 @@ export default function NewInvoicePage() {
                           {fullyCommitted && (
                             <span className="text-xs text-amber-600 font-medium whitespace-nowrap">Fully committed</span>
                           )}
+                          {boq.trackerCycleNumber != null && (
+                            <span className="hidden md:flex items-center gap-1.5" title={`Next cycle: ${boq.trackerCycleNumber}`}>
+                              <StatusBadge
+                                status={trackerCycleStatusesMap[boq.trackerCycleStatusId] ?? '—'}
+                                colors={trackerCycleStatusColorsMap[boq.trackerCycleStatusId]}
+                                size="sm"
+                              />
+                              <VarianceBadge days={boq.varianceDays} size="sm" />
+                            </span>
+                          )}
                           <span className="text-xs text-gray-400 whitespace-nowrap hidden sm:inline">
                             {billingFrequenciesMap[boq.billingFrequencyId] ?? '—'}
                           </span>
@@ -381,6 +399,20 @@ export default function NewInvoicePage() {
                                 {available} units
                               </p>
                             </div>
+                            {boq.trackerCycleNumber != null && (
+                              <div className="col-span-2">
+                                <p className="text-gray-400 uppercase tracking-wide">Next Invoicing Cycle</p>
+                                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                  <span className="font-semibold text-gray-700">Cycle {boq.trackerCycleNumber}</span>
+                                  <StatusBadge
+                                    status={trackerCycleStatusesMap[boq.trackerCycleStatusId] ?? '—'}
+                                    colors={trackerCycleStatusColorsMap[boq.trackerCycleStatusId]}
+                                    size="sm"
+                                  />
+                                  <VarianceBadge days={boq.varianceDays} size="sm" />
+                                </div>
+                              </div>
+                            )}
                           </div>
 
                           {/* Quantity input + line total */}

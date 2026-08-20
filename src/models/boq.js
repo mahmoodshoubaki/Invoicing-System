@@ -125,6 +125,12 @@ export function createInvoiceableBOQItem(raw) {
     unitCost,
     totalCost:         raw.totalCost ?? quantity * unitCost,
     billingFrequencyId: raw.billingFrequencyId ?? null,
+    // The item's next upcoming tracker cycle — null when it has no tracker
+    // plan at all. Lets the invoice picker show whether submitting now
+    // would be on schedule, ahead, or already behind.
+    trackerCycleNumber:   raw.trackerCycleNumber   ?? null,
+    trackerCycleStatusId: raw.trackerCycleStatusId ?? null,
+    varianceDays:         raw.varianceDays         ?? null,
   };
 }
 
@@ -159,12 +165,16 @@ export function createBOQItemForm() {
  */
 export function createTrackerCycle(raw) {
   return {
-    id:          raw.id ?? null,
-    cycleNumber: raw.cycleNumber ?? 0,
-    totalCycles: raw.totalCycles ?? 0,
-    plannedDate: raw.plannedDate ?? null,
-    isCommitted: raw.isCommitted ?? false,
-    statusId:    raw.statusId ?? null,
+    id:           raw.id ?? null,
+    cycleNumber:  raw.cycleNumber ?? 0,
+    totalCycles:  raw.totalCycles ?? 0,
+    plannedDate:  raw.plannedDate ?? null,
+    isCommitted:  raw.isCommitted ?? false,
+    statusId:     raw.statusId ?? null,
+    // How many days late (positive) / early (negative) the invoice against
+    // this cycle was submitted; 0 = exactly on time. Only meaningful once
+    // the cycle is actually invoiced — null otherwise.
+    varianceDays: raw.varianceDays ?? null,
   };
 }
 

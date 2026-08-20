@@ -8,6 +8,7 @@ import Modal from '@/components/common/Modal';
 import Button from '@/components/common/Button';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { StatusBadge } from '@/components/common/Badge';
+import VarianceBadge from '@/components/common/VarianceBadge';
 import { formatCurrency, formatDateTime, formatDate, formatPercentage, formatFileSize } from '@/utils/formatters';
 import { iconForFileName } from '@/utils/attachmentIcon';
 import { saveBlob } from '@/utils/saveBlob';
@@ -126,6 +127,9 @@ function HistoryEntry({ entry, isLatest, currency, invoiceId, invoiceStatusesMap
                           Total: {formatCurrency(line.billedUnitPrice * line.quantity, currency)}
                         </span>
                       </div>
+                      {line.varianceDays != null && (
+                        <div className="mt-1.5"><VarianceBadge days={line.varianceDays} size="sm" /></div>
+                      )}
                     </div>
                   ))}
                 </div>
