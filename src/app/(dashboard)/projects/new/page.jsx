@@ -4,11 +4,15 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import Link from 'next/link';
-import { ChevronLeft, Check } from 'lucide-react';
+import { MotionConfig } from 'motion/react';
+import {
+  CalendarRange, Check, ChevronLeft, FileSignature, FolderKanban, Layers, Users, Wallet,
+} from 'lucide-react';
 
-import PageHeader from '@/components/common/PageHeader';
+import SubPageHeader from '@/components/common/SubPageHeader';
+import FormSection from '@/components/common/FormSection';
+import Reveal from '@/components/motion/Reveal';
 import Button from '@/components/common/Button';
-import Card from '@/components/common/Card';
 import { Input, DatePicker, Select, Textarea, FormField } from '@/components/forms/FormField';
 const BUSINESS_UNITS = [
   'Energy & Resources',
@@ -113,7 +117,8 @@ export default function NewProjectPage() {
   };
 
   return (
-    <div>
+    <MotionConfig reducedMotion="user">
+    <div className="mx-auto max-w-4xl">
       {showToast && (
         <div className="fixed top-5 right-5 z-50 bg-green-600 text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 animate-fade-in">
           <Check size={16} />
@@ -121,7 +126,9 @@ export default function NewProjectPage() {
         </div>
       )}
 
-      <PageHeader
+      <SubPageHeader
+        icon={FolderKanban}
+        eyebrow="New project"
         title="New Project"
         subtitle="Create a new project contract"
         breadcrumbs={[
@@ -136,12 +143,10 @@ export default function NewProjectPage() {
         }
       />
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <form onSubmit={handleSubmit}>
+       <Reveal className="flex flex-col gap-5">
         {/* Section 1: Contract Info */}
-        <Card>
-          <h2 className="text-base font-semibold text-gray-800 mb-4 pb-3 border-b border-gray-100">
-            Contract Information
-          </h2>
+        <FormSection title="Contract Information" icon={FileSignature}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="Contract Name"
@@ -172,13 +177,10 @@ export default function NewProjectPage() {
               options={INVOICING_PLATFORMS.map((p) => ({ value: p, label: p }))}
             />
           </div>
-        </Card>
+        </FormSection>
 
         {/* Section 2: Project Details */}
-        <Card>
-          <h2 className="text-base font-semibold text-gray-800 mb-4 pb-3 border-b border-gray-100">
-            Project Details
-          </h2>
+        <FormSection title="Project Details" icon={FolderKanban}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="Project Focus Name"
@@ -208,13 +210,10 @@ export default function NewProjectPage() {
               options={BUSINESS_UNITS.map((b) => ({ value: b, label: b }))}
             />
           </div>
-        </Card>
+        </FormSection>
 
         {/* Section 3: Team */}
-        <Card>
-          <h2 className="text-base font-semibold text-gray-800 mb-4 pb-3 border-b border-gray-100">
-            Project Team
-          </h2>
+        <FormSection title="Project Team" icon={Users}>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <Select
               label="Project Manager"
@@ -254,13 +253,10 @@ export default function NewProjectPage() {
               options={buHeadUsers.map((u) => ({ value: u.id, label: u.name }))}
             />
           </div>
-        </Card>
+        </FormSection>
 
         {/* Section 4: Financial */}
-        <Card>
-          <h2 className="text-base font-semibold text-gray-800 mb-4 pb-3 border-b border-gray-100">
-            Financial Details
-          </h2>
+        <FormSection title="Financial Details" icon={Wallet}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input
               label={`Project Value (${currency})`}
@@ -288,13 +284,10 @@ export default function NewProjectPage() {
               onChange={set('poNumber')}
             />
           </div>
-        </Card>
+        </FormSection>
 
         {/* Section 5: Timeline */}
-        <Card>
-          <h2 className="text-base font-semibold text-gray-800 mb-4 pb-3 border-b border-gray-100">
-            Timeline
-          </h2>
+        <FormSection title="Timeline" icon={CalendarRange}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <DatePicker
               label="Start Date"
@@ -318,13 +311,10 @@ export default function NewProjectPage() {
               className="bg-gray-50 cursor-not-allowed"
             />
           </div>
-        </Card>
+        </FormSection>
 
         {/* Section 6: Revenue Breakdown */}
-        <Card>
-          <h2 className="text-base font-semibold text-gray-800 mb-4 pb-3 border-b border-gray-100">
-            Revenue Breakdown ({currency})
-          </h2>
+        <FormSection title={`Revenue Breakdown (${currency})`} icon={Layers}>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Input
               label="SW Licenses Revenue"
@@ -363,18 +353,20 @@ export default function NewProjectPage() {
               onChange={set('revenueExternalSubs')}
             />
           </div>
-        </Card>
+        </FormSection>
+       </Reveal>
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-3 pb-6">
+        <div className="sticky bottom-0 z-10 mt-5 flex items-center justify-end gap-3 rounded-2xl border border-[#e9e7e5] bg-white/85 px-4 py-3 shadow-[0_-4px_16px_-8px_rgb(60_60_58/0.18)] backdrop-blur-md">
           <Link href="/projects">
-            <Button variant="outline">Cancel</Button>
+            <Button variant="ghost">Cancel</Button>
           </Link>
-          <Button type="submit" loading={saving}>
-            Create Project
+          <Button type="submit" icon={Check} loading={saving}>
+            Create project
           </Button>
         </div>
       </form>
     </div>
+    </MotionConfig>
   );
 }

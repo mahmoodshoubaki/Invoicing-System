@@ -1,17 +1,29 @@
 'use client';
 
+import { memo } from 'react';
+import { CHROME } from '@/theme/vizPalette';
+
 /**
- * Was previously declared inline inside ProjectDetailPage's render body —
- * React treats a component defined inside another component's function as a
- * brand-new type on every parent re-render, so it was fully unmounting and
- * remounting on every click instead of just updating. Living in its own
- * module gives it a stable identity across renders.
+ * Label-over-value pair used throughout the project detail panels.
+ *
+ * Lives in its own module rather than inside a page's render body: a
+ * component declared inside another component is a brand-new type on every
+ * parent render, so React unmounts and remounts it instead of updating.
  */
-export default function InfoRow({ label, value }) {
+function InfoRow({ label, value }) {
   return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">{label}</span>
-      <span className="text-sm text-gray-800">{value || '—'}</span>
+    <div className="flex min-w-0 flex-col gap-1">
+      <span
+        className="text-[10px] font-semibold uppercase tracking-wider"
+        style={{ color: CHROME.textMuted }}
+      >
+        {label}
+      </span>
+      <span className="truncate text-sm font-medium" style={{ color: CHROME.textPrimary }}>
+        {value || '—'}
+      </span>
     </div>
   );
 }
+
+export default memo(InfoRow);

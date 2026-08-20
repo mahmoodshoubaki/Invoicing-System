@@ -693,6 +693,14 @@ header {
               background-color var(--dur-3) var(--ease-smooth);
 }
 
+/* Opt out of the automatic entrance animations below wherever a JS animation
+   library (Motion) already owns an element's opacity/transform. CSS animations
+   beat inline styles in the cascade, so without this the `both` fill mode would
+   land on the element and permanently override whatever Motion set. */
+[data-motion],
+[data-motion] > li,
+[data-motion] > tr { animation: none !important; }
+
 /* List items stagger in */
 ul > li, ol > li { animation: row-in var(--dur-3) var(--ease-out-expo) both; }
 ul > li:nth-child(1), ol > li:nth-child(1) { animation-delay: 20ms; }
@@ -715,9 +723,11 @@ ul > li:nth-child(n+6), ol > li:nth-child(n+6) { animation-delay: 170ms; }
   font-weight: 500;
   fill: var(--color-mid-grey);
 }
+/* Gridlines are solid hairlines, one shade off the surface. Dashing them adds
+   noise and reads as "projection" or "threshold" when it is only a grid — the
+   dashed rule that used to live here was overriding every chart's own stroke. */
 .recharts-cartesian-grid line {
   stroke: color-mix(in srgb, var(--color-line) 75%, transparent);
-  stroke-dasharray: 3 5;
 }
 .recharts-wrapper { animation: fade-in var(--dur-4) var(--ease-smooth) both; }
 .recharts-default-tooltip {

@@ -1,26 +1,32 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import Link from 'next/link';
-import { Plus, Trash2, Edit2, CheckCircle, ChevronLeft, History } from 'lucide-react';
+import { AnimatePresence, MotionConfig, motion } from 'motion/react';
+import {
+  Banknote, CheckCircle, ChevronLeft, Edit2, History, LayoutList, Plus, Trash2, X,
+} from 'lucide-react';
 
-import PageHeader from '@/components/common/PageHeader';
+import SubPageHeader from '@/components/common/SubPageHeader';
+import TabToolbar from '@/components/projects/TabToolbar';
 import Button from '@/components/common/Button';
 import { StatusBadge } from '@/components/common/Badge';
 import Table from '@/components/common/Table';
 import { ConfirmModal } from '@/components/common/Modal';
 import BOQItemHistoryModal from '@/components/boq/BOQItemHistoryModal';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { CHROME, SERIES_ROLE, STATUS } from '@/theme/vizPalette';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import { usePermission } from '@/hooks/usePermission';
-import { bulkRemoveBOQItems, fetchBOQByProjectCode, removeBOQItem, selectBOQItems, selectBOQLoading, selectCurrentBOQ } from '@/store/slices/boqSlice';
+import {
+  bulkRemoveBOQItems, fetchBOQByProjectCode, removeBOQItem,
+  selectBOQItems, selectBOQLoading, selectCurrentBOQ,
+} from '@/store/slices/boqSlice';
 import { fetchMainProjectDetails, selectMainProjectDetails, selectMainDetailsLoading } from '@/store/slices/projectsSlice';
 import {
-  selectBillingFrequenciesMap,
-  selectBoqItemStatusesMap,
-  selectBoqItemStatusColorsMap,
+  selectBillingFrequenciesMap, selectBoqItemStatusesMap, selectBoqItemStatusColorsMap,
 } from '@/store/slices/lookupsSlice';
 import { useToast } from '@/hooks/useToast';
 
@@ -31,6 +37,7 @@ export default function ProjectBOQPage() {
   // decodeURIComponent unchanged.
   const { id: rawId } = useParams();
   const projectCode = decodeURIComponent(rawId);
+  const encoded = encodeURIComponent(projectCode);
   const { can } = usePermission();
   const toast = useToast();
 
@@ -56,6 +63,7 @@ export default function ProjectBOQPage() {
   const canUpdate = can('Boqs', 'Update');
   const canDelete = can('Boqs', 'Delete');
   const canApprove = can('Boqs', 'Approve');
+  const money = (v) => formatCurrency(v, currency);
 
   useEffect(() => {
     dispatch(fetchMainProjectDetails(projectCode));
@@ -65,17 +73,14 @@ export default function ProjectBOQPage() {
   const toggleSelect = (id) => {
     setSelected((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
 
   const toggleSelectAll = () => {
-    setSelected(
-      selected.size === boqItems.length
-        ? new Set()
-        : new Set(boqItems.map((i) => i.id))
-    );
+    setSelected(selected.size === boqItems.length ? new Set() : new Set(boqItems.map((i) => i.id)));
   };
 
   const handleDelete = async () => {
@@ -109,31 +114,53 @@ export default function ProjectBOQPage() {
   };
 
   const handleApprove = (_itemId) => {
-    // TODO: dispatch approveBOQItem(_itemId) when endpoint is available
+    // TODO: dispatch approveBOQItem(_itemId) when the endpoint is available
   };
 
   const totalCost = boqItems.reduce((s, i) => s + (i.totalCost || 0), 0);
 
-  const columns = [
+  const stats = useMemo(() => [
+    { label: 'BOQ items', value: boqItems.length, icon: LayoutList, accent: SERIES_ROLE.wip },
+    { label: 'Total value', value: money(totalCost), icon: Banknote, accent: SERIES_ROLE.revenue },
     {
-      key: 'id',
+      label: 'Selected',
+      value: `${selected.size} / ${boqItems.length}`,
+      icon: CheckCircle,
+      accent: selected.size > 0 ? STATUS.good : STATUS.neutral,
+    },
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [boqItems.length, totalCost, selected.size, currency]);
+
+  const breadcrumbs = useMemo(() => [
+    { label: 'Home', href: '/' },
+    { label: 'Projects', href: '/projects' },
+    { label: project?.contractName ?? projectCode, href: `/projects/${encoded}` },
+    { label: 'BOQ' },
+  ], [project?.contractName, projectCode, encoded]);
+
+  const columns = useMemo(() => [
+    {
+      key: 'select',
       label: (
         <input
           type="checkbox"
           checked={selected.size === boqItems.length && boqItems.length > 0}
           onChange={toggleSelectAll}
           onClick={(e) => e.stopPropagation()}
-          className="accent-primary"
+          className="accent-[#f8485e]"
+          aria-label="Select all BOQ items"
         />
       ),
       sortable: false,
+      resizable: false,
       render: (_, row) => (
         <input
           type="checkbox"
           checked={selected.has(row.id)}
           onChange={() => toggleSelect(row.id)}
           onClick={(e) => e.stopPropagation()}
-          className="accent-primary"
+          className="accent-[#f8485e]"
+          aria-label={`Select ${row.englishName}`}
         />
       ),
     },
@@ -141,77 +168,78 @@ export default function ProjectBOQPage() {
       key: 'englishName',
       label: 'Item',
       render: (val, row) => (
-        <div>
-          <p className="font-medium text-gray-800">{val}</p>
-          <p className="text-xs text-gray-400 mt-0.5" dir="rtl">{row.arabicName}</p>
+        <div className="min-w-0 max-w-xs">
+          <p className="text-sm font-semibold leading-tight" style={{ color: CHROME.textPrimary }}>{val}</p>
+          {row.arabicName && (
+            <p className="mt-0.5 truncate text-xs" dir="rtl" style={{ color: CHROME.textMuted }}>{row.arabicName}</p>
+          )}
           {row.notes && (
-            <p className="text-xs text-gray-400 mt-0.5 truncate max-w-50">{row.notes}</p>
+            <p className="mt-0.5 truncate text-xs" style={{ color: CHROME.textMuted }}>{row.notes}</p>
           )}
         </div>
       ),
     },
-    { key: 'quantity', label: 'Qty', align: 'right' },
+    { key: 'quantity', label: 'Qty', align: 'center' },
     {
       key: 'unitCost',
       label: 'Unit Cost',
       align: 'right',
-      render: (val) => formatCurrency(val, currency),
+      render: (val) => <span className="text-sm tabular-nums">{money(val)}</span>,
     },
     {
       key: 'totalCost',
       label: 'Total Cost',
       align: 'right',
-      render: (val) => <span className="font-semibold text-gray-800">{formatCurrency(val, currency)}</span>,
+      render: (val) => (
+        <span className="text-sm font-semibold tabular-nums" style={{ color: CHROME.textPrimary }}>{money(val)}</span>
+      ),
     },
     {
       key: 'statusId',
       label: 'Status',
       sortable: false,
-      render: (val) => <StatusBadge status={boqStatusesMap[val] ?? String(val)} colors={boqStatusColorsMap[val]} />,
+      render: (val) => (
+        <StatusBadge status={boqStatusesMap[val] ?? String(val)} colors={boqStatusColorsMap[val]} />
+      ),
     },
     {
       key: 'expectedInvoicingDate',
-      label: 'Expected Invoicing Date',
-      render: (val) => formatDate(val),
+      label: 'Expected Date',
+      render: (val) => (
+        <span className="text-sm" style={{ color: CHROME.textSecondary }}>{formatDate(val) || '—'}</span>
+      ),
     },
     {
       key: 'billingFrequencyId',
       label: 'Billing',
-      render: (val) => billingFrequenciesMap[val] ?? '—',
+      render: (val) => (
+        <span className="text-sm" style={{ color: CHROME.textSecondary }}>{billingFrequenciesMap[val] ?? '—'}</span>
+      ),
     },
     {
       key: 'actions',
-      label: 'Actions',
+      label: '',
       sortable: false,
+      resizable: false,
       render: (_, row) => (
-        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-          <Button
-            variant="ghost"
-            size="xs"
-            icon={History}
-            onClick={() => setHistoryItemId(row.id)}
-            title="History"
-          />
+        <div className="flex items-center justify-end gap-0.5" onClick={(e) => e.stopPropagation()}>
+          <Button variant="ghost" size="xs" icon={History} onClick={() => setHistoryItemId(row.id)} title="History" />
           {canUpdate && (
-            <Link href={`/projects/${encodeURIComponent(projectCode)}/boq/${row.id}/edit`}>
+            <Link href={`/projects/${encoded}/boq/${row.id}/edit`}>
               <Button variant="ghost" size="xs" icon={Edit2} title="Edit" />
             </Link>
           )}
           {canApprove && (
             <Button
-              variant="ghost"
-              size="xs"
-              icon={CheckCircle}
-              className="text-green-600 hover:bg-green-50"
+              variant="ghost" size="xs" icon={CheckCircle}
+              className="text-[#0ca30c] hover:bg-green-50"
               onClick={() => handleApprove(row.id)}
               title="Approve"
             />
           )}
           {canDelete && (
             <Button
-              variant="ghost"
-              size="xs"
-              icon={Trash2}
+              variant="ghost" size="xs" icon={Trash2}
               className="text-red-500 hover:bg-red-50"
               onClick={() => { setDeletingId(row.id); setDeleteModal(true); }}
               title="Delete"
@@ -220,11 +248,12 @@ export default function ProjectBOQPage() {
         </div>
       ),
     },
-  ];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [selected, boqItems.length, currency, boqStatusesMap, boqStatusColorsMap, billingFrequenciesMap, canUpdate, canApprove, canDelete, encoded]);
 
   if (projectLoading || boqLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex h-64 items-center justify-center">
         <LoadingSpinner />
       </div>
     );
@@ -232,8 +261,8 @@ export default function ProjectBOQPage() {
 
   if (!project) {
     return (
-      <div className="text-center py-20">
-        <p className="text-gray-500">Project not found.</p>
+      <div className="py-20 text-center">
+        <p style={{ color: CHROME.textMuted }}>Project not found.</p>
         <Link href="/projects">
           <Button variant="outline" className="mt-4">Back to Projects</Button>
         </Link>
@@ -242,93 +271,94 @@ export default function ProjectBOQPage() {
   }
 
   return (
-    <div>
-      <ConfirmModal
-        open={deleteModal}
-        onClose={() => { setDeleteModal(false); setDeletingId(null); }}
-        onConfirm={handleDelete}
-        title="Delete BOQ Item"
-        message="Are you sure you want to delete this BOQ item? This action cannot be undone."
-        confirmLabel="Delete Item"
-        loading={saving}
-      />
+    <MotionConfig reducedMotion="user">
+      <div>
+        <ConfirmModal
+          open={deleteModal}
+          onClose={() => { setDeleteModal(false); setDeletingId(null); }}
+          onConfirm={handleDelete}
+          title="Delete BOQ Item"
+          message="Are you sure you want to delete this BOQ item? This action cannot be undone."
+          confirmLabel="Delete Item"
+          loading={saving}
+        />
 
-      <ConfirmModal
-        open={bulkDeleteModal}
-        onClose={() => setBulkDeleteModal(false)}
-        onConfirm={handleBulkDelete}
-        title="Delete Selected Items"
-        message={`Are you sure you want to delete ${selected.size} selected item(s)? This action cannot be undone.`}
-        confirmLabel={`Delete ${selected.size} Items`}
-        loading={saving}
-      />
+        <ConfirmModal
+          open={bulkDeleteModal}
+          onClose={() => setBulkDeleteModal(false)}
+          onConfirm={handleBulkDelete}
+          title="Delete Selected Items"
+          message={`Are you sure you want to delete ${selected.size} selected item(s)? This action cannot be undone.`}
+          confirmLabel={`Delete ${selected.size} Items`}
+          loading={saving}
+        />
 
-      <BOQItemHistoryModal
-        open={historyItemId != null}
-        onClose={() => setHistoryItemId(null)}
-        boqItemId={historyItemId}
-      />
+        <BOQItemHistoryModal
+          open={historyItemId != null}
+          onClose={() => setHistoryItemId(null)}
+          boqItemId={historyItemId}
+        />
 
-      <PageHeader
-        title="BOQ Management"
-        subtitle={`Project Code: ${projectCode}`}
-        breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Projects', href: '/projects' },
-          { label: project.contractName, href: `/projects/${encodeURIComponent(projectCode)}` },
-          { label: 'BOQ' },
-        ]}
-        actions={
-          <>
-            <Link href={`/projects/${encodeURIComponent(projectCode)}`}>
-              <Button variant="ghost" icon={ChevronLeft} size="sm">Back</Button>
-            </Link>
-            {canCreate && (
-              <Link href={`/projects/${encodeURIComponent(projectCode)}/boq/new`}>
-                <Button icon={Plus}>Add Item</Button>
+        <SubPageHeader
+          eyebrow="Bill of Quantities"
+          title={project.contractName ?? projectCode}
+          subtitle={`Project code ${projectCode}`}
+          icon={LayoutList}
+          breadcrumbs={breadcrumbs}
+          actions={
+            <>
+              <Link href={`/projects/${encoded}`}>
+                <Button variant="ghost" icon={ChevronLeft} size="sm">Back</Button>
               </Link>
-            )}
-          </>
-        }
-      />
+              {canCreate && (
+                <Link href={`/projects/${encoded}/boq/new`}>
+                  <Button icon={Plus} size="sm">Add item</Button>
+                </Link>
+              )}
+            </>
+          }
+        />
 
-      {/* Bulk Actions */}
-      {selected.size > 0 && (
-        <div className="bg-primary/10 border border-primary/20 rounded-xl p-3 mb-4 flex items-center gap-3">
-          <span className="text-sm font-medium text-primary">{selected.size} item(s) selected</span>
-          {canDelete && (
-            <Button variant="danger" size="sm" icon={Trash2} onClick={() => setBulkDeleteModal(true)}>
-              Delete Selected
-            </Button>
+        <TabToolbar stats={stats} />
+
+        {/* Bulk action bar — slides in only when a selection exists */}
+        <AnimatePresence>
+          {selected.size > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -8, height: 0, marginBottom: 0 }}
+              animate={{ opacity: 1, y: 0, height: 'auto', marginBottom: 16 }}
+              exit={{ opacity: 0, y: -8, height: 0, marginBottom: 0 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="overflow-hidden"
+            >
+              <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#f8485e]/25 bg-[#f8485e]/6 px-4 py-3">
+                <span className="text-sm font-semibold text-[#d9304a]">
+                  {selected.size} item{selected.size !== 1 ? 's' : ''} selected
+                </span>
+                <div className="ml-auto flex items-center gap-2">
+                  {canDelete && (
+                    <Button variant="danger" size="sm" icon={Trash2} onClick={() => setBulkDeleteModal(true)}>
+                      Delete selected
+                    </Button>
+                  )}
+                  <Button variant="ghost" size="sm" icon={X} onClick={() => setSelected(new Set())}>
+                    Clear
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
           )}
-          <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>
-            Clear Selection
-          </Button>
-        </div>
-      )}
+        </AnimatePresence>
 
-      <Table
-        columns={columns}
-        data={boqItems}
-        rowKey="id"
-        isLoading={boqLoading}
-        emptyMessage="No BOQ items yet. Click 'Add Item' to get started."
-        sortable
-      />
-
-      {/* Summary Footer */}
-      {boqItems.length > 0 && (
-        <div className="mt-4 bg-gray-50 rounded-xl border border-gray-100 p-4 grid grid-cols-2 gap-4 text-center">
-          <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Total Cost</p>
-            <p className="text-lg font-bold text-gray-800">{formatCurrency(totalCost, currency)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Selected Items</p>
-            <p className="text-lg font-bold text-primary">{selected.size} / {boqItems.length}</p>
-          </div>
-        </div>
-      )}
-    </div>
+        <Table
+          columns={columns}
+          data={boqItems}
+          rowKey="id"
+          isLoading={boqLoading}
+          emptyMessage="No BOQ items yet — use “Add item” to get started."
+          sortable
+        />
+      </div>
+    </MotionConfig>
   );
 }

@@ -4,11 +4,13 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import Link from 'next/link';
-import { ChevronLeft } from 'lucide-react';
+import { MotionConfig } from 'motion/react';
+import { CalendarRange, ChevronLeft, PencilLine, Save } from 'lucide-react';
 
-import PageHeader from '@/components/common/PageHeader';
+import SubPageHeader from '@/components/common/SubPageHeader';
+import FormSection from '@/components/common/FormSection';
+import Reveal from '@/components/motion/Reveal';
 import Button from '@/components/common/Button';
-import Card from '@/components/common/Card';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { Input, NumberInput, DatePicker, Select, Textarea } from '@/components/forms/FormField';
 import InvoicingPlanTracker from '@/components/boq/InvoicingPlanTracker';
@@ -264,10 +266,13 @@ export default function EditBOQItemPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <PageHeader
+    <MotionConfig reducedMotion="user">
+    <div className="mx-auto max-w-4xl">
+      <SubPageHeader
+        eyebrow="Bill of Quantities"
         title="Edit BOQ Item"
-        subtitle={projectCode}
+        subtitle={item.englishName ?? currentProject?.contractName ?? projectCode}
+        icon={PencilLine}
         breadcrumbs={[
           { label: 'Home', href: '/' },
           { label: 'Projects', href: '/projects' },
@@ -277,16 +282,18 @@ export default function EditBOQItemPage() {
         ]}
         actions={
           <Link href={`/projects/${encodeURIComponent(projectCode)}/boq`}>
-            <Button variant="outline" icon={ChevronLeft} size="sm">Back</Button>
+            <Button variant="ghost" icon={ChevronLeft} size="sm">Back</Button>
           </Link>
         }
       />
 
-      <form onSubmit={handleSubmit} className="max-w-3xl flex flex-col gap-6">
-        <Card>
-          <h2 className="text-base font-semibold text-gray-800 mb-4 pb-3 border-b border-gray-100">
-            Item Details
-          </h2>
+      <form onSubmit={handleSubmit}>
+       <Reveal className="flex flex-col gap-5">
+        <FormSection
+          title="Item Details"
+          subtitle="Baseline date and contract window are fixed after creation"
+          icon={PencilLine}
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="English Description"
@@ -377,18 +384,16 @@ export default function EditBOQItemPage() {
               />
             </div>
           </div>
-        </Card>
+        </FormSection>
 
-        <Card>
-          <h2 className="text-base font-semibold text-gray-800 mb-1 pb-3 border-b border-gray-100">
-            Invoicing Plan Tracker
-          </h2>
-          <p className="text-xs text-gray-400 mb-4">
-            Cycles already invoiced are locked and read-only. Changing the expected invoicing date or billing frequency regenerates the remaining cycles.
-          </p>
+        <FormSection
+          title="Invoicing Plan Tracker"
+          subtitle="Cycles already invoiced are locked. Changing the expected invoicing date or billing frequency regenerates the remaining ones"
+          icon={CalendarRange}
+        >
           {missingContractDates ? (
-            <p className="text-sm text-red-500 text-center py-8">
-              This project has no start/finish dates set on its sub-projects yet — invoicing cycles can't be generated.
+            <p className="py-8 text-center text-sm text-red-500">
+              This project has no start/finish dates set on its sub-projects yet — invoicing cycles can&apos;t be generated.
             </p>
           ) : (
             <InvoicingPlanTracker
@@ -404,17 +409,21 @@ export default function EditBOQItemPage() {
             />
           )}
           {errors.trackerCycles && (
-            <p className="text-xs text-red-500 mt-3">{errors.trackerCycles}</p>
+            <p className="mt-3 text-xs text-red-500">{errors.trackerCycles}</p>
           )}
-        </Card>
+        </FormSection>
+       </Reveal>
 
-        <div className="flex items-center justify-end gap-3 pb-6">
+        <div className="sticky bottom-0 z-10 mt-5 flex items-center justify-end gap-3 rounded-2xl border border-[#e9e7e5] bg-white/85 px-4 py-3 shadow-[0_-4px_16px_-8px_rgb(60_60_58/0.18)] backdrop-blur-md">
           <Link href={`/projects/${encodeURIComponent(projectCode)}/boq`}>
-            <Button variant="outline">Cancel</Button>
+            <Button variant="ghost">Cancel</Button>
           </Link>
-          <Button type="submit" loading={saving} disabled={subProjectsLoading || missingContractDates}>Save Changes</Button>
+          <Button type="submit" icon={Save} loading={saving} disabled={subProjectsLoading || missingContractDates}>
+            Save changes
+          </Button>
         </div>
       </form>
     </div>
+    </MotionConfig>
   );
 }

@@ -6,11 +6,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import Link from 'next/link';
 import {
   ChevronLeft, FileText, User, Calendar, DollarSign, Percent, Trash2, RotateCcw, History, Download,
+  ListChecks, Paperclip, PencilLine, Save, Upload,
 } from 'lucide-react';
+import { MotionConfig } from 'motion/react';
 
-import PageHeader from '@/components/common/PageHeader';
+import SubPageHeader from '@/components/common/SubPageHeader';
+import FormSection from '@/components/common/FormSection';
+import Reveal from '@/components/motion/Reveal';
 import Button from '@/components/common/Button';
-import Card from '@/components/common/Card';
 import { StatusBadge } from '@/components/common/Badge';
 import VarianceBadge from '@/components/common/VarianceBadge';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
@@ -163,7 +166,8 @@ export default function EditInvoicePage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <MotionConfig reducedMotion="user">
+    <div className="mx-auto max-w-4xl">
       <InvoiceHistoryModal
         open={historyOpen}
         onClose={() => setHistoryOpen(false)}
@@ -171,9 +175,11 @@ export default function EditInvoicePage() {
         currency={currency}
       />
 
-      <PageHeader
+      <SubPageHeader
+        eyebrow="Invoicing"
         title={`Edit ${invoice.invoiceNumber}`}
-        subtitle={projectCode}
+        subtitle={project?.contractName ?? projectCode}
+        icon={PencilLine}
         breadcrumbs={[
           { label: 'Home', href: '/' },
           { label: 'Projects', href: '/projects' },
@@ -193,16 +199,21 @@ export default function EditInvoicePage() {
         }
       />
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <form onSubmit={handleSubmit}>
+       <Reveal className="flex flex-col gap-5">
         {/* Read-only invoice info */}
-        <Card>
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
-            <h3 className="text-sm font-semibold text-gray-700">Invoice Information</h3>
+        <FormSection
+          title="Invoice Information"
+          subtitle="Read-only — set when the request was submitted"
+          icon={FileText}
+          tone="muted"
+          actions={
             <StatusBadge
               status={invoiceStatusesMap[invoice.statusId] ?? '—'}
               colors={invoiceStatusColorsMap[invoice.statusId]}
             />
-          </div>
+          }
+        >
           <div className="grid grid-cols-2 gap-4">
             <InfoItem icon={FileText} label="Invoice Number" value={invoice.invoiceNumber} valueClass="font-mono font-semibold" />
             <InfoItem icon={DollarSign} label="Total Amount" value={formatCurrency(invoice.totalAmount, currency)} valueClass="font-semibold text-primary" />
@@ -214,13 +225,15 @@ export default function EditInvoicePage() {
             <InfoItem icon={Calendar} label="Baseline Expected Collection Date" value={formatDate(invoice.baselineCollectionDate)} />
             <InfoItem icon={Calendar} label="Updated Expected Collection Date" value={formatDate(invoice.expectedCollectionDate)} />
           </div>
-        </Card>
+        </FormSection>
 
         {/* Read-only BOQ lines */}
-        <Card>
-          <h3 className="text-sm font-semibold text-gray-700 mb-4 pb-3 border-b border-gray-100">
-            BOQ Line Items ({invoice.lines.length})
-          </h3>
+        <FormSection
+          title={`BOQ Line Items (${invoice.lines.length})`}
+          subtitle="Line items are fixed once the invoice is raised"
+          icon={ListChecks}
+          tone="muted"
+        >
           {invoice.lines.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-6">No line items on this invoice.</p>
           ) : (
@@ -250,13 +263,14 @@ export default function EditInvoicePage() {
               ))}
             </div>
           )}
-        </Card>
+        </FormSection>
 
         {/* Editable: update details */}
-        <Card>
-          <h3 className="text-sm font-semibold text-gray-700 mb-4 pb-3 border-b border-gray-100">
-            Update Details
-          </h3>
+        <FormSection
+          title="Update Details"
+          subtitle="The only fields this request can change"
+          icon={PencilLine}
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <DatePicker
               label="Updated Expected Collection Date"
@@ -277,13 +291,14 @@ export default function EditInvoicePage() {
               />
             </div>
           </div>
-        </Card>
+        </FormSection>
 
         {/* Editable: existing attachments — mark for deletion */}
-        <Card>
-          <h3 className="text-sm font-semibold text-gray-700 mb-4 pb-3 border-b border-gray-100">
-            Existing Attachments ({invoice.attachments.length})
-          </h3>
+        <FormSection
+          title={`Existing Attachments (${invoice.attachments.length})`}
+          subtitle="Download, or mark for removal on save"
+          icon={Paperclip}
+        >
           {invoice.attachments.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-6">No existing attachments.</p>
           ) : (
@@ -333,13 +348,14 @@ export default function EditInvoicePage() {
               })}
             </div>
           )}
-        </Card>
+        </FormSection>
 
         {/* Editable: add new attachments */}
-        <Card>
-          <h3 className="text-sm font-semibold text-gray-700 mb-4 pb-3 border-b border-gray-100">
-            Add Attachments
-          </h3>
+        <FormSection
+          title="Add Attachments"
+          subtitle="New files are uploaded when you save"
+          icon={Upload}
+        >
           <AttachmentUploader
             files={attachmentsToAdd}
             onChange={setAttachmentsToAdd}
@@ -350,18 +366,20 @@ export default function EditInvoicePage() {
               });
             }}
           />
-        </Card>
+        </FormSection>
+       </Reveal>
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-3 pb-6">
+        <div className="sticky bottom-0 z-10 mt-5 flex items-center justify-end gap-3 rounded-2xl border border-[#e9e7e5] bg-white/85 px-4 py-3 shadow-[0_-4px_16px_-8px_rgb(60_60_58/0.18)] backdrop-blur-md">
           <Link href="" onClick={() => router.back()}>
-            <Button variant="outline">Cancel</Button>
+            <Button variant="ghost">Cancel</Button>
           </Link>
-          <Button type="submit" loading={saving} disabled={attachmentsUploading}>
-            {attachmentsUploading ? 'Uploading attachments…' : 'Save Changes'}
+          <Button type="submit" icon={Save} loading={saving} disabled={attachmentsUploading}>
+            {attachmentsUploading ? 'Uploading attachments…' : 'Save changes'}
           </Button>
         </div>
       </form>
     </div>
+    </MotionConfig>
   );
 }

@@ -1,8 +1,10 @@
 'use client';
 
 import { memo } from 'react';
-import { Banknote, TrendingUp, FileText, Clock } from 'lucide-react';
-import { StatCard } from '@/components/common/Card';
+import { Activity, Banknote, CheckCircle2, Clock, FileText } from 'lucide-react';
+import KpiTile from '@/components/dashboard/KpiTile';
+import Reveal from '@/components/motion/Reveal';
+import { SERIES_ROLE, STATUS } from '@/theme/vizPalette';
 import { formatCurrency } from '@/utils/formatters';
 
 /**
@@ -11,42 +13,66 @@ import { formatCurrency } from '@/utils/formatters';
  * when `totals`/`currency` actually change.
  */
 function ProjectStatCards({ totals, currency }) {
+  const money = (v) => formatCurrency(v, currency);
+  const collectionRate = totals.totalInvoicesValue > 0
+    ? Math.round((totals.collectedValue / totals.totalInvoicesValue) * 100)
+    : 0;
+
+  const tiles = [
+    {
+      label: 'Project Value',
+      value: totals.projectValue,
+      format: money,
+      icon: Banknote,
+      accent: SERIES_ROLE.revenue,
+      footnote: 'Contracted total',
+    },
+    {
+      label: 'Total Revenue',
+      value: totals.totalRevenue,
+      format: money,
+      icon: Activity,
+      accent: SERIES_ROLE.invoiced,
+      delta: `${money(totals.wip)} WIP`,
+      deltaType: 'neutral',
+      footnote: 'Recognised to date',
+    },
+    {
+      label: 'Total Invoiced',
+      value: totals.totalInvoicesValue,
+      format: money,
+      icon: FileText,
+      accent: SERIES_ROLE.wip,
+      footnote: 'Raised against this project',
+    },
+    {
+      label: 'Collected',
+      value: totals.collectedValue,
+      format: money,
+      icon: CheckCircle2,
+      accent: SERIES_ROLE.collected,
+      delta: `${collectionRate}% of invoiced`,
+      deltaType: collectionRate >= 50 ? 'positive' : 'neutral',
+      footnote: 'Cash received',
+    },
+    {
+      label: 'Non-Collected',
+      value: totals.nonCollectedValue,
+      format: money,
+      icon: Clock,
+      accent: STATUS.warning,
+      delta: totals.nonCollectedValue > 0 ? 'Outstanding' : 'All settled',
+      deltaType: totals.nonCollectedValue > 0 ? 'negative' : 'positive',
+      footnote: 'Awaiting collection',
+    },
+  ];
+
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-      <StatCard
-        title="Project Value"
-        value={formatCurrency(totals.projectValue, currency)}
-        icon={Banknote}
-        color="primary"
-      />
-      <StatCard
-        title="Total Revenue"
-        value={formatCurrency(totals.totalRevenue, currency)}
-        icon={TrendingUp}
-        color="success"
-        subtitle="WIP"
-        changeType="negative"
-        change={formatCurrency(totals.wip, currency)}
-      />
-      <StatCard
-        title="Total Invoicing"
-        value={formatCurrency(totals.totalInvoicesValue, currency)}
-        icon={FileText}
-        color="info"
-      />
-      <StatCard
-        title="Collected Value"
-        value={formatCurrency(totals.collectedValue, currency)}
-        icon={FileText}
-        color="info"
-      />
-      <StatCard
-        title="Non-Collected Value"
-        value={formatCurrency(totals.nonCollectedValue, currency)}
-        icon={Clock}
-        color="warning"
-      />
-    </div>
+    <Reveal className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      {tiles.map((tile) => (
+        <KpiTile key={tile.label} {...tile} />
+      ))}
+    </Reveal>
   );
 }
 

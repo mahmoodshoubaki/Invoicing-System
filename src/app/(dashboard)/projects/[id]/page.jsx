@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import Link from 'next/link';
+import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 
 import Button from '@/components/common/Button';
 import { ConfirmModal } from '@/components/common/Modal';
@@ -79,6 +80,14 @@ export default function ProjectDetailPage() {
   // changed.
   const totals = useMemo(() => aggregateSubProjectFinancials(subProjects), [subProjects]);
 
+  // Memoised so ProjectTabs — which is memo'd — isn't handed a brand-new
+  // object on every render of this page.
+  const tabCounts = useMemo(() => ({
+    'EPM Sub-Projects': subProjects.length,
+    BOQ: boqItems.length,
+    Invoices: invoices.length,
+  }), [subProjects.length, boqItems.length, invoices.length]);
+
   const handleArchive = () => {
     setArchiving(true);
     setTimeout(() => {
@@ -108,63 +117,77 @@ export default function ProjectDetailPage() {
   }
 
   return (
-    <div>
-      <ConfirmModal
-        open={archiveModal}
-        onClose={() => setArchiveModal(false)}
-        onConfirm={handleArchive}
-        title="Archive Project"
-        message={`Are you sure you want to archive "${project.contractName}"? This action will move the project to archived status.`}
-        confirmLabel="Archive Project"
-        loading={archiving}
-      />
-
-      <ProjectDetailHeader project={project} projectCode={projectCode} />
-
-      <ProjectStatCards totals={totals} currency={currency} />
-
-      <ProjectTabs activeTab={activeTab} onChange={setActiveTab} />
-
-      {activeTab === 'Overview' && (
-        <OverviewTab
-          project={project}
-          projectCode={projectCode}
-          subProjects={subProjects}
-          totals={totals}
-          currency={currency}
+    <MotionConfig reducedMotion="user">
+      <div>
+        <ConfirmModal
+          open={archiveModal}
+          onClose={() => setArchiveModal(false)}
+          onConfirm={handleArchive}
+          title="Archive Project"
+          message={`Are you sure you want to archive "${project.contractName}"? This action will move the project to archived status.`}
+          confirmLabel="Archive Project"
+          loading={archiving}
         />
-      )}
 
-      {activeTab === 'EPM Sub-Projects' && (
-        <SubProjectsTab
-          subProjects={subProjects}
-          subProjectsLoading={subProjectsLoading}
-          currency={currency}
-        />
-      )}
+        <ProjectDetailHeader project={project} projectCode={projectCode} />
 
-      {activeTab === 'BOQ' && (
-        <BOQTab
-          projectCode={projectCode}
-          boqItems={boqItems}
-          currentBOQ={currentBOQ}
-          billingFrequenciesMap={billingFrequenciesMap}
-          boqItemStatusesMap={boqItemStatusesMap}
-          boqItemStatusColorsMap={boqItemStatusColorsMap}
-          currency={currency}
-        />
-      )}
+        <ProjectStatCards totals={totals} currency={currency} />
 
-      {activeTab === 'Invoices' && (
-        <InvoicesTab
-          projectCode={projectCode}
-          invoices={invoices}
-          invoicesLoading={invoicesLoading}
-          invoiceStatusesMap={invoiceStatusesMap}
-          invoiceStatusColorsMap={invoiceStatusColorsMap}
-          currency={currency}
-        />
-      )}
-    </div>
+        <ProjectTabs activeTab={activeTab} onChange={setActiveTab} counts={tabCounts} />
+
+        {/* Panels cross-fade on switch. Only the active one is mounted, so the
+            memoised tabs below still skip re-rendering entirely. */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {activeTab === 'Overview' && (
+              <OverviewTab
+                project={project}
+                projectCode={projectCode}
+                subProjects={subProjects}
+                totals={totals}
+                currency={currency}
+              />
+            )}
+
+            {activeTab === 'EPM Sub-Projects' && (
+              <SubProjectsTab
+                subProjects={subProjects}
+                subProjectsLoading={subProjectsLoading}
+                currency={currency}
+              />
+            )}
+
+            {activeTab === 'BOQ' && (
+              <BOQTab
+                projectCode={projectCode}
+                boqItems={boqItems}
+                currentBOQ={currentBOQ}
+                billingFrequenciesMap={billingFrequenciesMap}
+                boqItemStatusesMap={boqItemStatusesMap}
+                boqItemStatusColorsMap={boqItemStatusColorsMap}
+                currency={currency}
+              />
+            )}
+
+            {activeTab === 'Invoices' && (
+              <InvoicesTab
+                projectCode={projectCode}
+                invoices={invoices}
+                invoicesLoading={invoicesLoading}
+                invoiceStatusesMap={invoiceStatusesMap}
+                invoiceStatusColorsMap={invoiceStatusColorsMap}
+                currency={currency}
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </MotionConfig>
   );
 }

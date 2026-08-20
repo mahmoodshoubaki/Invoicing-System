@@ -4,11 +4,15 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import Link from 'next/link';
-import { ChevronLeft, CheckSquare, Square } from 'lucide-react';
+import { MotionConfig } from 'motion/react';
+import {
+  ChevronLeft, CheckSquare, FileText, FolderKanban, ListChecks, Paperclip, Send, Square,
+} from 'lucide-react';
 
-import PageHeader from '@/components/common/PageHeader';
+import SubPageHeader from '@/components/common/SubPageHeader';
+import FormSection from '@/components/common/FormSection';
+import Reveal from '@/components/motion/Reveal';
 import Button from '@/components/common/Button';
-import Card from '@/components/common/Card';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { Input, DatePicker } from '@/components/forms/FormField';
 import { ConfirmModal } from '@/components/common/Modal';
@@ -233,6 +237,7 @@ export default function NewInvoicePage() {
   }
 
   return (
+    <MotionConfig reducedMotion="user">
     <div>
       <ConfirmModal
         open={confirmOpen}
@@ -245,9 +250,11 @@ export default function NewInvoicePage() {
         loading={saving}
       />
 
-      <PageHeader
+      <SubPageHeader
+        eyebrow="Invoicing"
         title="New Invoice Request"
-        subtitle={`${project.contractName} · ${projectCode}`}
+        subtitle={project.contractName ?? projectCode}
+        icon={FileText}
         breadcrumbs={[
           { label: 'Home', href: '/' },
           { label: 'Projects', href: '/projects' },
@@ -256,48 +263,47 @@ export default function NewInvoicePage() {
         ]}
         actions={
           <Link href={`/projects/${encodeURIComponent(projectCode)}`}>
-            <Button variant="outline" icon={ChevronLeft} size="sm">Back</Button>
+            <Button variant="ghost" icon={ChevronLeft} size="sm">Back</Button>
           </Link>
         }
       />
 
-      <div className="max-w-3xl flex flex-col gap-6">
-        <Card>
-          <h2 className="text-base font-semibold text-gray-800 mb-3 pb-3 border-b border-gray-100">
-            Project
-          </h2>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold text-gray-800">{project.contractName}</p>
-              <p className="text-xs text-gray-500 mt-0.5">
-                {projectCode}
-              </p>
-            </div>
+      <Reveal className="flex max-w-3xl flex-col gap-5">
+        <FormSection
+          title="Project"
+          icon={FolderKanban}
+          actions={
             <Link href={`/projects/${encodeURIComponent(projectCode)}`}>
-              <Button variant="ghost" size="xs">View Project</Button>
+              <Button variant="ghost" size="xs">View project</Button>
             </Link>
+          }
+        >
+          <div>
+            <p className="text-sm font-semibold text-[#0b0b0b]">{project.contractName}</p>
+            <p className="mt-0.5 font-mono text-xs text-[#898781]">{projectCode}</p>
           </div>
-          <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-100">
+          <div className="mt-4 grid grid-cols-2 gap-4 border-t border-[#f1f0ee] pt-4">
             <div>
-              <p className="text-xs text-gray-400 uppercase tracking-wide">Project Revenue</p>
-              <p className="text-sm font-semibold text-gray-800 mt-0.5">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-[#898781]">Project Revenue</p>
+              <p className="mt-0.5 text-sm font-semibold text-[#0b0b0b]">
                 {formatCurrency(projectFinancials.totalRevenue, currency)}
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-400 uppercase tracking-wide">Project WIP</p>
-              <p className="text-sm font-semibold text-gray-800 mt-0.5">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-[#898781]">Project WIP</p>
+              <p className="mt-0.5 text-sm font-semibold text-[#0b0b0b]">
                 {formatCurrency(projectFinancials.wip, currency)}
               </p>
             </div>
           </div>
-        </Card>
+        </FormSection>
 
         {/* BOQ line-item selection */}
-        <Card>
-          <h2 className="text-base font-semibold text-gray-800 mb-1 pb-3 border-b border-gray-100">
-            BOQ Items
-          </h2>
+        <FormSection
+          title="BOQ Items"
+          subtitle="Select items, then enter the quantity to invoice for each"
+          icon={ListChecks}
+        >
 
           {boqItemsLoading ? (
             <div className="flex items-center justify-center py-10">
@@ -306,7 +312,7 @@ export default function NewInvoicePage() {
           ) : boqItems.length === 0 ? (
             <div className="py-6 text-center">
               <p className="text-sm text-gray-500">
-                No invoiceable BOQ items found for this project — an invoice request can't be created.
+                No invoiceable BOQ items found for this project — an invoice request can&apos;t be created.
               </p>
               <p className="text-xs text-gray-400 mt-1">
                 Taking you back automatically in a few seconds...
@@ -314,10 +320,6 @@ export default function NewInvoicePage() {
             </div>
           ) : (
             <>
-              <p className="text-xs text-gray-500 pt-3 mb-3">
-                Select one or more items, then enter the quantity to invoice for each
-              </p>
-
               <div className="flex flex-col border border-gray-100 rounded-lg overflow-hidden divide-y divide-gray-100">
                 {boqItems.map((boq) => {
                   const isSelected = !!form.boqLineItems[boq.id];
@@ -453,26 +455,23 @@ export default function NewInvoicePage() {
               )}
 
               {selectedIds.length > 0 && (
-                <div className="mt-3 flex items-center justify-between bg-blue-50 rounded-lg px-3 py-2">
-                  <span className="text-xs text-blue-700">
+                <div className="mt-3 flex items-center justify-between rounded-xl border border-[#f8485e]/20 bg-[#f8485e]/6 px-3.5 py-2.5">
+                  <span className="text-xs font-medium text-[#d9304a]">
                     {selectedIds.length} item{selectedIds.length !== 1 ? 's' : ''} selected
                   </span>
-                  <span className="text-sm font-bold text-blue-800">
-                    Grand Total: {formatCurrency(grandTotal, currency)}
+                  <span className="text-sm font-bold tabular-nums text-[#d9304a]">
+                    Grand total: {formatCurrency(grandTotal, currency)}
                   </span>
                 </div>
               )}
             </>
           )}
-        </Card>
+        </FormSection>
 
         {/* Invoice Details */}
-        {!boqItemsLoading && boqItems.length > 0 && 
+        {!boqItemsLoading && boqItems.length > 0 &&
         (<>
-        <Card>
-          <h2 className="text-base font-semibold text-gray-800 mb-4 pb-3 border-b border-gray-100">
-            Invoice Details
-          </h2>
+        <FormSection title="Invoice Details" icon={FileText}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="Invoice Number"
@@ -502,13 +501,14 @@ export default function NewInvoicePage() {
               hint="Enter as a decimal, e.g. 0.15 for 15%"
             /> */}
           </div>
-        </Card>
+        </FormSection>
 
         {/* Attachments */}
-        <Card>
-          <h2 className="text-base font-semibold text-gray-800 mb-4 pb-3 border-b border-gray-100">
-            Attachments
-          </h2>
+        <FormSection
+          title="Attachments"
+          subtitle="Supporting documents for this request"
+          icon={Paperclip}
+        >
           <AttachmentUploader
             files={attachments}
             onChange={setAttachments}
@@ -519,20 +519,20 @@ export default function NewInvoicePage() {
               });
             }}
           />
-        </Card>
+        </FormSection>
 
-        <div className="flex items-center justify-end gap-3 pb-6">
+        <div className="sticky bottom-0 z-10 flex items-center justify-end gap-3 rounded-2xl border border-[#e9e7e5] bg-white/85 px-4 py-3 shadow-[0_-4px_16px_-8px_rgb(60_60_58/0.18)] backdrop-blur-md">
           <Link href={`/projects/${encodeURIComponent(projectCode)}`}>
-            <Button variant="outline">Cancel</Button>
+            <Button variant="ghost">Cancel</Button>
           </Link>
-          <Button onClick={handleSubmitClick} loading={saving} disabled={attachmentsUploading}>
-            {attachmentsUploading ? 'Uploading attachments…' : 'Submit Request'}
+          <Button icon={Send} onClick={handleSubmitClick} loading={saving} disabled={attachmentsUploading}>
+            {attachmentsUploading ? 'Uploading attachments…' : 'Submit request'}
           </Button>
         </div>
         </>
       )}
-      </div>
+      </Reveal>
     </div>
-    
+    </MotionConfig>
   );
 }

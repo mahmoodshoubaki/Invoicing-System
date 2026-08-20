@@ -1,20 +1,64 @@
 'use client';
 
 import { memo, useMemo } from 'react';
+import { Activity, Banknote, FileText, Network } from 'lucide-react';
 import Table from '@/components/common/Table';
 import { StatusBadge } from '@/components/common/Badge';
+import TabToolbar from './TabToolbar';
+import { CHROME, SERIES_ROLE } from '@/theme/vizPalette';
 import { formatCurrency } from '@/utils/formatters';
 
 function SubProjectsTab({ subProjects, subProjectsLoading, currency }) {
+  const money = (v) => formatCurrency(v, currency);
+
+  const totals = useMemo(() => subProjects.reduce(
+    (acc, sp) => ({
+      projectValue: acc.projectValue + (sp.projectValue || 0),
+      wip: acc.wip + (sp.wip || 0),
+      invoiced: acc.invoiced + (sp.totalInvoicesValue || 0),
+    }),
+    { projectValue: 0, wip: 0, invoiced: 0 }
+  ), [subProjects]);
+
+  const stats = useMemo(() => [
+    {
+      label: 'Sub-projects',
+      value: subProjects.length,
+      icon: Network,
+      accent: SERIES_ROLE.wip,
+    },
+    {
+      label: 'Combined value',
+      value: money(totals.projectValue),
+      icon: Banknote,
+      accent: SERIES_ROLE.revenue,
+    },
+    {
+      label: 'Total invoiced',
+      value: money(totals.invoiced),
+      icon: FileText,
+      accent: SERIES_ROLE.invoiced,
+    },
+    {
+      label: 'Work in progress',
+      value: money(totals.wip),
+      icon: Activity,
+      accent: SERIES_ROLE.collected,
+    },
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [subProjects.length, totals, currency]);
+
   const columns = useMemo(() => [
     {
       key: 'projectName',
       label: 'Project Name',
       render: (val, row) => (
-        <div>
-          <p className="font-medium text-gray-800 text-sm leading-tight">{val}</p>
-          <p className="text-xs text-gray-400 mt-0.5">
-            {row.projectCode}
+        <div className="min-w-0">
+          <p className="text-sm font-semibold leading-tight" style={{ color: CHROME.textPrimary }}>
+            {val ?? '—'}
+          </p>
+          <p className="mt-0.5 truncate text-xs" style={{ color: CHROME.textMuted }}>
+            <span className="font-mono">{row.projectCode}</span>
             {row.projectNameFocus ? ` · ${row.projectNameFocus}` : ''}
           </p>
         </div>
@@ -24,10 +68,12 @@ function SubProjectsTab({ subProjects, subProjectsLoading, currency }) {
       key: 'contractName',
       label: 'Contract Name',
       render: (val, row) => (
-        <div>
-          <p className="text-sm text-gray-700 leading-tight">{val ?? '—'}</p>
+        <div className="min-w-0">
+          <p className="text-sm leading-tight" style={{ color: CHROME.textSecondary }}>{val ?? '—'}</p>
           {row.contractNumber != null && (
-            <p className="text-xs text-gray-400 font-mono mt-0.5">{row.contractNumber}</p>
+            <p className="mt-0.5 font-mono text-xs" style={{ color: CHROME.textMuted }}>
+              #{row.contractNumber}
+            </p>
           )}
         </div>
       ),
@@ -38,20 +84,24 @@ function SubProjectsTab({ subProjects, subProjectsLoading, currency }) {
     {
       key: 'projectValue',
       label: 'Project Value',
-      align: 'center',
-      render: (val) => <span className="font-semibold text-gray-800 text-sm">{formatCurrency(val, currency)}</span>,
+      align: 'right',
+      render: (val) => (
+        <span className="text-sm font-semibold tabular-nums" style={{ color: CHROME.textPrimary }}>
+          {money(val)}
+        </span>
+      ),
     },
     {
       key: 'wip',
       label: 'WIP',
-      align: 'center',
-      render: (val) => formatCurrency(val, currency),
+      align: 'right',
+      render: (val) => <span className="text-sm tabular-nums">{money(val)}</span>,
     },
     {
       key: 'totalInvoicesValue',
       label: 'Total Invoiced',
-      align: 'center',
-      render: (val) => formatCurrency(val, currency),
+      align: 'right',
+      render: (val) => <span className="text-sm tabular-nums">{money(val)}</span>,
     },
     {
       key: 'status',
@@ -59,19 +109,18 @@ function SubProjectsTab({ subProjects, subProjectsLoading, currency }) {
       sortable: false,
       render: (val) => <StatusBadge status={val} />,
     },
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   ], [currency]);
 
   return (
     <div>
-      <p className="text-sm text-gray-500 mb-4">
-        {subProjects.length} sub-project{subProjects.length !== 1 ? 's' : ''}
-      </p>
+      <TabToolbar stats={stats} />
       <Table
         columns={columns}
         data={subProjects}
         isLoading={subProjectsLoading}
         rowKey="projectCode"
-        emptyMessage="No sub-projects found"
+        emptyMessage="No sub-projects are linked to this contract."
       />
     </div>
   );
