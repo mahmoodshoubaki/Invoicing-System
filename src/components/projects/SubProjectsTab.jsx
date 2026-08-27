@@ -54,13 +54,13 @@ function SubProjectsTab({ subProjects, subProjectsLoading, currency }) {
       label: 'Project Name',
       render: (val, row) => (
         <div className="min-w-0">
-          <p className="text-sm font-semibold leading-tight" style={{ color: CHROME.textPrimary }}>
+          <div className="text-sm font-semibold leading-tight" style={{ color: CHROME.textPrimary }}>
             {val ?? '—'}
-          </p>
-          <p className="mt-0.5 truncate text-xs" style={{ color: CHROME.textMuted }}>
-            <span className="font-mono">{row.projectCode}</span>
-            {row.projectNameFocus ? ` · ${row.projectNameFocus}` : ''}
-          </p>
+          </div>
+          <div className="mt-0.5 truncate text-xs" style={{ color: CHROME.textMuted }}>
+            <div className="font-mono">{row.projectCode}</div>
+            {row.projectNameFocus ? `${row.projectNameFocus}` : ''}
+          </div>
         </div>
       ),
     },

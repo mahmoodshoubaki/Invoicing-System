@@ -160,6 +160,7 @@ function InvoiceDetailContent() {
               <InfoItem icon={Calendar} label="Submission Date" value={formatDateTime(invoice.submissionDate)} />
               <InfoItem icon={Calendar} label="Baseline Expected Collection Date" value={formatDate(invoice.baselineCollectionDate)} />
               <InfoItem icon={Calendar} label="Updated Expected Collection Date" value={formatDate(invoice.expectedCollectionDate)} />
+              <InfoItem icon={Calendar} label="Reasons For Update" value={invoice.reasonsForUpdate} />
             </div>
           </Card>
 

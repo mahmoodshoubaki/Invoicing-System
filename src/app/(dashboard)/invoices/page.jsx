@@ -82,7 +82,7 @@ export default function InvoicesPage() {
     },
     {
       key: 'projectId',
-      label: 'Project',
+      label: 'Contract Name',
       render: (val) => (
         <div className="max-w-45">
           <p className="text-sm text-gray-700 truncate">{getProjectName(val)}</p>
@@ -91,7 +91,7 @@ export default function InvoicesPage() {
     },
     {
       key: 'boqItemIds',
-      label: 'BOQ Items',
+      label: 'Project Code',
       render: (val) => {
         const items = getBOQItems(val);
         if (items.length === 0) return <span className="text-gray-400">—</span>;

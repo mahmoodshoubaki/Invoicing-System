@@ -29,18 +29,27 @@ export const revealItem = {
 };
 
 /**
- * Convenience wrapper: a section that staggers its children in when it
- * enters the viewport.
+ * Convenience wrapper: staggers its children in.
+ *
+ * Uses `animate` rather than `whileInView`, deliberately. With a one-shot
+ * `whileInView` the container stops listening once it has played — so any
+ * child that mounts LATER (a section gated behind a fetch, say) inherits the
+ * container's `initial="hidden"` and never receives the "show" signal. It
+ * renders at opacity 0: invisible, but still taking up layout, leaving a
+ * blank gap where the content should be.
+ *
+ * Keeping the container permanently in "show" means late-mounting children
+ * animate in as soon as they appear, which is what you want on a form whose
+ * sections unlock progressively.
  */
-export default function Reveal({ children, className = '', as = 'div', once = true }) {
+export default function Reveal({ children, className = '', as = 'div' }) {
   const Component = motion[as] ?? motion.div;
   return (
     <Component
       className={className}
       variants={revealContainer}
       initial="hidden"
-      whileInView="show"
-      viewport={{ once, margin: '-60px' }}
+      animate="show"
     >
       {children}
     </Component>

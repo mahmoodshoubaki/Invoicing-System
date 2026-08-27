@@ -241,9 +241,13 @@ const invoicesSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(createInvoice.fulfilled, (state, action) => {
+      // Same reasoning as updateInvoice below: CreateInvoice's response is the
+      // raw POST result, not a mapped invoice — it may even be an empty body,
+      // which apiClient turns into `null`. Unshifting that put a non-invoice
+      // (or literal null) into the list every component renders from, which
+      // throws on the first `row.id` read. The caller re-fetches instead.
+      .addCase(createInvoice.fulfilled, (state) => {
         state.isLoading = false;
-        state.items.unshift(action.payload);
       })
       .addCase(createInvoice.rejected, (state, action) => {
         state.isLoading = false;

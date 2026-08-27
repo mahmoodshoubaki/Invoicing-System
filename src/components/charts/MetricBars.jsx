@@ -29,8 +29,9 @@ export default function MetricBars({ items = [], format = (v) => v, color = SERI
       data-motion
       className="flex flex-col gap-3"
       initial="hidden"
-      whileInView="show"
-      viewport={{ once: true, margin: '-40px' }}
+      // `animate`, not a one-shot `whileInView` — a row added after the
+      // container has played would otherwise inherit `hidden` and stay invisible.
+      animate="show"
       variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
     >
       {ranked.map((item) => (

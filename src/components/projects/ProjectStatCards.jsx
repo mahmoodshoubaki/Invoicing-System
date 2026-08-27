@@ -34,7 +34,7 @@ function ProjectStatCards({ totals, currency }) {
       icon: Activity,
       accent: SERIES_ROLE.invoiced,
       delta: `${money(totals.wip)} WIP`,
-      deltaType: 'neutral',
+      deltaType: totals.wip <= 0 ? 'positive' : 'negative',
       footnote: 'Recognised to date',
     },
     {
@@ -61,8 +61,8 @@ function ProjectStatCards({ totals, currency }) {
       format: money,
       icon: Clock,
       accent: STATUS.warning,
-      delta: totals.nonCollectedValue > 0 ? 'Outstanding' : 'All settled',
-      deltaType: totals.nonCollectedValue > 0 ? 'negative' : 'positive',
+      //delta: totals.nonCollectedValue > 0 ? 'Outstanding' : 'All settled',
+      //deltaType: totals.nonCollectedValue > 0 ? 'negative' : 'positive',
       footnote: 'Awaiting collection',
     },
   ];
