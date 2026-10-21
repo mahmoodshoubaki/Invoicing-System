@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, createSelector } from '@reduxjs/toolkit';
 import { lookupsRepository } from '@/repositories/lookupsRepository';
+import { changeRequestRepository } from '@/repositories/changeRequestRepository';
 
 // ---------------------------------------------------------------------------
 // Async thunks
@@ -49,6 +50,29 @@ export const fetchTrackerCycleStatuses = createAsyncThunk(
   }
 );
 
+// Change requests (2026-10-19): why a BOQ changes, and where a request stands.
+export const fetchChangeRequestReasons = createAsyncThunk(
+  'lookups/fetchChangeRequestReasons',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await changeRequestRepository.getReasons();
+    } catch (err) {
+      return rejectWithValue(err.message || 'Failed to fetch change request reasons.');
+    }
+  }
+);
+
+export const fetchChangeRequestStatuses = createAsyncThunk(
+  'lookups/fetchChangeRequestStatuses',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await changeRequestRepository.getStatuses();
+    } catch (err) {
+      return rejectWithValue(err.message || 'Failed to fetch change request statuses.');
+    }
+  }
+);
+
 // ---------------------------------------------------------------------------
 // Slice
 // ---------------------------------------------------------------------------
@@ -58,6 +82,8 @@ const initialState = {
   boqItemStatuses: [],
   invoiceStatuses: [],
   trackerCycleStatuses: [],
+  changeRequestReasons: [],
+  changeRequestStatuses: [],
   isLoading: false,
   error: null,
 };
@@ -125,6 +151,13 @@ const lookupsSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload;
       })
+      // change requests — no loading flag of their own: nothing waits on them to draw
+      .addCase(fetchChangeRequestReasons.fulfilled, (state, action) => {
+        state.changeRequestReasons = action.payload;
+      })
+      .addCase(fetchChangeRequestStatuses.fulfilled, (state, action) => {
+        state.changeRequestStatuses = action.payload;
+      })
       ;
   },
 
@@ -138,6 +171,20 @@ export const selectBillingFrequencies = (state) => state.lookups.billingFrequenc
 export const selectBoqItemStatuses = (state) => state.lookups.boqItemStatuses;
 export const selectInvoiceStatuses = (state) => state.lookups.invoiceStatuses;
 export const selectTrackerCycleStatuses = (state) => state.lookups.trackerCycleStatuses;
+export const selectChangeRequestReasons = (state) => state.lookups.changeRequestReasons;
+export const selectChangeRequestStatuses = (state) => state.lookups.changeRequestStatuses;
+
+/** Change request statuses by key → { label, colorHex }. */
+export const selectChangeRequestStatusesMap = createSelector(
+  [selectChangeRequestStatuses],
+  (statuses) => Object.fromEntries(statuses.map((s) => [s.key, s]))
+);
+
+/** Change request reasons by key → { label, justification }. */
+export const selectChangeRequestReasonsMap = createSelector(
+  [selectChangeRequestReasons],
+  (reasons) => Object.fromEntries(reasons.map((r) => [r.key, r]))
+);
 
 /**
  * Returns a plain object keyed by id for O(1) resolution.

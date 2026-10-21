@@ -22,7 +22,7 @@ function SubPageHeader({ title, subtitle, icon: Icon, breadcrumbs = [], actions,
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-      className="relative mb-6 overflow-hidden rounded-2xl border border-[#e9e7e5] bg-white px-5 py-5 shadow-[0_2px_6px_-2px_rgb(60_60_58/0.08)] sm:px-6"
+      className="relative mb-6 overflow-hidden rounded-2xl border border-[#e9e7e5] bg-white px-5 py-5 shadow-[var(--shadow-card)] sm:px-6"
     >
       {/* Soft brand wash in the corner — enough to tie back to the hero pages */}
       <div
@@ -60,9 +60,12 @@ function SubPageHeader({ title, subtitle, icon: Icon, breadcrumbs = [], actions,
                 {eyebrow}
               </p>
             )}
-            <h1 className="text-xl font-bold tracking-tight sm:text-2xl" style={{ color: CHROME.textPrimary }}>
-              {title}
-            </h1>
+            {/* No empty heading when a page leaves the title to a card below. */}
+            {title && (
+              <h1 className="text-xl font-bold tracking-tight sm:text-2xl" style={{ color: CHROME.textPrimary }}>
+                {title}
+              </h1>
+            )}
             {subtitle && (
               <p className="mt-1 text-sm" style={{ color: CHROME.textSecondary }}>{subtitle}</p>
             )}

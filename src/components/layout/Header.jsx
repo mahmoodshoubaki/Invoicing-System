@@ -1,22 +1,20 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Bell, Menu } from 'lucide-react';
-import { useSelector, useDispatch } from 'react-redux';
+import { Menu } from 'lucide-react';
+import { useDispatch } from 'react-redux';
 import { toggleSidebar } from '@/store/slices/uiSlice';
 import { useAuth } from '@/hooks/useAuth';
 import UserMenu from './UserMenu';
 import LanguageToggle from './LanguageToggle';
 import { Currencies } from '@/constants/currencies';
 import CurrencyMenu from './CurrencyMenu';
+import NotificationBell from '@/components/notifications/NotificationBell';
 import logo from '@/theme/assets/devoteam-logo.png';
 
 export default function Header() {
   const dispatch = useDispatch();
   const { user, logout } = useAuth();
-  const unreadCount = useSelector((s) => s.notifications.unreadCount);
-  const router = useRouter();
 
   const handleLogout = async () => {
     await logout();
@@ -55,17 +53,7 @@ export default function Header() {
       <div className="flex items-center gap-2">
         <LanguageToggle />
         <CurrencyMenu />
-        <button
-          onClick={() => router.push('/notifications')}
-          className="relative p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
-        >
-          <Bell size={20} />
-          {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 w-4 h-4 bg-primary text-white text-[10px] rounded-full flex items-center justify-center font-bold">
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </span>
-          )}
-        </button>
+        <NotificationBell />
 
         <UserMenu user={user} onLogout={handleLogout} />
       </div>

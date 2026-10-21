@@ -18,7 +18,7 @@ export default function FormSection({
   return (
     <motion.section
       variants={revealItem}
-      className={`rounded-2xl border border-[#e9e7e5] bg-white p-5 shadow-[0_2px_6px_-2px_rgb(60_60_58/0.08)] ${className}`}
+      className={`rounded-2xl border border-[#e9e7e5] bg-white p-5 shadow-[var(--shadow-card)] ${className}`}
     >
       {(title || actions) && (
         <header className="mb-5 flex flex-wrap items-start justify-between gap-3 border-b border-[#f1f0ee] pb-3.5">

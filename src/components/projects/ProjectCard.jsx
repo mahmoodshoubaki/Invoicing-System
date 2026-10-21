@@ -2,10 +2,8 @@
 
 import { memo } from 'react';
 import Link from 'next/link';
-import { motion } from 'motion/react';
 import { ArrowUpRight, Building2, CreditCard, Receipt } from 'lucide-react';
 import { StatusBadge } from '@/components/common/Badge';
-import { revealItem } from '@/components/motion/Reveal';
 import { CHROME, STATUS } from '@/theme/vizPalette';
 import { formatDate } from '@/utils/formatters';
 
@@ -34,14 +32,16 @@ function ProjectCard({ project }) {
   ].filter((m) => m.value);
 
   return (
-    <motion.div variants={revealItem} whileHover={{ y: -4 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
+    // No animation (2026-10-08): no spring lift, no wipe, no growing bar.
+    // Hover shows the brand rail, a deeper shadow and the arrow, instantly.
+    <div>
       <Link
         href={`/projects/${encodeURIComponent(project.projectCode)}`}
-        className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-[#e9e7e5] bg-white p-5 shadow-[0_2px_6px_-2px_rgb(60_60_58/0.08)] transition-shadow hover:shadow-[0_18px_38px_-14px_rgb(60_60_58/0.20)]"
+        className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-[#e9e7e5] bg-white p-5 shadow-[var(--shadow-card)] hover:shadow-[0_18px_38px_-14px_rgb(60_60_58/0.20)]"
       >
-        {/* Brand rail that wipes in on hover */}
+        {/* Brand rail shown on hover */}
         <span
-          className="absolute inset-x-0 top-0 h-[3px] origin-left scale-x-0 bg-gradient-to-r from-[#f8485e] via-[#fca2ae] to-[#fcc354] transition-transform duration-500 ease-out group-hover:scale-x-100"
+          className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-[#f8485e] via-[#fca2ae] to-[#fcc354] opacity-0 group-hover:opacity-100"
           aria-hidden="true"
         />
 
@@ -85,26 +85,22 @@ function ProjectCard({ project }) {
               <span>{formatDate(project.contractFinishDate)}</span>
             </div>
             <div className="h-1.5 overflow-hidden rounded-full bg-[#f1f0ee]">
-              <motion.div
+              <div
                 className="h-full rounded-full"
-                style={{ backgroundColor: overdue ? STATUS.critical : '#f8485e' }}
-                initial={{ width: 0 }}
-                whileInView={{ width: `${progress}%` }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+                style={{ width: `${progress}%`, backgroundColor: overdue ? STATUS.critical : '#f8485e' }}
               />
             </div>
           </div>
         )}
 
         <span
-          className="absolute bottom-4 right-4 text-[#a1a1a0] opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100 md:-translate-x-1"
+          className="absolute bottom-4 right-4 text-[#a1a1a0] opacity-0 group-hover:opacity-100"
           aria-hidden="true"
         >
           <ArrowUpRight size={16} />
         </span>
       </Link>
-    </motion.div>
+    </div>
   );
 }
 

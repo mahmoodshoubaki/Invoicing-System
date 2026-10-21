@@ -20,6 +20,8 @@ import ADUserSearchInput from './ADUserSearchInput';
 const EMPTY_FORM = {
   displayName: '',
   roleIds: [],
+  // Ticked by default: a new user is sent a welcome with their roles.
+  notifyUser: true,
 };
 
 /**
@@ -126,6 +128,12 @@ function AddUserModal({ open, onClose, onCreated }) {
             ))}
           </div>
         </div>
+        <Checkbox
+          label="Notify the user about this change"
+          description="They get a welcome with their roles, by email and in the bell."
+          checked={formData.notifyUser}
+          onChange={(e) => setFormData((prev) => ({ ...prev, notifyUser: e.target.checked }))}
+        />
       </div>
     </Modal>
   );

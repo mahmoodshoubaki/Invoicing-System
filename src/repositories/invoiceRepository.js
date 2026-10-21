@@ -4,7 +4,9 @@ import { mockInvoices } from '@/mock/invoices';
 import { INVOICE_STATUS } from '@/constants/statuses';
 import { createApiClient } from '@/lib/apiClient';
 import { createInvoiceableBOQItem } from '@/models/boq';
-import { createInvoice as mapInvoice, createInvoiceFormData, createUpdateInvoiceFormData } from '@/models/invoice';
+import {
+  createAddAttachmentsFormData, createInvoice as mapInvoice, createInvoiceFormData, createUpdateInvoiceFormData,
+} from '@/models/invoice';
 
 const api = createApiClient('/api/Invoices');
 
@@ -88,6 +90,21 @@ export const invoiceRepository = {
    */
   async updateInvoice(data) {
     return await api.post('/UpdateInvoice', createUpdateInvoiceFormData(data));
+  },
+
+  // REAL API
+  /**
+   * Add files to an invoice at any stage while it is open (2026-10-11) —
+   * refused with INV-013 once it is Collected or Cancelled. Same file limits
+   * as creating one. Needs Invoices.AddAttachments.
+   *
+   * @param {string} invoiceId
+   * @param {Array<{file: File, name: string, status: string}>} attachments  AttachmentUploader's entries
+   * @returns {Promise<string[]>} the new attachments' ids
+   */
+  async addInvoiceAttachments(invoiceId, attachments) {
+    const data = await api.post('/AddInvoiceAttachments', createAddAttachmentsFormData(invoiceId, attachments));
+    return data?.attachmentIds ?? [];
   },
 
   /**
@@ -256,5 +273,21 @@ export const invoiceRepository = {
   async getInvoiceHistory(invoiceId) {
     const data = await api.get(`/GetInvoiceHistory?InvoiceId=${encodeURIComponent(invoiceId)}`);
     return (data ?? []).map(mapInvoice);
+  },
+
+  /**
+   * Delete one or many invoices — `Invoices.Delete`, added 2026-10-07.
+   *
+   * **All or nothing:** if any one cannot go (Invoiced or Collected), none
+   * does, and the INV-010 message names every one. A soft delete: the invoice
+   * leaves every list, its running workflows are cancelled, and an
+   * `InvoiceDeleted` event is raised.
+   *
+   * @param {string[]} invoiceIds
+   * @returns {Promise<string[]>} the ids deleted
+   */
+  async deleteInvoices(invoiceIds) {
+    const data = await api.post('/DeleteInvoices', { invoiceIds });
+    return data?.deletedInvoiceIds ?? [];
   },
 };

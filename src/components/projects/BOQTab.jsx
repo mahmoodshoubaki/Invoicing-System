@@ -12,6 +12,7 @@ import { CHROME, SERIES_ROLE, STATUS } from '@/theme/vizPalette';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import { usePermission } from '@/hooks/usePermission';
 import { BOQ_STATUS } from '@/constants/statuses';
+import { ROUTES } from '@/constants/routes';
 
 function BOQTab({
   projectCode, boqItems, currentBOQ, billingFrequenciesMap, boqItemStatusesMap, boqItemStatusColorsMap, currency,
@@ -58,10 +59,16 @@ function BOQTab({
       key: 'englishName',
       label: 'Item',
       render: (val, row) => (
-        <div className="w-xs min-w-0">
-          <p className="text-sm font-semibold leading-tight" style={{ color: CHROME.textPrimary }}>
+        <div>
+          {/* Opens the item, read-only — the same link the BOQ list gives. */}
+          <Link
+            href={ROUTES.PROJECT_BOQ_ITEM(encoded, row.id)}
+            onClick={(e) => e.stopPropagation()}
+            className="text-sm font-semibold leading-tight underline-offset-2 hover:underline"
+            style={{ color: CHROME.textPrimary }}
+          >
             {val ?? '—'}
-          </p>
+          </Link>
           {row.arabicName && (
             <p className="mt-0.5 truncate text-xs" dir="rtl" style={{ color: CHROME.textMuted }}>
               {row.arabicName}
@@ -141,7 +148,7 @@ function BOQTab({
       ),
     },
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [currency, boqItemStatusesMap, boqItemStatusColorsMap, billingFrequenciesMap]);
+  ], [currency, boqItemStatusesMap, boqItemStatusColorsMap, billingFrequenciesMap, encoded]);
 
   const actions = currentBOQ?.id ? (
     <Link href={`/projects/${encoded}/boq`}>

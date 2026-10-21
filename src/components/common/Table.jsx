@@ -1,10 +1,32 @@
 'use client';
 
 import { memo, useLayoutEffect, useRef, useState } from 'react';
-import { ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
-import Button from './Button';
+import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
+import TablePagination from './TablePagination';
 
 const MIN_COL_WIDTH = 60;
+
+/**
+ * The table's sort order, exported so a paginating caller can sort the WHOLE
+ * list with exactly the rules a header click uses.
+ *
+ * Empty values sink to the end in both directions — a row with no date should
+ * not jump to the top of a newest-first list. Strings compare with
+ * `localeCompare`, which orders ISO date strings chronologically.
+ */
+export function sortRows(data, col, dir) {
+  if (!col) return data;
+  return [...data].sort((a, b) => {
+    const aVal = a[col];
+    const bVal = b[col];
+    if (aVal == null) return 1;
+    if (bVal == null) return -1;
+    const cmp = typeof aVal === 'string'
+      ? aVal.localeCompare(bVal)
+      : aVal - bVal;
+    return dir === 'asc' ? cmp : -cmp;
+  });
+}
 
 function SortIcon({ direction }) {
   if (direction === 'asc') return <ChevronUp size={13} />;
@@ -24,6 +46,8 @@ function Table({
   stickyHeader = false,
   compact = false,
   resizable = true,
+  sort: sortProp,
+  onSortChange,
 }) {
   // sortCol/sortDir were previously two separate useState slots updated
   // together on every real sort change — splitting state that always
@@ -31,7 +55,16 @@ function Table({
   // "toggle gets stuck" class of bug (any path that updates one without the
   // other leaves them inconsistent). One state object updated atomically
   // removes that possibility entirely.
-  const [sort, setSort] = useState({ col: null, dir: 'asc' });
+  const [internalSort, setSort] = useState({ col: null, dir: 'asc' });
+
+  /*
+   * Sorting is internal by default and sorts only the rows passed in. A caller
+   * that paginates must pass `sort` + `onSortChange` instead and sort the whole
+   * list itself: this component never sees the other pages, so sorting here
+   * would reorder the current page and nothing else.
+   */
+  const controlled = typeof onSortChange === 'function';
+  const sort = controlled ? (sortProp ?? { col: null, dir: 'asc' }) : internalSort;
   const { col: sortCol, dir: sortDir } = sort;
   const [colWidths, setColWidths] = useState({});
   const [measured, setMeasured] = useState(false);
@@ -87,25 +120,18 @@ function Table({
   const handleSort = (col) => {
     if (col.sortable === false) return;
     if (!sortable && col.sortable !== true) return;
-    setSort((prev) => (
+    const next = (prev) => (
       prev.col === col.key
         ? { col: col.key, dir: prev.dir === 'asc' ? 'desc' : 'asc' }
         : { col: col.key, dir: 'asc' }
-    ));
+    );
+    if (controlled) onSortChange(next(sort));
+    else setSort(next);
   };
 
-  const sortedData = sortCol
-    ? [...data].sort((a, b) => {
-        const aVal = a[sortCol];
-        const bVal = b[sortCol];
-        if (aVal == null) return 1;
-        if (bVal == null) return -1;
-        const cmp = typeof aVal === 'string'
-          ? aVal.localeCompare(bVal)
-          : aVal - bVal;
-        return sortDir === 'asc' ? cmp : -cmp;
-      })
-    : data;
+  // Controlled: the caller sorted the FULL list before paginating, so sorting
+  // `data` here again would only reorder the current page.
+  const sortedData = controlled ? data : sortRows(data, sortCol, sortDir);
 
   const cellPad = compact ? 'px-3 py-2' : 'px-7 py-3';
 
@@ -202,43 +228,7 @@ function Table({
         </table>
       </div>
 
-      {/* Pagination */}
-      {pagination && (
-        <div className="flex items-center justify-between mt-3">
-          <p className="text-xs text-gray-500">
-            Showing {pagination.from}–{pagination.to} of {pagination.total} records
-          </p>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="sm"
-              icon={ChevronLeft}
-              disabled={pagination.page <= 1}
-              onClick={() => pagination.onChange(pagination.page - 1)}
-            />
-            {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
-              .filter((p) => Math.abs(p - pagination.page) <= 2)
-              .map((p) => (
-                <button
-                  key={p}
-                  onClick={() => pagination.onChange(p)}
-                  className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors
-                    ${p === pagination.page ? 'bg-primary text-white' : 'text-gray-600 hover:bg-gray-100'}
-                  `}
-                >
-                  {p}
-                </button>
-              ))}
-            <Button
-              variant="outline"
-              size="sm"
-              icon={ChevronRight}
-              disabled={pagination.page >= pagination.totalPages}
-              onClick={() => pagination.onChange(pagination.page + 1)}
-            />
-          </div>
-        </div>
-      )}
+      {pagination && <TablePagination {...pagination} />}
     </div>
   );
 }

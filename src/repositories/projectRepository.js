@@ -11,6 +11,20 @@ export const projectRepository = {
     return createProject(raw);
   },
 
+  /**
+   * One project's EPM details by its code (2026-10-21) — `GetProjectDetails`
+   * takes `projectCode`. The only call that names its people: its CRP, BU
+   * head and BDM, by display name. With several sub-projects it answers with
+   * one of them; null when the user may not see the project.
+   *
+   * @param {string} projectCode
+   * @returns {Promise<Object|null>}  createProject's
+   */
+  async getProjectDetails(projectCode) {
+    const raw = await api.get(`/GetProjectDetails?${new URLSearchParams({ projectCode }).toString()}`);
+    return raw ? createProject(raw) : null;
+  },
+
   // REAL API
   async getMainProjectDetails(projectCode) {
     const raw = await api.get(`/GetMainProjectDetails?${new URLSearchParams({ projectCode }).toString()}`);

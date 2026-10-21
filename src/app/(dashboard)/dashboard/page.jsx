@@ -23,6 +23,7 @@ import { mockBOQItems } from '@/mock/boq';
 import { mockUsers } from '@/mock/users';
 import { INVOICE_STATUS, BOQ_STATUS, PROJECT_STATUS } from '@/constants/statuses';
 import { formatCurrency, formatDate } from '@/utils';
+import { invoiceNumberOrPending } from '@/utils/invoiceDisplay';
 
 // ---------------------------------------------------------------------------
 // Derived KPI values from mock data
@@ -217,18 +218,12 @@ export default function DashboardPage() {
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="relative isolate overflow-hidden rounded-3xl bg-[#17161c] px-6 py-7 sm:px-9 sm:py-8"
         >
-          {/* Ambient colour fields */}
+          {/* Ambient colour fields. Held still (2026-10-08): drifting them forever
+              made the browser re-blur two 90–100px glows on every frame,
+              scrolling included. Still, they are painted once. */}
           <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-            <motion.div
-              className="absolute -left-16 -top-24 h-72 w-72 rounded-full bg-[#f8485e] opacity-40 blur-[90px]"
-              animate={{ x: [0, 40, 0], y: [0, 24, 0] }}
-              transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
-            />
-            <motion.div
-              className="absolute -bottom-28 right-10 h-72 w-72 rounded-full bg-[#4a3aa7] opacity-40 blur-[100px]"
-              animate={{ x: [0, -36, 0], y: [0, -20, 0] }}
-              transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
-            />
+            <div className="absolute -left-16 -top-24 h-72 w-72 rounded-full bg-[#f8485e] opacity-40 blur-[90px]" />
+            <div className="absolute -bottom-28 right-10 h-72 w-72 rounded-full bg-[#4a3aa7] opacity-40 blur-[100px]" />
             <div
               className="absolute inset-0 opacity-[0.05]"
               style={{
@@ -292,7 +287,7 @@ export default function DashboardPage() {
         <Reveal className="grid grid-cols-1 gap-4 lg:grid-cols-5">
           <motion.section
             variants={revealItem}
-            className="rounded-2xl border border-[#e9e7e5] bg-white p-5 shadow-[0_2px_6px_-2px_rgb(60_60_58/0.08)] lg:col-span-3"
+            className="rounded-2xl border border-[#e9e7e5] bg-white p-5 shadow-[var(--shadow-card)] lg:col-span-3"
           >
             <header className="mb-5">
               <h2 className="text-base font-semibold tracking-tight" style={{ color: CHROME.textPrimary }}>
@@ -307,7 +302,7 @@ export default function DashboardPage() {
 
           <motion.section
             variants={revealItem}
-            className="rounded-2xl border border-[#e9e7e5] bg-white p-5 shadow-[0_2px_6px_-2px_rgb(60_60_58/0.08)] lg:col-span-2"
+            className="rounded-2xl border border-[#e9e7e5] bg-white p-5 shadow-[var(--shadow-card)] lg:col-span-2"
           >
             <header className="mb-5">
               <h2 className="text-base font-semibold tracking-tight" style={{ color: CHROME.textPrimary }}>
@@ -326,7 +321,7 @@ export default function DashboardPage() {
           {/* Recent projects */}
           <motion.section
             variants={revealItem}
-            className="overflow-hidden rounded-2xl border border-[#e9e7e5] bg-white shadow-[0_2px_6px_-2px_rgb(60_60_58/0.08)]"
+            className="overflow-hidden rounded-2xl border border-[#e9e7e5] bg-white shadow-[var(--shadow-card)]"
           >
             <header className="flex items-center justify-between gap-2 border-b border-[#f1f0ee] px-5 py-4">
               <div>
@@ -362,7 +357,7 @@ export default function DashboardPage() {
           {/* Pending approvals */}
           <motion.section
             variants={revealItem}
-            className="overflow-hidden rounded-2xl border border-[#e9e7e5] bg-white shadow-[0_2px_6px_-2px_rgb(60_60_58/0.08)]"
+            className="overflow-hidden rounded-2xl border border-[#e9e7e5] bg-white shadow-[var(--shadow-card)]"
           >
             <header className="flex items-center justify-between gap-2 border-b border-[#f1f0ee] px-5 py-4">
               <div>
@@ -389,7 +384,7 @@ export default function DashboardPage() {
                   <li key={inv.id} className="flex items-start justify-between gap-3 px-5 py-3.5 transition-colors hover:bg-[#faf9f8]">
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-mono text-sm font-semibold" style={{ color: CHROME.textPrimary }}>
-                        {inv.invoiceNumber}
+                        {invoiceNumberOrPending(inv)}
                       </p>
                       <p className="mt-0.5 truncate text-xs" style={{ color: CHROME.textMuted }}>
                         {inv.projectName}
@@ -408,7 +403,7 @@ export default function DashboardPage() {
           {/* SLA violations */}
           <motion.section
             variants={revealItem}
-            className="overflow-hidden rounded-2xl border border-[#e9e7e5] bg-white p-5 shadow-[0_2px_6px_-2px_rgb(60_60_58/0.08)]"
+            className="overflow-hidden rounded-2xl border border-[#e9e7e5] bg-white p-5 shadow-[var(--shadow-card)]"
           >
             <header className="mb-4 flex items-center justify-between gap-2">
               <div>
@@ -436,7 +431,7 @@ export default function DashboardPage() {
             <motion.div
               key={s.label}
               variants={revealItem}
-              className="rounded-2xl border border-[#e9e7e5] bg-white px-4 py-4 text-center shadow-[0_2px_6px_-2px_rgb(60_60_58/0.08)]"
+              className="rounded-2xl border border-[#e9e7e5] bg-white px-4 py-4 text-center shadow-[var(--shadow-card)]"
             >
               <span
                 className="mx-auto grid h-8 w-8 place-items-center rounded-lg"

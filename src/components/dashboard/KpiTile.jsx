@@ -1,11 +1,9 @@
 'use client';
 
 import { memo } from 'react';
-import { motion } from 'motion/react';
 import { ArrowDownRight, ArrowUpRight, Minus } from 'lucide-react';
 import AnimatedCounter from '@/components/motion/AnimatedCounter';
 import Sparkline from '@/components/charts/Sparkline';
-import { revealItem } from '@/components/motion/Reveal';
 import { CHROME } from '@/theme/vizPalette';
 
 const DELTA_STYLES = {
@@ -25,15 +23,14 @@ function KpiTile({
   const { cls, Icon: DeltaIcon } = DELTA_STYLES[deltaType] ?? DELTA_STYLES.neutral;
 
   return (
-    <motion.div
-      variants={revealItem}
-      whileHover={{ y: -4 }}
-      transition={{ type: 'spring', stiffness: 380, damping: 26 }}
-      className="group relative overflow-hidden rounded-2xl border border-[#e9e7e5] bg-white p-5 shadow-[0_2px_6px_-2px_rgb(60_60_58/0.08)] transition-shadow hover:shadow-[0_18px_38px_-14px_rgb(60_60_58/0.20)]"
+    // No animation (2026-10-08): no spring lift, no fading bloom. Hover shows
+    // the deeper shadow and the accent wash, instantly.
+    <div
+      className="group relative overflow-hidden rounded-2xl border border-[#e9e7e5] bg-white p-5 shadow-[var(--shadow-card)] hover:shadow-[0_18px_38px_-14px_rgb(60_60_58/0.20)]"
     >
-      {/* Accent wash that blooms on hover */}
+      {/* Accent wash shown on hover */}
       <div
-        className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100"
+        className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full opacity-0 blur-2xl group-hover:opacity-100"
         style={{ backgroundColor: accent }}
         aria-hidden="true"
       />
@@ -72,7 +69,7 @@ function KpiTile({
         </div>
         {trend?.length > 1 && <Sparkline values={trend} color={accent} width={84} height={28} />}
       </div>
-    </motion.div>
+    </div>
   );
 }
 

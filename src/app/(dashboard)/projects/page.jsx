@@ -170,7 +170,7 @@ export default function ProjectsPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.06, ease: [0.16, 1, 0.3, 1] }}
-          className="rounded-2xl border border-[#e9e7e5] bg-white p-4 shadow-[0_2px_6px_-2px_rgb(60_60_58/0.08)]"
+          className="rounded-2xl border border-[#e9e7e5] bg-white p-4 shadow-[var(--shadow-card)]"
         >
           <div className="flex flex-wrap items-center gap-3">
             <div className="group relative min-w-[240px] flex-1">

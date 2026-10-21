@@ -44,6 +44,9 @@
     --shadow-md: 0 8px 20px -6px rgb(60 60 58 / 0.12), 0 2px 6px -2px rgb(60 60 58 / 0.06);
     --shadow-lg: 0 18px 38px -12px rgb(60 60 58 / 0.18), 0 6px 12px -6px rgb(60 60 58 / 0.08);
     --shadow-xl: 0 32px 64px -20px rgb(60 60 58 / 0.24);
+    /* A card on the page (2026-10-21): a hairline under its edge and a soft
+       fall below it — --shadow-sm alone was too faint to see on the page grey. */
+    --shadow-card: 0 1px 2px rgb(60 60 58 / 0.07), 0 6px 18px -6px rgb(60 60 58 / 0.18);
     --shadow-primary: 0 12px 28px -10px rgb(248 72 94 / 0.45);
     --shadow-accent: 0 12px 28px -10px rgb(252 195 84 / 0.5);
 
@@ -74,15 +77,27 @@
 
   body {
     background-color: var(--color-background);
-    background-image:
-      radial-gradient(circle at 12% -10%, rgb(252 162 174 / 0.20), transparent 45%),
-      radial-gradient(circle at 92% 0%, rgb(252 195 84 / 0.18), transparent 40%);
-    background-attachment: fixed;
     color: var(--color-dark-grey);
     font-family: 'Montserrat', 'Tajawal', system-ui, sans-serif;
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+  }
+
+  /* The warm wash behind every page, held still while the page scrolls.
+     It used to be `background-attachment: fixed` on body, which makes the
+     browser repaint the whole window on every scroll frame. As its own fixed
+     layer the browser paints it once and just slides the page over it. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      radial-gradient(circle at 12% -10%, rgb(252 162 174 / 0.20), transparent 45%),
+      radial-gradient(circle at 92% 0%, rgb(252 195 84 / 0.18), transparent 40%);
+    will-change: transform;
   }
 
   body[dir="rtl"] {
@@ -186,7 +201,9 @@
                 color var(--dur-2) var(--ease-smooth),
                 opacity var(--dur-2) var(--ease-smooth),
                 filter var(--dur-2) var(--ease-smooth);
-    will-change: transform;
+    /* No `will-change` here (2026-10-08). On every button it put each one on
+       its own GPU layer — hundreds on a table with row actions — and the
+       browser had to shuffle all of them on every scroll frame. */
   }
   button:not(:disabled):hover {
     transform: translateY(-2px);
@@ -264,17 +281,9 @@
   tbody td { border-bottom: 1px solid color-mix(in srgb, var(--color-line) 65%, transparent); }
   tbody tr:last-child td { border-bottom: 0; }
 
-  /* Rows arrive one after another */
-  tbody tr { animation: row-in var(--dur-3) var(--ease-out-expo) both; }
-  tbody tr:nth-child(1)  { animation-delay: 20ms; }
-  tbody tr:nth-child(2)  { animation-delay: 45ms; }
-  tbody tr:nth-child(3)  { animation-delay: 70ms; }
-  tbody tr:nth-child(4)  { animation-delay: 95ms; }
-  tbody tr:nth-child(5)  { animation-delay: 120ms; }
-  tbody tr:nth-child(6)  { animation-delay: 145ms; }
-  tbody tr:nth-child(7)  { animation-delay: 170ms; }
-  tbody tr:nth-child(8)  { animation-delay: 195ms; }
-  tbody tr:nth-child(n+9) { animation-delay: 220ms; }
+  /* Rows used to fade in one after another. Removed (2026-10-08): they replayed
+     on every page change and filter, so a table that arrived in milliseconds
+     took a quarter of a second to read. Rows now show on the first frame. */
 
   /* ---- Dialogs & overlays --------------------------------------------- */
   dialog, [role="dialog"], [role="alertdialog"] {
@@ -318,8 +327,8 @@
 @keyframes media-in { from { opacity: 0; transform: scale(1.015); } to { opacity: 1; transform: none; } }
 
 @keyframes rise-in {
-  from { opacity: 0; transform: translate3d(0, 18px, 0) scale(0.985); filter: blur(6px); }
-  to   { opacity: 1; transform: none; filter: blur(0); }
+  from { opacity: 0; transform: translate3d(0, 18px, 0) scale(0.985); }
+  to   { opacity: 1; transform: none; }
 }
 
 @keyframes row-in {
@@ -411,7 +420,13 @@
   .text-muted { color: var(--color-mid-grey); }
   .bg-surface { background-color: var(--color-surface); }
 
-  /* --- Card: lifts, warms its shadow, and reveals a hairline brand edge --- */
+  /* --- Card: a hairline brand edge that becomes a full border on hover ---
+
+     No animation of any kind (2026-10-08) — no entrance, no lift, no sweep,
+     no transitions. Cards used to rise in blurred, then lift and sweep a
+     glowing rail on hover; while scrolling, every card passing under the mouse
+     started that. Hover is now an instant change of border, nothing more.
+     Animations come back deliberately, one at a time. */
   .card {
     --rail-width: 3px;    /* rail thickness */
     --rail-angle: 90deg;  /* flipped to 270deg for RTL below */
@@ -420,20 +435,20 @@
     background-color: var(--color-surface);
     border: 1px solid color-mix(in srgb, var(--color-line) 70%, transparent);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-    transition: transform var(--dur-3) var(--ease-out-expo),
-                box-shadow var(--dur-3) var(--ease-out-expo),
-                border-color var(--dur-3) var(--ease-smooth);
-    animation: rise-in var(--dur-4) var(--ease-out-expo) both;
+    box-shadow: var(--shadow-card);
   }
   /* Leading-edge rail — a gradient ring masked back to just the leading edge,
      so it wraps both corners along the radius instead of cutting them off.
-     On hover the mask sweeps open and the ring unwraps around the whole card. */
+     On hover the mask opens and the ring becomes a thin gradient border around
+     the whole card.
+
+     It sits over the card's own 1px outline (inset -1px), so on hover it
+     replaces that outline exactly rather than running just inside it. */
   @supports (mask-composite: intersect) {
     .card::before {
       content: "";
       position: absolute;
-      inset: 0;
+      inset: -1px;
       border-radius: inherit;
       padding: var(--rail-width);
       background: linear-gradient(155deg,
@@ -442,7 +457,6 @@
         #3799a66c 72%,
         var(--color-primary) 100%);
       background-size: 220% 220%;
-      animation:  gradient-drift 8s var(--ease-smooth) infinite;
       mask-image:
         linear-gradient(var(--rail-angle), #000 var(--rail-reveal), transparent calc(var(--rail-reveal) + var(--rail-feather))),
         linear-gradient(#000 0 0),
@@ -450,17 +464,16 @@
       mask-clip: border-box, content-box, border-box;
       mask-repeat: no-repeat;
       mask-composite: intersect, exclude, add;
-      transition: --rail-reveal var(--dur-4) var(--ease-out-expo),
-                  --rail-feather var(--dur-4) var(--ease-out-expo),
-                  filter var(--dur-3) var(--ease-smooth);
       pointer-events: none;
     }
+    /* The full gradient laid once around the card — teal, amber, coral —
+       at a crisp 2px. */
     .card:hover::before,
     .card:focus-within::before {
       --rail-reveal: 130%;
       --rail-feather: 60px;
-      filter: drop-shadow(0 0 8px rgb(248 72 94 / 0.40));
-      animation-duration: 3s;
+      padding: 2px;
+      background-size: 100% 100%;
     }
   }
 
@@ -475,51 +488,19 @@
       border-start-start-radius: inherit;
       border-end-start-radius: inherit;
       background: linear-gradient(180deg, var(--color-primary), var(--color-accent));
-      transition: width var(--dur-3) var(--ease-spring);
       pointer-events: none;
     }
     .card:hover::before { width: 6px; }
   }
 
-  /* Soft bloom that pools behind the rail as the card lifts */
-  .card::after {
-    content: "";
-    position: absolute;
-    inset-block: 12%;
-    inset-inline-start: 0;
-    width: 45%;
-    border-radius: inherit;
-    
-    opacity: 0;
-    transition: opacity var(--dur-3) var(--ease-smooth);
-    pointer-events: none;
-  }
-  .card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
-    border-color: transparent;
-  }
-  .card:hover::after { opacity: 1; }
+  .card:hover { border-color: transparent; }
 
   /* Mirror the rail for Arabic layouts */
   [dir="rtl"] .card { --rail-angle: 270deg; }
 
   /* Opt out of the rail on a specific card */
-  .card-plain::before, .card-plain::after { content: none; }
-
-  /* Cards enter in sequence */
-  .card:nth-child(1)  { animation-delay: 40ms; }
-  .card:nth-child(2)  { animation-delay: 90ms; }
-  .card:nth-child(3)  { animation-delay: 140ms; }
-  .card:nth-child(4)  { animation-delay: 190ms; }
-  .card:nth-child(5)  { animation-delay: 240ms; }
-  .card:nth-child(6)  { animation-delay: 290ms; }
-  .card:nth-child(7)  { animation-delay: 340ms; }
-  .card:nth-child(n+8) { animation-delay: 380ms; }
-
-  /* Static card — no lift, for containers holding tables or forms */
-  .card-flat { animation: rise-in var(--dur-4) var(--ease-out-expo) both; }
-  .card-flat:hover { transform: none; box-shadow: var(--shadow-sm); }
+  .card-plain::before { content: none; }
+  .card-plain:hover { border-color: color-mix(in srgb, var(--color-line) 70%, transparent); }
 
   /* --- Layout --- */
   .sidebar-width { width: var(--sidebar-width); }
@@ -701,14 +682,8 @@ header {
 [data-motion] > li,
 [data-motion] > tr { animation: none !important; }
 
-/* List items stagger in */
-ul > li, ol > li { animation: row-in var(--dur-3) var(--ease-out-expo) both; }
-ul > li:nth-child(1), ol > li:nth-child(1) { animation-delay: 20ms; }
-ul > li:nth-child(2), ol > li:nth-child(2) { animation-delay: 50ms; }
-ul > li:nth-child(3), ol > li:nth-child(3) { animation-delay: 80ms; }
-ul > li:nth-child(4), ol > li:nth-child(4) { animation-delay: 110ms; }
-ul > li:nth-child(5), ol > li:nth-child(5) { animation-delay: 140ms; }
-ul > li:nth-child(n+6), ol > li:nth-child(n+6) { animation-delay: 170ms; }
+/* List items used to stagger in — every list in the app, the sidebar and
+   dropdowns included. Removed (2026-10-08) for the same reason as table rows. */
 
 /* RTL helpers */
 [dir="rtl"] .ml-auto { margin-left: unset; margin-right: auto; }
@@ -752,6 +727,110 @@ ul > li:nth-child(n+6), ol > li:nth-child(n+6) { animation-delay: 170ms; }
 .recharts-dot { transition: r var(--dur-2) var(--ease-spring); }
 
 /* ==========================================================================
+   5b. RICH TEXT EDITOR (template bodies)
+   The page's resets strip headings, lists and quotes of their look; inside the
+   editor they get it back, close to how an email client shows them.
+   ========================================================================== */
+.rt-toolbar button:not(:disabled):hover,
+.rt-toolbar button:not(:disabled):active { transform: none; filter: none; }
+
+.rt-content {
+  min-height: 15rem;
+  max-height: 34rem;
+  overflow-y: auto;
+  padding: 0.875rem 1rem;
+  outline: none;
+  font-size: 0.875rem;
+  line-height: 1.65;
+  color: var(--color-dark-grey);
+  word-break: break-word;
+}
+.rt-content > * + * { margin-top: 0.65em; }
+.rt-content h1 { font-size: 1.6rem; }
+.rt-content h2 { font-size: 1.3rem; }
+.rt-content h3 { font-size: 1.1rem; }
+.rt-content ul { list-style: disc; padding-inline-start: 1.5em; }
+.rt-content ol { list-style: decimal; padding-inline-start: 1.5em; }
+.rt-content li > p { margin: 0; }
+.rt-content blockquote {
+  border-inline-start: 3px solid var(--color-line);
+  padding-inline-start: 0.875em;
+  color: var(--color-mid-grey);
+}
+.rt-content hr {
+  height: 0;
+  margin: 1.2em 0;
+  background: none;
+  border: 0;
+  border-top: 1px solid #e2e0dc;
+}
+.rt-content a { color: #2563eb; text-decoration: underline; }
+/* A button carries its own inline style, which wins over the link look above. */
+.rt-content a[style*="inline-block"] { cursor: default; }
+.rt-content img { max-width: 100%; height: auto; animation: none; }
+.rt-content .ProseMirror-selectednode { outline: 2px solid rgb(248 72 94 / 0.55); outline-offset: 2px; border-radius: 4px; }
+
+/* A {{ value }} — shown as a chip while editing; the saved text is unchanged. */
+.rt-content .rt-value {
+  padding: 0.05em 0.3em;
+  border-radius: 0.3em;
+  background: rgb(37 99 235 / 0.09);
+  color: #1d4ed8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.86em;
+}
+
+/* Tables — borders and padding come inline from the editor (as in the email);
+   these only add what editing needs, and undo the app's own table look. */
+.rt-content .tableWrapper { overflow-x: auto; }
+.rt-content table { table-layout: fixed; }
+.rt-content th,
+.rt-content td { position: relative; min-width: 2.5rem; }
+.rt-content th { font-weight: 600; }
+.rt-content th p,
+.rt-content td p { margin: 0; }   /* the saved cell has no paragraph margins either */
+.rt-content tbody tr:hover { background: transparent; }
+.rt-content .selectedCell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgb(248 72 94 / 0.1);
+  pointer-events: none;
+  z-index: 1;
+}
+.rt-content .column-resize-handle {
+  position: absolute;
+  top: 0;
+  bottom: -2px;
+  right: -2px;
+  width: 4px;
+  background: rgb(248 72 94 / 0.55);
+  pointer-events: none;
+  z-index: 2;
+}
+.rt-content.resize-cursor { cursor: col-resize; }
+
+/* Image resize handles (drawn by the editor, unstyled by default) */
+.rt-content [data-resize-container] { display: inline-block; position: relative; max-width: 100%; }
+.rt-content [data-resize-handle] {
+  width: 10px;
+  height: 10px;
+  margin: -5px;
+  background: #fff;
+  border: 2px solid var(--color-primary);
+  border-radius: 3px;
+  opacity: 0;
+  transition: opacity var(--dur-1) var(--ease-smooth);
+  z-index: 2;
+}
+.rt-content [data-resize-container]:hover [data-resize-handle],
+.rt-content .ProseMirror-selectednode [data-resize-handle] { opacity: 1; }
+.rt-content [data-resize-handle="top-left"],
+.rt-content [data-resize-handle="bottom-right"] { cursor: nwse-resize; }
+.rt-content [data-resize-handle="top-right"],
+.rt-content [data-resize-handle="bottom-left"] { cursor: nesw-resize; }
+
+/* ==========================================================================
    6. ACCESSIBILITY & PRINT
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
@@ -762,13 +841,14 @@ ul > li:nth-child(n+6), ol > li:nth-child(n+6) { animation-delay: 170ms; }
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  .card:hover, .hover-lift:hover, button:not(:disabled):hover { transform: none; }
+  .hover-lift:hover, button:not(:disabled):hover { transform: none; }
 }
 
 @media print {
   .no-print { display: none !important; }
   body { background: #fff; }
-  .card, .card-flat {
+  body::before { display: none; }
+  .card {
     box-shadow: none;
     border: 1px solid #e5e7eb;
     animation: none;

@@ -73,12 +73,42 @@ export const identityRepository = {
   },
 
   /**
-   * Return every user authorized to access the system, with the role ids
-   * assigned to each.
+   * Users authorized to access the system, with the role ids assigned to each.
+   *
+   * **Active users only unless you ask otherwise.** Four shapes, and the
+   * difference matters:
+   *
+   *   getAuthorizedUsers()                        active users
+   *   getAuthorizedUsers({ includeInactive: true })  everyone — the admin screen,
+   *                                               which has to show a deactivated
+   *                                               user in order to reactivate them
+   *   getAuthorizedUsers({ search: 'sar', take: 20 })  typeahead
+   *   getAuthorizedUsers({ ids: [...] })          just those people, **active or
+   *                                               not** — for resolving ids that
+   *                                               were saved earlier, where the
+   *                                               person may since have left
+   *
+   * `ids` is serialised as repeated `?ids=a&ids=b`, which is why the params are
+   * built as pairs rather than an object — an object would comma-join them.
+   *
+   * Guarded by `User.View` OR `Workflow.Manage`, so a workflow author reaches it
+   * without being a user administrator.
+   *
+   * @param {Object} [options]
+   * @param {boolean} [options.includeInactive]
+   * @param {string}  [options.search]
+   * @param {number}  [options.take]
+   * @param {string[]} [options.ids]
    * @returns {Promise<object[]>}
    */
-  async getAuthorizedUsers() {
-    const data = await api.get('/GetAuthorizedUsers');
+  async getAuthorizedUsers({ includeInactive, search, take, ids } = {}) {
+    const params = [];
+    if (includeInactive) params.push(['includeInactive', 'true']);
+    if (search) params.push(['search', search]);
+    if (take != null) params.push(['take', String(take)]);
+    for (const id of ids ?? []) params.push(['ids', id]);
+
+    const data = await api.get('/GetAuthorizedUsers', params.length > 0 ? params : undefined);
     return (data ?? []).map(mapUser);
   },
 

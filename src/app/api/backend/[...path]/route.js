@@ -18,8 +18,16 @@ const BACKEND_URL = process.env.BACKEND_API_URL;
 // --trust` has made the browser trust it — that only touches the OS/browser
 // trust store, which Node's fetch doesn't consult. Scoped to this one
 // outgoing connection via a dedicated Agent (not a process-wide
-// NODE_TLS_REJECT_UNAUTHORIZED bypass), and only outside production.
-const dispatcher = process.env.NODE_ENV !== 'production'
+// NODE_TLS_REJECT_UNAUTHORIZED bypass).
+//
+// Allowed in `next dev`, and in `next start` only when BACKEND_ALLOW_SELF_SIGNED
+// is "true" — a production build run locally against the dev backend needs it,
+// and keying this on NODE_ENV alone made every call fail there with a 502.
+// A real deployment has a proper certificate and never sets the flag.
+const allowSelfSigned = process.env.NODE_ENV !== 'production'
+  || process.env.BACKEND_ALLOW_SELF_SIGNED === 'true';
+
+const dispatcher = allowSelfSigned
   ? new Agent({ connect: { rejectUnauthorized: false } })
   : undefined;
 

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import Link from 'next/link';
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
@@ -11,11 +11,15 @@ import { ConfirmModal } from '@/components/common/Modal';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import ProjectDetailHeader from '@/components/projects/ProjectDetailHeader';
 import ProjectStatCards from '@/components/projects/ProjectStatCards';
-import ProjectTabs from '@/components/projects/ProjectTabs';
+import ProjectTabs, { PROJECT_TABS, tabSlug } from '@/components/projects/ProjectTabs';
 import OverviewTab from '@/components/projects/OverviewTab';
 import SubProjectsTab from '@/components/projects/SubProjectsTab';
 import BOQTab from '@/components/projects/BOQTab';
 import InvoicesTab from '@/components/projects/InvoicesTab';
+import ChangeRequestsTab from '@/components/projects/ChangeRequestsTab';
+import { usePermission } from '@/hooks/usePermission';
+import { allow } from '@/constants/workflowPermissions';
+import { CR_PERMISSIONS } from '@/constants/changeRequests';
 import {
   fetchMainProjectDetails,
   fetchSubProjectsSummary,
@@ -25,6 +29,7 @@ import {
   selectSubProjectsLoading,
 } from '@/store/slices/projectsSlice';
 import { aggregateSubProjectFinancials } from '@/models/project';
+import { summariseProjectInvoices } from '@/models/invoice';
 import { fetchBOQByProjectCode, selectBOQItems, selectCurrentBOQ } from '@/store/slices/boqSlice';
 import { fetchInvoicesByProjectCode, selectInvoices, selectInvoicesLoading } from '@/store/slices/invoicesSlice';
 import {
@@ -62,7 +67,15 @@ export default function ProjectDetailPage() {
   const invoiceStatusColorsMap = useSelector(selectInvoiceStatusColorsMap);
   const invoices              = useSelector(selectInvoices);
   const invoicesLoading       = useSelector(selectInvoicesLoading);
-  const [activeTab, setActiveTab]       = useState('Overview');
+  // `?tab=change-requests` opens the page on that tab — the change request form's Back and Cancel land there.
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab]       = useState(
+    () => PROJECT_TABS.find((t) => tabSlug(t) === searchParams.get('tab')) ?? 'Overview'
+  );
+  const { can } = usePermission();
+  // Change requests are ChangeRequests.View's to read (2026-10-19).
+  const canViewChangeRequests = allow(can, CR_PERMISSIONS.VIEW);
+  const hiddenTabs = useMemo(() => (canViewChangeRequests ? [] : ['Change requests']), [canViewChangeRequests]);
   const [archiveModal, setArchiveModal] = useState(false);
   const [archiving, setArchiving]       = useState(false);
 
@@ -73,12 +86,48 @@ export default function ProjectDetailPage() {
     dispatch(fetchInvoicesByProjectCode(projectCode));
   }, [dispatch, projectCode]);
 
+  // After a delete: the invoice list, and the BOQ — a deleted In Progress
+  // invoice stops holding its items, so their editability changes too.
+  const reloadInvoices = useCallback(() => {
+    dispatch(fetchInvoicesByProjectCode(projectCode));
+    dispatch(fetchBOQByProjectCode(projectCode));
+  }, [dispatch, projectCode]);
+
   // aggregateSubProjectFinancials builds a fresh object every call — without
   // this useMemo, ProjectStatCards (and OverviewTab) would get a new `totals`
   // reference on every render of this page (e.g. every tab click), which
   // defeats their React.memo regardless of whether subProjects actually
   // changed.
-  const totals = useMemo(() => aggregateSubProjectFinancials(subProjects), [subProjects]);
+  /*
+   * The sub-project summaries carry every figure except the three about
+   * invoices, which are counted from the project's invoices themselves:
+   * rejected and cancelled ones are money nobody will pay, so they count
+   * towards nothing. See summariseProjectInvoices.
+   */
+  const totals = useMemo(() => {
+    const subTotals = aggregateSubProjectFinancials(subProjects);
+
+    /*
+     * Kept to THIS project's invoices. The invoices slice holds one list,
+     * shared with the invoices page, so arriving here from there leaves every
+     * project's invoices in the store until this project's fetch lands — and a
+     * money tile must never show another project's total, even for a moment.
+     * Rows that carry no `projectCode` are trusted, since then the fetch is all
+     * there is to go on.
+     */
+    const invoiceTotals = summariseProjectInvoices(
+      invoices.filter((i) => !i.projectCode || i.projectCode === projectCode)
+    );
+
+    return {
+      ...subTotals,
+      ...invoiceTotals,
+      // Work in progress: revenue earned that the money has not arrived for
+      // yet. Counted from what was actually collected rather than from the
+      // sub-project summaries, so it moves the moment an invoice is collected.
+      wip: subTotals.totalRevenue - invoiceTotals.collectedValue,
+    };
+  }, [subProjects, invoices, projectCode]);
 
   // Memoised so ProjectTabs — which is memo'd — isn't handed a brand-new
   // object on every render of this page.
@@ -133,7 +182,7 @@ export default function ProjectDetailPage() {
 
         <ProjectStatCards totals={totals} currency={currency} />
 
-        <ProjectTabs activeTab={activeTab} onChange={setActiveTab} counts={tabCounts} />
+        <ProjectTabs activeTab={activeTab} onChange={setActiveTab} counts={tabCounts} hidden={hiddenTabs} />
 
         {/* Panels cross-fade on switch. Only the active one is mounted, so the
             memoised tabs below still skip re-rendering entirely. */}
@@ -183,6 +232,16 @@ export default function ProjectDetailPage() {
                 invoiceStatusesMap={invoiceStatusesMap}
                 invoiceStatusColorsMap={invoiceStatusColorsMap}
                 currency={currency}
+                // A delete changes the list and the money totals above it.
+                onInvoicesChanged={reloadInvoices}
+              />
+            )}
+
+            {activeTab === 'Change requests' && canViewChangeRequests && (
+              <ChangeRequestsTab
+                projectCode={projectCode}
+                boqId={currentBOQ?.id ?? null}
+                canCreate={allow(can, CR_PERMISSIONS.CREATE)}
               />
             )}
           </motion.div>

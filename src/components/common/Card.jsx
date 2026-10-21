@@ -8,7 +8,7 @@ function Card({ children, className = '', padding = true, hover = false, onClick
       className={`
         card bg-white rounded-xl border border-gray-100
         ${padding ? 'p-5' : ''}
-        ${hover ? 'hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer' : ''}
+        ${hover ? 'hover:shadow-md cursor-pointer' : ''}
         ${onClick ? 'cursor-pointer' : ''}
         ${className}
       `}

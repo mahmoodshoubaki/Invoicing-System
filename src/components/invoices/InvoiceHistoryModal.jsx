@@ -95,11 +95,11 @@ function HistoryEntry({ entry, isLatest, currency, invoiceId, invoiceStatusesMap
               </div>
               <div>
                 <p className="text-gray-400 flex items-center gap-1"><User size={11} /> Submitted By</p>
-                <p className="font-semibold text-gray-700 mt-0.5 truncate">{entry.submittedBy ?? '—'}</p>
+                <p className="font-semibold text-gray-700 mt-0.5 truncate">{entry.submittedByName || '—'}</p>
               </div>
               <div>
                 <p className="text-gray-400 flex items-center gap-1"><Calendar size={11} /> Baseline Collection</p>
-                <p className="font-semibold text-gray-700 mt-0.5">{formatDate(entry.baselineCollectionDate) || '—'}</p>
+                <p className="font-semibold text-gray-700 mt-0.5">{entry.baselineCollectionDate ? formatDate(entry.baselineCollectionDate) : 'Pending'}</p>
               </div>
               <div>
                 <p className="text-gray-400 flex items-center gap-1"><Calendar size={11} /> Expected Collection</p>
@@ -197,7 +197,6 @@ export default function InvoiceHistoryModal({ open, onClose, invoiceId, currency
   const sorted = [...history].sort(
     (a, b) => new Date(b.submissionDate ?? 0) - new Date(a.submissionDate ?? 0)
   );
-
   return (
     <Modal open={open} onClose={onClose} title="Invoice History" size="xl">
       {isLoading ? (

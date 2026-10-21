@@ -5,11 +5,17 @@ import { identityRepository } from '@/repositories/identityRepository';
 // Async thunks
 // ---------------------------------------------------------------------------
 
+/**
+ * @param {Object} [options] passed straight to the endpoint — notably
+ *   `includeInactive`, which the admin screen needs: the endpoint returns
+ *   active users by default, and a deactivated user has to be visible there
+ *   in order to be reactivated.
+ */
 export const fetchAuthorizedUsers = createAsyncThunk(
   'users/fetchAuthorizedUsers',
-  async (_, { rejectWithValue }) => {
+  async (options = {}, { rejectWithValue }) => {
     try {
-      return await identityRepository.getAuthorizedUsers();
+      return await identityRepository.getAuthorizedUsers(options);
     } catch (err) {
       return rejectWithValue(err.message || 'Failed to fetch users.');
     }

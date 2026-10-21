@@ -2,15 +2,22 @@
 
 import { memo } from 'react';
 import { motion } from 'motion/react';
-import { FileText, LayoutList, Network, PieChart } from 'lucide-react';
+import { FileDiff, FileText, LayoutList, Network, PieChart } from 'lucide-react';
 
-export const PROJECT_TABS = ['Overview', 'EPM Sub-Projects', 'BOQ', 'Invoices'];
+export const PROJECT_TABS = ['Overview', 'EPM Sub-Projects', 'BOQ', 'Invoices', 'Change requests'];
+
+/** A tab as it reads in the address (`?tab=change-requests`), so a link can open the page on it. */
+export const tabSlug = (tab) => tab.toLowerCase().replace(/\s+/g, '-');
+
+/** Stable, so the memo'd bar is not handed a new empty list every render. */
+const NO_TABS = [];
 
 const TAB_ICONS = {
   Overview: PieChart,
   'EPM Sub-Projects': Network,
   BOQ: LayoutList,
   Invoices: FileText,
+  'Change requests': FileDiff,
 };
 
 /**
@@ -21,10 +28,10 @@ const TAB_ICONS = {
  * The active pill is a single shared element animated between tabs via
  * layoutId, rather than four elements cross-fading — so it physically slides.
  */
-function ProjectTabs({ activeTab, onChange, counts = {} }) {
+function ProjectTabs({ activeTab, onChange, counts = {}, hidden = NO_TABS }) {
   return (
     <div className="mb-5 flex w-fit max-w-full gap-1 overflow-x-auto rounded-2xl bg-[#f4f3f1] p-1.5">
-      {PROJECT_TABS.map((tab) => {
+      {PROJECT_TABS.filter((tab) => !hidden.includes(tab)).map((tab) => {
         const Icon = TAB_ICONS[tab];
         const active = activeTab === tab;
         const count = counts[tab];

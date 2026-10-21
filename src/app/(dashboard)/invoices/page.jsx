@@ -17,6 +17,7 @@ import { INVOICE_STATUS } from '@/constants/statuses';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import { getUserName } from '@/mock/users';
 import { usePermission } from '@/hooks/usePermission';
+import { PENDING_LABEL } from '@/utils/invoiceDisplay';
 
 const TABS = [
   { label: 'All', value: '' },
@@ -74,9 +75,10 @@ export default function InvoicesPage() {
     {
       key: 'invoiceNumber',
       label: 'Invoice #',
+      // Null until stage 2 fills it in (2026-10-11).
       render: (val) => (
         <span className="font-mono text-xs font-semibold text-gray-700 bg-gray-100 px-2 py-0.5 rounded">
-          {val}
+          {val || PENDING_LABEL}
         </span>
       ),
     },

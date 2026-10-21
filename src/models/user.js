@@ -15,6 +15,11 @@ export function mapMe(raw) {
 /** User entity — one item from GetAuthorizedUsers. */
 export function mapUser(raw) {
   return {
+    // The user's GUID. Added to GetAuthorizedUsers so a workflow's humanTask can
+    // put real ids into `assignToUserIds` — before it existed, the only
+    // identifier the API returned was `username`, and assigning a task to a
+    // named person could not be built at all.
+    id: raw.id ?? null,
     username: raw.username,
     email: raw.email,
     displayName: raw.displayName,
@@ -30,17 +35,23 @@ export function mapUser(raw) {
  */
 export function updateUserPayload(data) {
   return {
-    username: data.displayName,
+    username: data.username,
     RoleIds: data.roleIds,
     IsActive: data.isActive,
+    // Whether the person hears about this change (2026-10-07). Turned off: an
+    // email only. Back on, or roles changed: email + bell. The backend never
+    // notifies an admin about an edit to their own account.
+    notifyUser: data.notifyUser ?? true,
   };
 }
 
 /** Request body for CreateUser — just the short login handle (our displayName) and roles. */
 export function createUserPayload(data) {
   return {
-    username: data.displayName,
+    username: data.username,
     RoleIds: data.roleIds,
+    // A welcome with their roles, by email and in the bell. Ticked by default.
+    notifyUser: data.notifyUser ?? true,
   };
 }
 

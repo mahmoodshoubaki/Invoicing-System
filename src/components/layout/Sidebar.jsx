@@ -2,8 +2,8 @@
 
 import {
   LayoutDashboard, FolderKanban, Receipt,
-  GitBranch, Bell, BarChart3, Users, Shield, Settings,
-  X, Menu,
+  GitBranch, Bell, BarChart3, Users, Shield, Settings, ListChecks,
+  Activity, X, Menu, BellRing, Timer,
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleSidebar } from '@/store/slices/uiSlice';
@@ -32,19 +32,21 @@ const NAV_ITEMS = [
     permission: { module: 'Invoices', action: 'View' },
   },
   {
-    label: 'Workflow',
-    labelAr: 'سير العمل',
-    href: '/workflow',
-    icon: GitBranch,
-    permission: { module: 'Workflow', action: 'View' },
+    label: 'My Tasks',
+    labelAr: 'مهامي',
+    href: '/workflow/tasks',
+    icon: ListChecks,
+    permission: { module: 'WorkflowTasks', action: 'View' },
+    badge: 'workflowTasks',
   },
   {
+    // The person's own inbox — every signed-in user has one.
     label: 'Notifications',
     labelAr: 'الإشعارات',
     href: '/notifications',
     icon: Bell,
     permission: null,
-    badge: 'unread',
+    badge: 'unseen',
   },
   {
     label: 'Reports',
@@ -61,12 +63,61 @@ const NAV_ITEMS = [
     permission: [
       { module: 'System', action: 'Administrator' },
       { module: 'Role', action: 'View' },
+      // Admin › Workflow — somebody who only reads workflows finds them here.
+      { module: 'Workflow', action: 'View' },
       { module: 'Workflow', action: 'Manage' },
+      { module: 'Notifications', action: 'View' },
+      { module: 'Notifications', action: 'Manage' },
+      { module: 'Notifications', action: 'Manage Settings' },
+      { module: 'System', action: 'Manage Jobs' },
+      // Monitoring's workflow runs and trace — somebody who only watches runs
+      // reaches them here, with nothing else under Admin.
+      { module: 'WorkflowInstances', action: 'View' },
     ],
     children: [
       { label: 'Users', labelAr: 'المستخدمون', href: '/admin/users', icon: Users, permission: { module: 'System', action: 'Administrator' } },
       { label: 'Roles & Permissions', labelAr: 'الأدوار والصلاحيات', href: '/admin/roles', icon: Shield, permission: { module: 'Role', action: 'View' } },
-      { label: 'Workflow Management', labelAr: 'إدارة سير العمل', href: '/admin/workflow', icon: GitBranch, permission: { module: 'Workflow', action: 'Manage' } },
+      // One entry for the workflows, the fields the builder shows and the engine
+      // (2026-10-13); its own tab bar shows each page to whoever may read it.
+      {
+        label: 'Workflow',
+        labelAr: 'سير العمل',
+        href: '/admin/workflow',
+        icon: GitBranch,
+        permission: [
+          { module: 'Workflow', action: 'View' },
+          { module: 'Workflow', action: 'Manage' },
+        ],
+      },
+      // One entry for the whole notifications admin area; its own tab bar
+      // shows each page to whoever may read it.
+      {
+        label: 'Notifications',
+        labelAr: 'إدارة الإشعارات',
+        href: '/admin/notifications',
+        icon: BellRing,
+        // Manage Settings alone no longer opens anything here: its pages (the
+        // delivery monitor and the audit) moved to Monitoring.
+        permission: [
+          { module: 'Notifications', action: 'View' },
+          { module: 'Notifications', action: 'Manage' },
+        ],
+      },
+      // Watching what the system does: workflow runs, notification deliveries,
+      // the trace of one action, and who changed what. Its tab bar shows each
+      // page to whoever may read it.
+      {
+        label: 'Monitoring',
+        labelAr: 'المراقبة',
+        href: '/admin/monitoring',
+        icon: Activity,
+        permission: [
+          { module: 'WorkflowInstances', action: 'View' },
+          { module: 'Notifications', action: 'Manage Settings' },
+          { module: 'Workflow', action: 'Manage' },
+        ],
+      },
+      { label: 'Background Jobs', labelAr: 'المهام الخلفية', href: '/admin/jobs', icon: Timer, permission: { module: 'System', action: 'Manage Jobs' } },
       { label: 'System Settings', labelAr: 'إعدادات النظام', href: '/admin/settings', icon: Settings, permission: { module: 'System', action: 'Administrator' } },
     ],
   },

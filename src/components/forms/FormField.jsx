@@ -5,9 +5,10 @@ import { createPortal } from 'react-dom';
 import { Calendar, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { formatDate } from '@/utils/formatters';
 
+// `data-field` and `data-problem` let a form find its first problem and scroll to it (2026-10-20).
 export function FormField({ label, required, error, hint, children, className = '' }) {
   return (
-    <div className={`flex flex-col gap-1.5 ${className}`}>
+    <div data-field className={`flex flex-col gap-1.5 ${className}`}>
       {label && (
         <label className="text-sm font-medium text-gray-700">
           {label}
@@ -16,7 +17,7 @@ export function FormField({ label, required, error, hint, children, className = 
       )}
       {children}
       {hint && !error && <p className="text-xs text-gray-400">{hint}</p>}
-      {error && <p className="text-xs text-red-500 flex items-center gap-1">{error}</p>}
+      {error && <p data-problem className="text-xs text-red-500 flex items-center gap-1">{error}</p>}
     </div>
   );
 }

@@ -74,6 +74,9 @@
 export function mapProjectListItem(raw) {
   const info = raw.projectInformation ?? {};
   return {
+    // The EPM project's id (2026-10-19) — what a change request names when it
+    // changes a sub-project's value or contract dates.
+    projectUID:            info.projectUID        ?? null,
     projectName:           info.projectName_EPM   ?? null,
     projectNameFocus:      info.projectName_Focus ?? null,
     contractName:          info.contractName      ?? null,

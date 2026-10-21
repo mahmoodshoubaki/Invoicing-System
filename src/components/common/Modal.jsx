@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { X } from 'lucide-react';
 import Button from './Button';
 
@@ -12,6 +12,12 @@ const SIZE_MAP = {
   full: 'max-w-screen-xl mx-4',
 };
 
+/**
+ * A dialog over the page. It closes only from its × (2026-10-20) — and from
+ * whatever buttons the caller puts in it. A click outside it or Escape does
+ * nothing: either one used to throw away a half-filled form, and Escape meant
+ * for a dropdown inside the dialog closed the dialog too.
+ */
 export default function Modal({
   open,
   onClose,
@@ -19,10 +25,8 @@ export default function Modal({
   children,
   footer,
   size = 'md',
-  closeOnOverlay = true,
   showClose = true,
 }) {
-  const overlayRef = useRef(null);
 
   useEffect(() => {
     if (open) {
@@ -33,24 +37,12 @@ export default function Modal({
     return () => { document.body.style.overflow = ''; };
   }, [open]);
 
-  useEffect(() => {
-    function handleKey(e) {
-      if (e.key === 'Escape' && open) onClose?.();
-    }
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [open, onClose]);
-
   if (!open) return null;
 
   return (
     <div
-      ref={overlayRef}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
-      onClick={(e) => {
-        if (closeOnOverlay && e.target === overlayRef.current) onClose?.();
-      }}
     >
       <div
         className={`bg-white rounded-2xl shadow-2xl w-full ${SIZE_MAP[size] || SIZE_MAP.md} flex flex-col max-h-[90vh]`}
@@ -68,7 +60,10 @@ export default function Modal({
             )}
             {showClose && (
               <button
+                type="button"
                 onClick={onClose}
+                aria-label="Close"
+                title="Close"
                 className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors ml-auto"
               >
                 <X size={16} />

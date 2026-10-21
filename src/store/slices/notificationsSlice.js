@@ -1,96 +1,61 @@
-import { createSlice } from '@reduxjs/toolkit';
-
-const initialState = {
-  items: [],
-  unreadCount: 0,
-  isLoading: false,
-};
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { notificationRepository } from '@/repositories/notificationRepository';
 
 /**
- * Recompute unreadCount from the items array.
- * Supports both `read` (repository/mock field) and `isRead` (legacy) field names.
+ * The one number the whole shell shares: how many bell notifications this
+ * person has not SEEN yet (opened the bell while they were there). The red
+ * badge on the bell and on the sidebar's Notifications row both read it.
+ *
+ * Lists live in the components that show them — the bell panel and the inbox
+ * page each ask for exactly the page they draw, and nothing else needs them.
  */
-function recalcUnread(state) {
-  state.unreadCount = state.items.filter((n) => !(n.read ?? n.isRead)).length;
-}
+export const fetchUnseenCount = createAsyncThunk(
+  'notifications/fetchUnseenCount',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await notificationRepository.getMyUnseenCount();
+    } catch (err) {
+      return rejectWithValue(err.message || 'Could not check for new notifications.');
+    }
+  }
+);
+
+/**
+ * Opening the bell marks everything in it seen. The badge drops to zero at
+ * once — waiting for the next poll would show a count for things the person is
+ * looking at.
+ */
+export const markAllSeen = createAsyncThunk(
+  'notifications/markAllSeen',
+  async (_, { rejectWithValue }) => {
+    try {
+      await notificationRepository.markAllSeen();
+      return true;
+    } catch (err) {
+      return rejectWithValue(err.message || 'Could not mark notifications as seen.');
+    }
+  }
+);
 
 const notificationsSlice = createSlice({
   name: 'notifications',
-  initialState,
-  reducers: {
-    /**
-     * Replace the full list of notifications.
-     * Payload: notification[]
-     */
-    setNotifications(state, action) {
-      state.items = action.payload;
-      recalcUnread(state);
-      state.isLoading = false;
-    },
-
-    /**
-     * Mark a single notification as read.
-     * Payload: string (notification id)
-     */
-    markAsRead(state, action) {
-      const notification = state.items.find((n) => n.id === action.payload);
-      if (notification) {
-        // Support both field names; prefer `read` to match the data layer
-        notification.read = true;
-        notification.isRead = true;
-      }
-      recalcUnread(state);
-    },
-
-    /**
-     * Mark all notifications as read.
-     */
-    markAllAsRead(state) {
-      state.items.forEach((n) => {
-        n.read = true;
-        n.isRead = true;
+  initialState: {
+    unseenCount: 0,
+  },
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchUnseenCount.fulfilled, (state, action) => {
+        state.unseenCount = action.payload;
+      })
+      // Optimistic: the person is looking at them now. A failed call leaves the
+      // next poll to correct it rather than flashing the badge back.
+      .addCase(markAllSeen.pending, (state) => {
+        state.unseenCount = 0;
       });
-      state.unreadCount = 0;
-    },
-
-    /**
-     * Prepend a new notification to the list.
-     * Payload: notification object
-     */
-    addNotification(state, action) {
-      state.items.unshift(action.payload);
-      recalcUnread(state);
-    },
-
-    /**
-     * Remove a notification by id.
-     * Payload: string (notification id)
-     */
-    removeNotification(state, action) {
-      state.items = state.items.filter((n) => n.id !== action.payload);
-      recalcUnread(state);
-    },
-
-    setLoading(state, action) {
-      state.isLoading = action.payload;
-    },
   },
 });
 
-export const {
-  setNotifications,
-  markAsRead,
-  markAllAsRead,
-  addNotification,
-  removeNotification,
-  setLoading,
-} = notificationsSlice.actions;
-
-// Selectors
-export const selectNotifications = (state) => state.notifications.items;
-export const selectUnreadCount = (state) => state.notifications.unreadCount;
-export const selectNotificationsLoading = (state) => state.notifications.isLoading;
-export const selectUnreadNotifications = (state) =>
-  state.notifications.items.filter((n) => !(n.read ?? n.isRead));
+export const selectUnseenCount = (state) => state.notifications.unseenCount;
 
 export default notificationsSlice.reducer;

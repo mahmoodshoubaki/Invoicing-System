@@ -13,7 +13,7 @@ function Panel({ title, icon: Icon, subtitle, children, className = '' }) {
   return (
     <motion.section
       variants={revealItem}
-      className={`rounded-2xl border border-[#e9e7e5] bg-white p-5 shadow-[0_2px_6px_-2px_rgb(60_60_58/0.08)] ${className}`}
+      className={`rounded-2xl border border-[#e9e7e5] bg-white p-5 shadow-[var(--shadow-card)] ${className}`}
     >
       <header className="mb-4 flex items-start gap-2.5 border-b border-[#f1f0ee] pb-3">
         {Icon && (
@@ -117,7 +117,9 @@ function OverviewTab({ project, projectCode, subProjects, totals, currency }) {
 
       {/* ---------------- Money ---------------- */}
       <div className="flex flex-col gap-5">
-        <Panel title="Financial Summary" icon={Wallet} subtitle="Aggregated across all sub-projects">
+        {/* Not purely a sub-project roll-up any more: the cash figures below,
+            and WIP with them, are counted from this project's invoices. */}
+        <Panel title="Financial Summary" icon={Wallet} subtitle="Across this project and its sub-projects">
           <div className="grid grid-cols-2 gap-4">
             <InfoRow label="Project Value" value={money(totals.projectValue)} />
             <InfoRow label="VAT Value" value={money(totals.vatValue)} />

@@ -18,9 +18,12 @@ import { StatusBadge } from '@/components/common/Badge';
 import VarianceBadge from '@/components/common/VarianceBadge';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { DatePicker, Textarea } from '@/components/forms/FormField';
+import ClaimReferenceInput from '@/components/invoices/ClaimReferenceInput';
+import { claimReferenceProblem, claimReferenceText, toClaimReference } from '@/lib/claimReference';
 import AttachmentUploader from '@/components/invoices/AttachmentUploader';
 import InvoiceHistoryModal from '@/components/invoices/InvoiceHistoryModal';
 import { formatCurrency, formatDate, formatDateTime, formatPercentage, formatFileSize } from '@/utils/formatters';
+import { baselineDateOrPending, invoiceNumberOrPending } from '@/utils/invoiceDisplay';
 import { iconForFileName } from '@/utils/attachmentIcon';
 import { saveBlob } from '@/utils/saveBlob';
 import { fetchInvoiceById, selectSelectedInvoice, selectInvoicesLoading, updateInvoice } from '@/store/slices/invoicesSlice';
@@ -63,6 +66,10 @@ export default function EditInvoicePage() {
 
   const [reasonsForUpdate, setReasonsForUpdate] = useState('');
   const [expectedCollectionDate, setexpectedCollectionDate] = useState('');
+  // What was typed for the claim reference, or null while untouched — then the
+  // saved one shows, and is what gets sent: UpdateInvoice CLEARS it when it is
+  // left out (2026-10-13).
+  const [claimDraft, setClaimDraft] = useState(null);
   const [attachmentIdsToDelete, setAttachmentIdsToDelete] = useState(new Set());
   const [attachmentsToAdd, setAttachmentsToAdd] = useState([]);
   const [errors, setErrors] = useState({});
@@ -119,6 +126,8 @@ export default function EditInvoicePage() {
     const e = {};
     if (!reasonsForUpdate.trim()) e.reasonsForUpdate = 'A reason for this update is required';
     if (!expectedCollectionDate) e.expectedCollectionDate = 'Expected Collection date is required';
+    const claimProblem = claimDraft === null ? null : claimReferenceProblem(claimDraft);
+    if (claimProblem) e.financialClaimReference = claimProblem;
     return e;
   };
 
@@ -132,6 +141,7 @@ export default function EditInvoicePage() {
         invoiceId,
         reasonsForUpdate,
         expectedCollectionDate,
+        financialClaimReference: claimDraft === null ? invoice.financialClaimReference : toClaimReference(claimDraft),
         attachmentIdsToDelete: Array.from(attachmentIdsToDelete),
         attachmentsToAdd,
       })).unwrap();
@@ -177,14 +187,14 @@ export default function EditInvoicePage() {
 
       <SubPageHeader
         eyebrow="Invoicing"
-        title={`Edit ${invoice.invoiceNumber}`}
+        title={`Edit ${invoiceNumberOrPending(invoice)}`}
         subtitle={project?.contractName ?? projectCode}
         icon={PencilLine}
         breadcrumbs={[
           { label: 'Home', href: '/' },
           { label: 'Projects', href: '/projects' },
           { label: project?.contractName ?? projectCode, href: `/projects/${encodeURIComponent(projectCode)}` },
-          { label: invoice.invoiceNumber, href: viewInvoiceHref },
+          { label: invoiceNumberOrPending(invoice), href: viewInvoiceHref },
           { label: 'Edit' },
         ]}
         actions={
@@ -215,14 +225,14 @@ export default function EditInvoicePage() {
           }
         >
           <div className="grid grid-cols-2 gap-4">
-            <InfoItem icon={FileText} label="Invoice Number" value={invoice.invoiceNumber} valueClass="font-mono font-semibold" />
+            <InfoItem icon={FileText} label="Invoice Number" value={invoiceNumberOrPending(invoice)} valueClass="font-mono font-semibold" />
             <InfoItem icon={DollarSign} label="Total Amount" value={formatCurrency(invoice.totalAmount, currency)} valueClass="font-semibold text-primary" />
             <InfoItem icon={DollarSign} label="Revenue" value={formatCurrency(invoice.revenue, currency)} />
             <InfoItem icon={DollarSign} label="WIP" value={formatCurrency(invoice.wip, currency)} />
             <InfoItem icon={Percent} label="VAT Rate" value={formatPercentage(invoice.vat)} />
-            <InfoItem icon={User} label="Submitted By" value={invoice.submittedBy} />
+            <InfoItem icon={User} label="Submitted By" value={invoice.submittedByName} />
             <InfoItem icon={Calendar} label="Submission Date" value={formatDateTime(invoice.submissionDate)} />
-            <InfoItem icon={Calendar} label="Baseline Expected Collection Date" value={formatDate(invoice.baselineCollectionDate)} />
+            <InfoItem icon={Calendar} label="Baseline Expected Collection Date" value={baselineDateOrPending(invoice)} />
             <InfoItem icon={Calendar} label="Updated Expected Collection Date" value={formatDate(invoice.expectedCollectionDate)} />
           </div>
         </FormSection>
@@ -278,6 +288,11 @@ export default function EditInvoicePage() {
               value={expectedCollectionDate}
               onChange={(e) => { setexpectedCollectionDate(e.target.value); setErrors((p) => ({ ...p, expectedCollectionDate: undefined })); }}
               error={errors.expectedCollectionDate}
+            />
+            <ClaimReferenceInput
+              value={claimDraft ?? claimReferenceText(invoice.financialClaimReference)}
+              onChange={(text) => { setClaimDraft(text); setErrors((p) => ({ ...p, financialClaimReference: undefined })); }}
+              error={errors.financialClaimReference}
             />
             <div className="md:col-span-2">
               <Textarea
@@ -370,7 +385,7 @@ export default function EditInvoicePage() {
        </Reveal>
 
         {/* Actions */}
-        <div className="sticky bottom-0 z-10 mt-5 flex items-center justify-end gap-3 rounded-2xl border border-[#e9e7e5] bg-white/85 px-4 py-3 shadow-[0_-4px_16px_-8px_rgb(60_60_58/0.18)] backdrop-blur-md">
+        <div className="sticky bottom-0 z-10 mt-5 flex items-center justify-end gap-3 rounded-2xl border border-[#e9e7e5] bg-white/95 px-4 py-3 shadow-[0_-4px_16px_-8px_rgb(60_60_58/0.18)]">
           <Link href="" onClick={() => router.back()}>
             <Button variant="ghost">Cancel</Button>
           </Link>

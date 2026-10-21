@@ -40,7 +40,6 @@ export default function BOQItemHistoryModal({ open, onClose, boqItemId }) {
       dispatch(clearBOQItemHistory());
     }
   }, [dispatch, open, boqItemId]);
-
   const columns = [
     {
       key: 'englishName',
@@ -85,6 +84,11 @@ export default function BOQItemHistoryModal({ open, onClose, boqItemId }) {
       key: 'billingFrequencyId',
       label: 'Billing Frequency',
       render: (val) => billingFrequenciesMap[val] ?? '—',
+    },
+    {
+      key: 'submittedByName',
+      label: 'Submitted By',
+      render: (val) => val || '—',
     },
     {
       key: 'updatedOn',

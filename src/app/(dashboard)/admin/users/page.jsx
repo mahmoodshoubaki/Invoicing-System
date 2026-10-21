@@ -24,7 +24,6 @@ import Button from '@/components/common/Button';
 import Badge from '@/components/common/Badge';
 import Table from '@/components/common/Table';
 import Modal from '@/components/common/Modal';
-import { ConfirmModal } from '@/components/common/Modal';
 import { Checkbox } from '@/components/forms/FormField';
 import Card from '@/components/common/Card';
 import AddUserModal from '@/components/admin/AddUserModal';
@@ -45,10 +44,16 @@ export default function UsersPage() {
   const [deactivateModal, setDeactivateModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [editRoleIds, setEditRoleIds] = useState([]);
+  // 'Notify the user about this change' — ticked each time a dialog opens.
+  const [notifyUser, setNotifyUser] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchAuthorizedUsers());
+    // GetAuthorizedUsers returns active users by default. This screen is where
+    // a user gets reactivated, so it has to ask for the inactive ones too —
+    // without this a deactivated account disappears from the only page that
+    // could bring it back.
+    dispatch(fetchAuthorizedUsers({ includeInactive: true }));
     dispatch(fetchAllRoles());
   }, [dispatch]);
 
@@ -91,11 +96,12 @@ export default function UsersPage() {
   // typing in the search box below while the modal happens to be open),
   // which defeats that memo just as surely as not memoizing at all.
   const closeAddModal = useCallback(() => setAddModal(false), []);
-  const handleUserCreated = useCallback(() => { dispatch(fetchAuthorizedUsers()); }, [dispatch]);
+  const handleUserCreated = useCallback(() => { dispatch(fetchAuthorizedUsers({ includeInactive: true })); }, [dispatch]);
 
   function openEdit(user) {
     setSelectedUser(user);
     setEditRoleIds([...user.roleIds]);
+    setNotifyUser(true);
     setEditModal(true);
   }
 
@@ -117,10 +123,10 @@ export default function UsersPage() {
     }
     setSaving(true);
     try {
-      await dispatch(updateUser({ ...selectedUser, roleIds: editRoleIds })).unwrap();
+      await dispatch(updateUser({ ...selectedUser, roleIds: editRoleIds, notifyUser })).unwrap();
       dispatch(addToast({ type: 'success', title: 'Roles updated', message: `${selectedUser.username}'s roles have been updated.` }));
       closeEdit();
-      dispatch(fetchAuthorizedUsers());
+      dispatch(fetchAuthorizedUsers({ includeInactive: true }));
     } catch (err) {
       dispatch(addToast({ type: 'error', title: 'Failed to update roles', message: err ?? 'Please try again.' }));
     } finally {
@@ -132,10 +138,10 @@ export default function UsersPage() {
     setSaving(true);
     const action = selectedUser.isActive ? 'deactivated' : 'activated';
     try {
-      await dispatch(updateUser({ ...selectedUser, isActive: !selectedUser.isActive })).unwrap();
+      await dispatch(updateUser({ ...selectedUser, isActive: !selectedUser.isActive, notifyUser })).unwrap();
       dispatch(addToast({ type: 'success', title: `User ${action}`, message: `${selectedUser.username} has been ${action}.` }));
       setDeactivateModal(false);
-      dispatch(fetchAuthorizedUsers());
+      dispatch(fetchAuthorizedUsers({ includeInactive: true }));
     } catch (err) {
       dispatch(addToast({ type: 'error', title: `Failed to change status`, message: err ?? 'Please try again.' }));
     } finally {
@@ -145,6 +151,7 @@ export default function UsersPage() {
 
   function handleToggleStatus(user) {
     setSelectedUser(user);
+    setNotifyUser(true);
     setDeactivateModal(true);
   }
 
@@ -331,24 +338,50 @@ export default function UsersPage() {
               ))}
             </div>
           </div>
+          <Checkbox
+            label="Notify the user about this change"
+            description="If their roles change, they are told the before and after, by email and in the bell."
+            checked={notifyUser}
+            onChange={(e) => setNotifyUser(e.target.checked)}
+          />
         </div>
       </Modal>
 
       {/* Deactivate / Activate Confirm Modal */}
-      <ConfirmModal
+      <Modal
         open={deactivateModal}
         onClose={() => setDeactivateModal(false)}
-        onConfirm={handleDeactivate}
-        loading={saving}
         title={selectedUser?.isActive ? 'Deactivate User' : 'Activate User'}
-        message={
-          selectedUser?.isActive
-            ? `Are you sure you want to deactivate ${selectedUser?.username}? They will lose access to the system immediately.`
-            : `Are you sure you want to activate ${selectedUser?.username}? They will regain access to the system.`
+        size="sm"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setDeactivateModal(false)} disabled={saving}>Cancel</Button>
+            <Button
+              variant={selectedUser?.isActive ? 'danger' : 'success'}
+              onClick={handleDeactivate}
+              loading={saving}
+            >
+              {selectedUser?.isActive ? 'Deactivate' : 'Activate'}
+            </Button>
+          </>
         }
-        confirmLabel={selectedUser?.isActive ? 'Deactivate' : 'Activate'}
-        confirmVariant={selectedUser?.isActive ? 'danger' : 'success'}
-      />
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            {selectedUser?.isActive
+              ? `Are you sure you want to deactivate ${selectedUser?.username}? They will lose access to the system immediately.`
+              : `Are you sure you want to activate ${selectedUser?.username}? They will regain access to the system.`}
+          </p>
+          <Checkbox
+            label="Notify the user about this change"
+            description={selectedUser?.isActive
+              ? 'They get an email saying their access was turned off. Email only, since they can no longer see the bell.'
+              : 'They are told their access is back, with their roles, by email and in the bell.'}
+            checked={notifyUser}
+            onChange={(e) => setNotifyUser(e.target.checked)}
+          />
+        </div>
+      </Modal>
     </div>
   );
 }

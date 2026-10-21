@@ -1,3 +1,39 @@
+import { createWaitingTask } from '@/models/waitingTask';
+import { INVOICE_STATUS_ID } from '@/constants/statuses';
+
+/**
+ * The money a project's invoices add up to, in the three figures the project
+ * page reports.
+ *
+ * Rejected and cancelled invoices are not money: nobody will ever pay them, so
+ * they count towards nothing here — not the total raised, and not what is still
+ * outstanding. Everything else that is not yet collected is outstanding,
+ * whatever stage it has reached.
+ *
+ *   totalInvoicesValue = collectedValue + nonCollectedValue
+ *
+ * Amounts are `totalAmount`, the invoice's own total, which is what the
+ * Invoices tab shows per row.
+ *
+ * @param {Array<{statusId: number|null, totalAmount: number}>} invoices
+ * @returns {{totalInvoicesValue: number, collectedValue: number, nonCollectedValue: number}}
+ */
+export function summariseProjectInvoices(invoices = []) {
+  return invoices.reduce((totals, invoice) => {
+    const status = invoice?.statusId;
+    if (status === INVOICE_STATUS_ID.REJECTED || status === INVOICE_STATUS_ID.CANCELLED) return totals;
+
+    const amount = invoice?.totalAmount ?? 0;
+    const collected = status === INVOICE_STATUS_ID.COLLECTED;
+
+    return {
+      totalInvoicesValue: totals.totalInvoicesValue + amount,
+      collectedValue: totals.collectedValue + (collected ? amount : 0),
+      nonCollectedValue: totals.nonCollectedValue + (collected ? 0 : amount),
+    };
+  }, { totalInvoicesValue: 0, collectedValue: 0, nonCollectedValue: 0 });
+}
+
 /**
  * Maps a raw invoice line from the API into a consistent model.
  * Skips the nested `invoice` back-reference each line carries — it's a
@@ -40,12 +76,14 @@ export function createInvoiceLine(raw) {
  */
 export function createInvoiceFormData(data) {
   const request = {
-    invoiceNumber:          data.invoiceNumber,
+    // No invoice number or baseline collection date (2026-10-11): those are
+    // filled in at stage 2, by whoever holds the workflow's task for them.
     projectCode:            data.projectCode,
+    // A 12-digit number, or null for none (2026-10-13).
+    financialClaimReference: data.financialClaimReference ?? null,
     wip:                    Number(data.wip) || 0,
     revenue:                Number(data.revenue) || 0,
-    submittedBy:            data.submittedBy,
-    baselineCollectionDate: data.baselineCollectionDate || null,
+    // No `submittedBy`: the backend sets it from the signed-in user.
     lines: (data.lines ?? []).map((line) => ({
       boqItemId:               line.boqItemId,
       quantity:                Number(line.quantity),
@@ -84,6 +122,9 @@ export function createUpdateInvoiceFormData(data) {
     InvoiceId:              data.invoiceId,
     ReasonsForUpdate:       data.reasonsForUpdate,
     ExpectedCollectionDate:  data.expectedCollectionDate,
+    // Sent as it should be AFTER the edit (2026-10-13): null or missing CLEARS
+    // it, so an unchanged one is sent as it was.
+    FinancialClaimReference: data.financialClaimReference ?? null,
     AttachmentIdsToDelete:  data.attachmentIdsToDelete ?? [],
   };
 
@@ -92,6 +133,24 @@ export function createUpdateInvoiceFormData(data) {
   (data.attachmentsToAdd ?? [])
     .filter((a) => a.status === 'done')
     .forEach((a) => formData.append('AttachmentsToAdd', a.file, a.name));
+  return formData;
+}
+
+/**
+ * Builds the AddInvoiceAttachments request (2026-10-11): plain form fields —
+ * `InvoiceId`, and one `Attachments` file part per file — with no JSON
+ * "Request" part, because the endpoint binds the form directly.
+ *
+ * @param {string} invoiceId
+ * @param {Array<{file: File, name: string, status: string}>} attachments  AttachmentUploader's entries
+ * @returns {FormData}
+ */
+export function createAddAttachmentsFormData(invoiceId, attachments) {
+  const formData = new FormData();
+  formData.append('InvoiceId', invoiceId);
+  (attachments ?? [])
+    .filter((a) => a.status === 'done')
+    .forEach((a) => formData.append('Attachments', a.file, a.name));
   return formData;
 }
 
@@ -116,6 +175,7 @@ export function createInvoiceAttachment(raw) {
   };
 }
 
+
 /**
  * Maps a raw API invoice to a consistent model.
  *
@@ -125,20 +185,32 @@ export function createInvoiceAttachment(raw) {
 export function createInvoice(raw) {
   return {
     id:                      raw.id,
+    // Null until stage 2 fills it in (2026-10-11) — screens show "Pending".
     invoiceNumber:           raw.invoiceNumber ?? null,
     projectCode:             raw.projectCode   ?? null,
     vat:                     raw.vat ?? 0,
     wip:                     raw.wip ?? 0,
     revenue:                 raw.revenue ?? 0,
+    // The submitter's user id, set by the backend from whoever was signed in.
     submittedBy:             raw.submittedBy ?? null,
+    // What screens show. "Unknown" when the user is gone (null in the
+    // project list).
+    submittedByName:         raw.submittedByName ?? null,
     statusId:                raw.statusId    ?? null,
     isDeleted:               raw.isDeleted ?? false,
     creationDate:            raw.creationDate            ?? null,
     submissionDate:          raw.submissionDate          ?? null,
+    // Also null until stage 2.
     baselineCollectionDate:  raw.baselineCollectionDate  ?? null,
     expectedCollectionDate:  raw.expectedCollectionDate  ?? null,
     reasonsForUpdate:        raw.reasonsForUpdate  ?? null,
-    workflowInstanceId:      raw.workflowInstaceId ?? null,
+    // A 12-digit number or null (2026-10-13). Typed on the forms, or filled in
+    // by a workflow task.
+    financialClaimReference: raw.financialClaimReference ?? null,
+    workflowInstanceId:      raw.workflowInstanceId ?? null,
+    // The to-dos its workflow is waiting on, and who holds each — shown to
+    // anyone who can see the invoice. Only GetInvoiceById carries it.
+    waitingOn:               (raw.waitingOn ?? []).map(createWaitingTask),
     totalAmount:             raw.totalAmount ?? 0,
     lines:                   (raw.lines ?? []).map(createInvoiceLine),
     attachments:             (raw.attachments ?? []).map(createInvoiceAttachment),

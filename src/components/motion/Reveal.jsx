@@ -2,34 +2,32 @@
 
 import { motion } from 'motion/react';
 
-/** Shared easing — mirrors --ease-out-expo from globals.css. */
-const EASE = [0.16, 1, 0.3, 1];
-
 /**
- * Stagger container. Children using `revealItem` below animate in sequence
- * rather than all at once. Motion skips the whole thing automatically when
- * the user prefers reduced motion (MotionConfig in the page sets that up).
+ * The container. No stagger and no delay (2026-10-08): sections used to wait
+ * their turn — 70 ms each, on top of a 50 ms start — so the last one on a form
+ * appeared well after the data was ready. Everything now fades in together.
  */
 export const revealContainer = {
   hidden: {},
-  show: {
-    transition: { staggerChildren: 0.07, delayChildren: 0.05 },
-  },
-};
-
-/** A single staggered child — rises and settles. */
-export const revealItem = {
-  hidden: { opacity: 0, y: 18, filter: 'blur(6px)' },
-  show: {
-    opacity: 1,
-    y: 0,
-    filter: 'blur(0px)',
-    transition: { duration: 0.55, ease: EASE },
-  },
+  show: {},
 };
 
 /**
- * Convenience wrapper: staggers its children in.
+ * A single child — currently no animation at all (2026-10-08).
+ *
+ * It used to rise 18px out of a 6px blur over 550 ms, then a 150 ms fade. Both
+ * are off while animations are reintroduced one at a time; cards and sections
+ * render in place on the first frame. Keep the variant names — every card and
+ * form section points at them, so a fade can come back here in one line.
+ */
+export const revealItem = {
+  hidden: {},
+  show: {},
+};
+
+/**
+ * Wraps sections that fade in as they appear. Motion skips it entirely when the
+ * user prefers reduced motion (MotionConfig in the page sets that up).
  *
  * Uses `animate` rather than `whileInView`, deliberately. With a one-shot
  * `whileInView` the container stops listening once it has played — so any
@@ -39,7 +37,7 @@ export const revealItem = {
  * blank gap where the content should be.
  *
  * Keeping the container permanently in "show" means late-mounting children
- * animate in as soon as they appear, which is what you want on a form whose
+ * fade in as soon as they appear, which is what you want on a form whose
  * sections unlock progressively.
  */
 export default function Reveal({ children, className = '', as = 'div' }) {

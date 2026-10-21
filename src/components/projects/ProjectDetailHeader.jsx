@@ -20,18 +20,12 @@ function ProjectDetailHeader({ project, projectCode }) {
       transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
       className="relative isolate mb-6 overflow-hidden rounded-3xl bg-[#17161c] px-6 py-7 sm:px-8"
     >
-      {/* Ambient colour fields */}
+      {/* Ambient colour fields. Held still (2026-10-08): drifting them forever
+          made the browser re-blur two 90px glows on every frame, scrolling
+          included. Still, they are painted once. */}
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-        <motion.div
-          className="absolute -left-20 -top-24 h-64 w-64 rounded-full bg-[#f8485e] opacity-40 blur-[90px]"
-          animate={{ x: [0, 32, 0], y: [0, 18, 0] }}
-          transition={{ duration: 17, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <motion.div
-          className="absolute -bottom-24 right-4 h-64 w-64 rounded-full bg-[#4a3aa7] opacity-35 blur-[95px]"
-          animate={{ x: [0, -30, 0], y: [0, -16, 0] }}
-          transition={{ duration: 21, repeat: Infinity, ease: 'easeInOut' }}
-        />
+        <div className="absolute -left-20 -top-24 h-64 w-64 rounded-full bg-[#f8485e] opacity-40 blur-[90px]" />
+        <div className="absolute -bottom-24 right-4 h-64 w-64 rounded-full bg-[#4a3aa7] opacity-35 blur-[95px]" />
         <div
           className="absolute inset-0 opacity-[0.05]"
           style={{

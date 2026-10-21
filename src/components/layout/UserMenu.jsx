@@ -15,7 +15,7 @@ export default function UserMenu({ user, onLogout }) {
               {user?.displayName}
             </p>
             <p className="text-xs text-gray-500 leading-tight">
-              {user?.roles?.[0]}
+              {user?.email}
             </p>
           </div>
           <ChevronDown size={14} className="text-gray-500 hidden md:block" />

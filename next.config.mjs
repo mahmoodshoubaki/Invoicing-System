@@ -21,6 +21,29 @@ const nextConfig = {
     DEFAULT_VAT_PERCENT: '15',
   },
 
+  // Old addresses, still in links people have saved. The query (?id=, filters) is carried over.
+  async redirects() {
+    return [
+      // Admin › Monitoring (2026-10-08) gathered workflow runs, the delivery
+      // monitor, the trace and both audits into one place.
+      { source: '/workflow/runs', destination: '/admin/monitoring/runs', permanent: false },
+      { source: '/workflow/runs/:instanceId', destination: '/admin/monitoring/runs/:instanceId', permanent: false },
+      { source: '/admin/notifications/monitor', destination: '/admin/monitoring/deliveries', permanent: false },
+      { source: '/admin/notifications/monitor/:notificationId', destination: '/admin/monitoring/deliveries/:notificationId', permanent: false },
+      { source: '/trace', destination: '/admin/monitoring/trace', permanent: false },
+      { source: '/workflow/trace', destination: '/admin/monitoring/trace', permanent: false },
+      { source: '/admin/notifications/trace', destination: '/admin/monitoring/trace', permanent: false },
+      { source: '/admin/notifications/audit', destination: '/admin/monitoring/audit', permanent: false },
+      { source: '/admin/workflow/changes', destination: '/admin/monitoring/audit?view=workflow', permanent: false },
+      // Admin › Workflow (2026-10-13) gathered the workflows, their builder, the
+      // fields and the engine. The builder's ?code= is carried over.
+      { source: '/workflow', destination: '/admin/workflow/workflows', permanent: false },
+      { source: '/workflow/builder', destination: '/admin/workflow/builder', permanent: false },
+      // The engine page was split into its limits and its approved domains.
+      { source: '/admin/workflow/engine', destination: '/admin/workflow/limits', permanent: false },
+    ];
+  },
+
   // Headers for security
   async headers() {
     return [

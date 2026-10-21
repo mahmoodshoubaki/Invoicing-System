@@ -38,12 +38,14 @@ function ProjectStatCards({ totals, currency }) {
       footnote: 'Recognised to date',
     },
     {
-      label: 'Total Invoiced',
+      label: 'Total Invoices',
       value: totals.totalInvoicesValue,
       format: money,
       icon: FileText,
       accent: SERIES_ROLE.wip,
-      footnote: 'Raised against this project',
+      // Says what is left out, because a total that quietly drops rows is a
+      // total nobody can reconcile against the Invoices tab.
+      footnote: 'Excludes rejected and cancelled',
     },
     {
       label: 'Collected',
@@ -51,7 +53,7 @@ function ProjectStatCards({ totals, currency }) {
       format: money,
       icon: CheckCircle2,
       accent: SERIES_ROLE.collected,
-      delta: `${collectionRate}% of invoiced`,
+      delta: `${collectionRate}% of invoices`,
       deltaType: collectionRate >= 50 ? 'positive' : 'neutral',
       footnote: 'Cash received',
     },

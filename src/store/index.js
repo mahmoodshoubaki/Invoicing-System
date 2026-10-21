@@ -6,6 +6,8 @@ import projectsReducer from '@/store/slices/projectsSlice';
 import boqReducer from '@/store/slices/boqSlice';
 import invoicesReducer from '@/store/slices/invoicesSlice';
 import workflowReducer from '@/store/slices/workflowSlice';
+import workflowRunsReducer from '@/store/slices/workflowRunsSlice';
+import workflowTasksReducer from '@/store/slices/workflowTasksSlice';
 import notificationsReducer from '@/store/slices/notificationsSlice';
 import uiReducer from '@/store/slices/uiSlice';
 import lookupsReducer from '@/store/slices/lookupsSlice';
@@ -19,6 +21,8 @@ export const store = configureStore({
     boq: boqReducer,
     invoices: invoicesReducer,
     workflow: workflowReducer,
+    workflowRuns: workflowRunsReducer,
+    workflowTasks: workflowTasksReducer,
     notifications: notificationsReducer,
     ui: uiReducer,
     lookups: lookupsReducer,

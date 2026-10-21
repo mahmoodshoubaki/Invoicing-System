@@ -2,7 +2,10 @@
 
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { fetchBillingFrequencies, fetchBoqItemStatuses, fetchInvoiceStatuses, fetchTrackerCycleStatuses } from '@/store/slices/lookupsSlice';
+import {
+  fetchBillingFrequencies, fetchBoqItemStatuses, fetchChangeRequestReasons, fetchChangeRequestStatuses,
+  fetchInvoiceStatuses, fetchTrackerCycleStatuses,
+} from '@/store/slices/lookupsSlice';
 
 /**
  * Renderless component — dispatches all lookup fetches once on app mount.
@@ -23,6 +26,10 @@ export default function LookupsSync() {
   }, [dispatch]);
   useEffect(() => {
     dispatch(fetchTrackerCycleStatuses());
+  }, [dispatch]);
+  useEffect(() => {
+    dispatch(fetchChangeRequestReasons());
+    dispatch(fetchChangeRequestStatuses());
   }, [dispatch]);
 
   return null;

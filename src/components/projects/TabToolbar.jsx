@@ -17,7 +17,7 @@ function TabToolbar({ stats = [], actions }) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-      className="mb-4 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[#e9e7e5] bg-white px-5 py-3.5 shadow-[0_2px_6px_-2px_rgb(60_60_58/0.08)]"
+      className="mb-4 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[#e9e7e5] bg-white px-5 py-3.5 shadow-[var(--shadow-card)]"
     >
       <dl className="flex flex-wrap items-center gap-x-7 gap-y-2">
         {stats.map((stat) => (

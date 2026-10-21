@@ -1,3 +1,5 @@
+import { createWaitingTask } from '@/models/waitingTask';
+
 /**
  * @typedef {Object} BOQItem
  *
@@ -55,6 +57,15 @@ export function createBOQItem(raw) {
     baselineInvoicingDate: raw.baselineInvoicingDate   ?? null,
     billingFrequencyId:    raw.billingFrequencyId      ?? null,
     statusId:              raw.statusId                ?? null,
+    // The submitter's user id, set by the backend from whoever was signed in —
+    // never sent by us on insert or update.
+    submittedBy:           raw.submittedBy             ?? null,
+    // What screens show. Null for items created before 2026-10-01, or when the
+    // user is gone.
+    submittedByName:       raw.submittedByName         ?? null,
+    // The to-dos its workflow is waiting on, and who holds each (2026-10-21) —
+    // on every item row of GetBoqById and GetBoqByProjectCode.
+    waitingOn:             (raw.waitingOn ?? []).map(createWaitingTask),
   };
 }
 
@@ -99,6 +110,9 @@ export function createBOQItemHistoryEntry(raw) {
     statusId:              raw.statusId               ?? null,
     isDeleted:             raw.isDeleted              ?? false,
     updatedOn:             raw.updatedOn              ?? false,
+    // Same as on the live item.
+    submittedBy:           raw.submittedBy            ?? null,
+    submittedByName:       raw.submittedByName        ?? null,
   };
 }
 

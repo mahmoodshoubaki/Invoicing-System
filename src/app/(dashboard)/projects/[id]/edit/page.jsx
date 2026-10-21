@@ -386,7 +386,7 @@ export default function EditProjectPage() {
        </Reveal>
 
         {/* Actions */}
-        <div className="sticky bottom-0 z-10 mt-5 flex items-center justify-end gap-3 rounded-2xl border border-[#e9e7e5] bg-white/85 px-4 py-3 shadow-[0_-4px_16px_-8px_rgb(60_60_58/0.18)] backdrop-blur-md">
+        <div className="sticky bottom-0 z-10 mt-5 flex items-center justify-end gap-3 rounded-2xl border border-[#e9e7e5] bg-white/95 px-4 py-3 shadow-[0_-4px_16px_-8px_rgb(60_60_58/0.18)]">
           <Link href={`/projects/${encodeURIComponent(projectCode)}`}>
             <Button variant="ghost">Cancel</Button>
           </Link>

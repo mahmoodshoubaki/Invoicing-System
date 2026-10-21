@@ -9,6 +9,8 @@ import PreferencesSync from '@/components/layout/PreferencesSync';
 import LookupsSync from '@/components/layout/LookupsSync';
 import CapabilityGuard from '@/components/layout/CapabilityGuard';
 import AuthGuard from '@/components/layout/AuthGuard';
+import WorkflowTasksSync from '@/components/layout/WorkflowTasksSync';
+import NotificationsSync from '@/components/layout/NotificationsSync';
 
 export default function DashboardLayout({ children }) {
   return (
@@ -17,6 +19,10 @@ export default function DashboardLayout({ children }) {
       <LookupsSync />
       <AuthProvider>
         <AuthGuard>
+          {/* Inside AuthGuard: it reads capabilities, which only exist once
+              Identity/me has resolved. */}
+          <WorkflowTasksSync />
+          <NotificationsSync />
           <CapabilityGuard>
             <AppShell>
               {children}

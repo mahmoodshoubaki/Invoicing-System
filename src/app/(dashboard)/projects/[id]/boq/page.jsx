@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import Link from 'next/link';
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import {
-  Banknote, CheckCircle, ChevronLeft, Edit2, History, LayoutList, Plus, Trash2, X,
+  Banknote, CheckCircle, ChevronLeft, Edit2, Eye, FileDiff, History, LayoutList, Plus, Trash2, X,
 } from 'lucide-react';
 
 import SubPageHeader from '@/components/common/SubPageHeader';
@@ -19,7 +19,9 @@ import BOQItemHistoryModal from '@/components/boq/BOQItemHistoryModal';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { CHROME, SERIES_ROLE, STATUS } from '@/theme/vizPalette';
 import { formatCurrency, formatDate } from '@/utils/formatters';
+import { waitingOnText } from '@/lib/waitingOn';
 import { usePermission } from '@/hooks/usePermission';
+import { ROUTES } from '@/constants/routes';
 import {
   bulkRemoveBOQItems, fetchBOQByProjectCode, removeBOQItem,
   selectBOQItems, selectBOQLoading, selectCurrentBOQ,
@@ -62,7 +64,6 @@ export default function ProjectBOQPage() {
   const canCreate = can('Boqs', 'Create');
   const canUpdate = can('Boqs', 'Update');
   const canDelete = can('Boqs', 'Delete');
-  const canApprove = can('Boqs', 'Approve');
   const money = (v) => formatCurrency(v, currency);
 
   useEffect(() => {
@@ -111,10 +112,6 @@ export default function ProjectBOQPage() {
     } finally {
       setSaving(false);
     }
-  };
-
-  const handleApprove = (_itemId) => {
-    // TODO: dispatch approveBOQItem(_itemId) when the endpoint is available
   };
 
   const totalCost = boqItems.reduce((s, i) => s + (i.totalCost || 0), 0);
@@ -169,7 +166,16 @@ export default function ProjectBOQPage() {
       label: 'Item',
       render: (val, row) => (
         <div className="min-w-0 max-w-xs">
-          <p className="text-sm font-semibold leading-tight" style={{ color: CHROME.textPrimary }}>{val}</p>
+          {/* The name opens the item. Read-only, so it is offered to everyone
+              who can see the list rather than only to whoever may edit. */}
+          <Link
+            href={ROUTES.PROJECT_BOQ_ITEM(encoded, row.id)}
+            onClick={(e) => e.stopPropagation()}
+            className="text-sm font-semibold leading-tight underline-offset-2 hover:underline"
+            style={{ color: CHROME.textPrimary }}
+          >
+            {val}
+          </Link>
           {row.arabicName && (
             <p className="mt-0.5 truncate text-xs" dir="rtl" style={{ color: CHROME.textMuted }}>{row.arabicName}</p>
           )}
@@ -198,9 +204,20 @@ export default function ProjectBOQPage() {
       key: 'statusId',
       label: 'Status',
       sortable: false,
-      render: (val) => (
-        <StatusBadge status={boqStatusesMap[val] ?? String(val)} colors={boqStatusColorsMap[val]} />
-      ),
+      // Who its workflow is waiting on, under the status (2026-10-21) — on every item row.
+      render: (val, row) => {
+        const waiting = waitingOnText(row.waitingOn);
+        return (
+          <div className="flex min-w-0 flex-col items-start gap-1">
+            <StatusBadge status={boqStatusesMap[val] ?? String(val)} colors={boqStatusColorsMap[val]} />
+            {waiting && (
+              <span className="max-w-[14rem] truncate text-[11px]" style={{ color: CHROME.textMuted }} title={`Waiting on: ${waiting}`}>
+                Waiting on: {waiting}
+              </span>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: 'expectedInvoicingDate',
@@ -223,20 +240,18 @@ export default function ProjectBOQPage() {
       resizable: false,
       render: (_, row) => (
         <div className="flex items-center justify-end gap-0.5" onClick={(e) => e.stopPropagation()}>
+          <Link href={ROUTES.PROJECT_BOQ_ITEM(encoded, row.id)}>
+            <Button variant="ghost" size="xs" icon={Eye} title="View" />
+          </Link>
           <Button variant="ghost" size="xs" icon={History} onClick={() => setHistoryItemId(row.id)} title="History" />
           {canUpdate && (
             <Link href={`/projects/${encoded}/boq/${row.id}/edit`}>
               <Button variant="ghost" size="xs" icon={Edit2} title="Edit" />
             </Link>
           )}
-          {canApprove && (
-            <Button
-              variant="ghost" size="xs" icon={CheckCircle}
-              className="text-[#0ca30c] hover:bg-green-50"
-              onClick={() => handleApprove(row.id)}
-              title="Approve"
-            />
-          )}
+          {/* No per-row Approve: approving BOQ items is moving to a workflow run
+              over the selected items (parked — see WORKFLOW-PLAN.md,
+              "Parked feature — BOQ items approval"). The button here was a stub. */}
           {canDelete && (
             <Button
               variant="ghost" size="xs" icon={Trash2}
@@ -249,7 +264,7 @@ export default function ProjectBOQPage() {
       ),
     },
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [selected, boqItems.length, currency, boqStatusesMap, boqStatusColorsMap, billingFrequenciesMap, canUpdate, canApprove, canDelete, encoded]);
+  ], [selected, boqItems.length, currency, boqStatusesMap, boqStatusColorsMap, billingFrequenciesMap, canUpdate, canDelete, encoded]);
 
   if (projectLoading || boqLoading) {
     return (
@@ -278,7 +293,7 @@ export default function ProjectBOQPage() {
           onClose={() => { setDeleteModal(false); setDeletingId(null); }}
           onConfirm={handleDelete}
           title="Delete BOQ Item"
-          message="Are you sure you want to delete this BOQ item? This action cannot be undone."
+          message="Are you sure you want to delete this BOQ item? This action cannot be undone. An item that any invoice points at, or that is waiting for approval, cannot be deleted."
           confirmLabel="Delete Item"
           loading={saving}
         />
@@ -288,7 +303,7 @@ export default function ProjectBOQPage() {
           onClose={() => setBulkDeleteModal(false)}
           onConfirm={handleBulkDelete}
           title="Delete Selected Items"
-          message={`Are you sure you want to delete ${selected.size} selected item(s)? This action cannot be undone.`}
+          message={`Are you sure you want to delete ${selected.size} selected item(s)? This action cannot be undone. It is all or nothing: if any item has an invoice or is waiting for approval, none are deleted and the message names them.`}
           confirmLabel={`Delete ${selected.size} Items`}
           loading={saving}
         />
@@ -310,6 +325,12 @@ export default function ProjectBOQPage() {
               <Link href={`/projects/${encoded}`}>
                 <Button variant="ghost" icon={ChevronLeft} size="sm">Back</Button>
               </Link>
+              {/* A formal change to the approved BOQ, decided by an approver (2026-10-18). */}
+              {can('ChangeRequests', 'Create') && (
+                <Link href={ROUTES.PROJECT_CHANGE_REQUEST_NEW(encoded)}>
+                  <Button variant="outline" icon={FileDiff} size="sm">New change request</Button>
+                </Link>
+              )}
               {canCreate && (
                 <Link href={`/projects/${encoded}/boq/new`}>
                   <Button icon={Plus} size="sm">Add item</Button>
