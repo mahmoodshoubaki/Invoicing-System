@@ -10,6 +10,7 @@
 import { CR_TARGET } from '@/constants/changeRequests';
 import { itemDraftFrom } from './itemDraft';
 import { applyProjectEdit } from './projectDraft';
+import { newItemFrom } from './newItemDraft';
 
 const day = (value) => (value ? String(value).slice(0, 10) : '');
 const DATE_FIELDS = new Set(['expectedInvoicingDate', 'contractStartDate']);
@@ -27,7 +28,10 @@ export function itemIdsOf(changeRequest) {
 /**
  * @param {Object} changeRequest  mapChangeRequest's
  * @param {{ boqItems: Array, cyclesByItem: Object<string, Array>, subProjects: Array }} context
- * @returns {{ reasons: number[], details: string, projectEdits: Object, items: Array }}
+ * @returns {{
+ *   reasons: number[], typeKeys: number[], otherTypeText: string, projectEffectKey: number|null,
+ *   details: string, projectEdits: Object, items: Array, newItems: Array, files: Object,
+ * }}
  */
 export function draftFromChangeRequest(changeRequest, { boqItems, cyclesByItem, subProjects }) {
   let projectEdits = {};
@@ -65,8 +69,13 @@ export function draftFromChangeRequest(changeRequest, { boqItems, cyclesByItem, 
 
   return {
     reasons: changeRequest.reasons.map((r) => r.key),
+    typeKeys: (changeRequest.types ?? []).map((t) => t.key),
+    otherTypeText: changeRequest.otherTypeText ?? '',
+    projectEffectKey: changeRequest.projectEffect?.key ?? null,
     details: changeRequest.additionalDetails ?? '',
     projectEdits,
     items,
+    newItems: (changeRequest.newItems ?? []).map((row, i) => newItemFrom(row, `new-${i + 1}`)),
+    files: { existing: changeRequest.attachments ?? [], deleteIds: [], added: [] },
   };
 }

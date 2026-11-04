@@ -2,8 +2,8 @@
 
 import {
   LayoutDashboard, FolderKanban, Receipt,
-  GitBranch, Bell, BarChart3, Users, Shield, Settings, ListChecks,
-  Activity, X, Menu, BellRing, Timer,
+  GitBranch, Bell, BarChart3, Users, Shield, Settings, ListChecks, Boxes,
+  Activity, X, Menu, BellRing, Timer, HardDriveUpload,
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleSidebar } from '@/store/slices/uiSlice';
@@ -63,6 +63,8 @@ const NAV_ITEMS = [
     permission: [
       { module: 'System', action: 'Administrator' },
       { module: 'Role', action: 'View' },
+      { module: 'Group', action: 'View' },
+      { module: 'Group', action: 'Manage' },
       // Admin › Workflow — somebody who only reads workflows finds them here.
       { module: 'Workflow', action: 'View' },
       { module: 'Workflow', action: 'Manage' },
@@ -77,6 +79,16 @@ const NAV_ITEMS = [
     children: [
       { label: 'Users', labelAr: 'المستخدمون', href: '/admin/users', icon: Users, permission: { module: 'System', action: 'Administrator' } },
       { label: 'Roles & Permissions', labelAr: 'الأدوار والصلاحيات', href: '/admin/roles', icon: Shield, permission: { module: 'Role', action: 'View' } },
+      {
+        label: 'Groups',
+        labelAr: 'المجموعات',
+        href: '/admin/groups',
+        icon: Boxes,
+        permission: [
+          { module: 'Group', action: 'View' },
+          { module: 'Group', action: 'Manage' },
+        ],
+      },
       // One entry for the workflows, the fields the builder shows and the engine
       // (2026-10-13); its own tab bar shows each page to whoever may read it.
       {
@@ -118,6 +130,7 @@ const NAV_ITEMS = [
         ],
       },
       { label: 'Background Jobs', labelAr: 'المهام الخلفية', href: '/admin/jobs', icon: Timer, permission: { module: 'System', action: 'Manage Jobs' } },
+      { label: 'Data Migration', labelAr: 'ترحيل البيانات', href: '/admin/migration', icon: HardDriveUpload, permission: { module: 'System', action: 'Administrator' } },
       { label: 'System Settings', labelAr: 'إعدادات النظام', href: '/admin/settings', icon: Settings, permission: { module: 'System', action: 'Administrator' } },
     ],
   },
@@ -131,16 +144,18 @@ export default function Sidebar() {
     <>
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/40 z-20 lg:hidden"
+          className="fixed inset-x-0 top-16 bottom-0 bg-black/40 z-20 lg:hidden"
           onClick={() => dispatch(toggleSidebar())}
         />
       )}
 
+      {/* Sticky in AppShell's row: stays under the header while scrolling, at
+          most one window tall, and stops above the footer at the end of the page
+          (sliding under the header, z-40, as the footer comes into view). */}
       <aside
-        className={`fixed top-16 left-0 h-full bg-white z-30 flex flex-col
+        className={`sticky top-16 max-h-[calc(100vh-4rem)] shrink-0 bg-white z-30 flex flex-col
           transition-all duration-300 ease-in-out border-r border-gray-100
           ${sidebarOpen ? 'w-64' : 'w-16'}
-          lg:translate-x-0
         `}
         style={{ boxShadow: '2px 0 8px rgba(0,0,0,0.06)' }}
       >

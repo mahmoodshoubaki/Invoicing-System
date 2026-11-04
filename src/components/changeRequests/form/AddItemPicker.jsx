@@ -1,28 +1,34 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { AlertTriangle, Plus } from 'lucide-react';
 
 import Button from '@/components/common/Button';
 import { controlClass } from '@/components/ui/kit';
-import { CHROME, STATUS } from '@/theme/vizPalette';
+import { STATUS } from '@/theme/vizPalette';
+import { withAlpha } from '@/utils/color';
+
+const nameOf = (item) => item.englishName ?? `Item ${item.id}`;
 
 /**
- * Picking an item to change: the approved items not in the request yet. An
- * item with an invoice is refused once its plan is loaded — the picker cannot
- * tell from the list alone.
+ * Picking an item to change. Items that can't be changed are listed too, so
+ * picking one says why at once; Add stays off for them.
  *
  * @param {{
  *   form: ReturnType<import('./useChangeRequestForm').useChangeRequestForm>,
- *   choices: Array, notApprovedCount: number,
+ *   choices: Array<{ item: Object, blocker: { reason: string, short: string }|null }>,
  * }} props
  */
-export default function AddItemPicker({ form, choices, notApprovedCount }) {
+export default function AddItemPicker({ form, choices }) {
   const [picked, setPicked] = useState('');
   const busy = form.adding.itemId != null;
+  const open = choices.filter((c) => !c.blocker);
+  const closed = choices.filter((c) => c.blocker);
+  const chosen = choices.find((c) => String(c.item.id) === picked) ?? null;
+  const blocker = chosen?.blocker ?? null;
 
   const add = async () => {
-    if (!picked) return;
+    if (!picked || blocker) return;
     await form.addItem(picked);
     setPicked('');
   };
@@ -37,18 +43,28 @@ export default function AddItemPicker({ form, choices, notApprovedCount }) {
           disabled={busy || choices.length === 0}
           className={`${controlClass} min-w-0 flex-1 sm:max-w-md`}
         >
-          <option value="">{choices.length ? 'Choose an approved item…' : 'No approved item left to add'}</option>
-          {choices.map((item) => (
-            <option key={item.id} value={item.id}>{item.englishName ?? `Item ${item.id}`}</option>
-          ))}
+          <option value="">{choices.length ? 'Choose an item…' : 'No item left to add'}</option>
+          {open.map(({ item }) => <option key={item.id} value={item.id}>{nameOf(item)}</option>)}
+          {closed.length > 0 && (
+            <optgroup label="Can't be changed">
+              {closed.map(({ item, blocker: b }) => (
+                <option key={item.id} value={item.id}>{nameOf(item)} — {b.short}</option>
+              ))}
+            </optgroup>
+          )}
         </select>
-        <Button size="sm" variant="outline" icon={Plus} onClick={add} loading={busy} disabled={!picked}>
+        <Button size="sm" variant="outline" icon={Plus} onClick={add} loading={busy} disabled={!picked || Boolean(blocker)}>
           Add to the request
         </Button>
       </div>
-      {notApprovedCount > 0 && (
-        <p className="mt-1 text-[11px]" style={{ color: CHROME.textMuted }}>
-          {notApprovedCount} item{notApprovedCount === 1 ? ' is' : 's are'} not approved, so not listed — only approved items can be changed.
+      {blocker && (
+        <p
+          role="alert"
+          className="mt-1.5 flex items-start gap-1.5 rounded-md px-2 py-1.5 text-xs"
+          style={{ backgroundColor: withAlpha(STATUS.critical, 0.07), color: STATUS.critical }}
+        >
+          <AlertTriangle size={12} className="mt-0.5 shrink-0" aria-hidden="true" />
+          {nameOf(chosen.item)} can’t be changed. {blocker.reason}
         </p>
       )}
       {form.adding.error && <p className="mt-1 text-xs" style={{ color: STATUS.critical }}>{form.adding.error}</p>}

@@ -39,6 +39,7 @@ import { validateDefinition } from '@/lib/workflowBuilderState';
 import { versionFacts } from '@/lib/workflowDrafts';
 import { indexProblems } from '@/lib/workflowProblems';
 import { selectRoles, selectRolesLoading } from '@/store/slices/rolesSlice';
+import { selectGroups, selectGroupsLoading } from '@/store/slices/groupsSlice';
 import {
   selectActions,
   selectAssigneesById,
@@ -106,6 +107,8 @@ function BuilderContent() {
   const catalogsLoaded = useSelector(selectCatalogsLoaded);
   const roles = useSelector(selectRoles);
   const rolesLoading = useSelector(selectRolesLoading);
+  const groups = useSelector(selectGroups);
+  const groupsLoading = useSelector(selectGroupsLoading);
   const approvedHosts = useSelector(selectEnabledApiDomains);
   const resolvedById = useSelector(selectAssigneesById);
 
@@ -141,7 +144,7 @@ function BuilderContent() {
   const canvas = useCanvasActions({ state, dispatch, editing, clip, inspector, menu });
   const ctx = useStepTreeContext({
     state,
-    lookups: { roles, rolesLoading, resolvedById, actions, approvedHosts },
+    lookups: { roles, rolesLoading, groups, groupsLoading, resolvedById, actions, approvedHosts },
     catalogs,
     editing,
     clip,

@@ -148,18 +148,27 @@ export function createPauseInstancePayload({ instanceId, reason }) {
  * `WF-005`. Ids are de-duplicated because naming somebody twice is a typo, not
  * an instruction.
  */
-export function createReassignTaskPayload({ instanceId, taskId, toUserIds = [], toRoleIds = [] }) {
+export function createReassignTaskPayload({ instanceId, taskId, toUserIds = [], toRoleIds = [], toGroupIds = [] }) {
   return {
     instanceId,
     taskId,
     toUserIds: [...new Set((toUserIds ?? []).filter(Boolean))],
     toRoleIds: [...new Set((toRoleIds ?? []).filter(Boolean))],
+    toGroupIds: [...new Set((toGroupIds ?? []).filter(Boolean))],
   };
 }
 
 /** Body for CompleteTask. */
-export function createCompleteTaskPayload({ instanceId, taskId, outcomeKey, comment = null, values = {} }) {
-  return { instanceId, taskId, outcomeKey, comment, values };
+export function createCompleteTaskPayload({ instanceId, taskId, outcomeKey, comment = null, values = {}, reasonKey = null, otherReason = null }) {
+  return {
+    instanceId,
+    taskId,
+    outcomeKey,
+    comment,
+    values,
+    ...(reasonKey ? { reasonKey } : {}),
+    ...(otherReason ? { otherReason } : {}),
+  };
 }
 
 /**

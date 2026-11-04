@@ -10,6 +10,7 @@
 
 /** The most the additional details may hold. */
 export const CR_DETAILS_MAX = 4000;
+export const CR_OTHER_TYPE_MAX = 500;
 
 export const CR_STATUS = {
   SUBMITTED: 1,

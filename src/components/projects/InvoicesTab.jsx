@@ -191,7 +191,7 @@ function InvoicesTab({
             onClick={() => setHistoryInvoiceId(row.id)}
             title="Revision history"
           />
-          {can('Invoices', 'Update') && (
+          {can('System', 'Administrator') && (
             <Link href={`/projects/${encoded}/invoices/${row.id}/edit`}>
               <Button variant="ghost" size="xs" icon={Edit2} title="Edit invoice" />
             </Link>

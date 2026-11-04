@@ -1,8 +1,9 @@
 import { BOQ_STATUS } from '@/constants/statuses';
 import { createApiClient } from '@/lib/apiClient';
+import { fetchAllPages } from '@/lib/fetchAllPages';
 import {
   createBOQ, createBOQItem, createBOQItemHistoryEntry, createTrackerCycle,
-  createBOQItemPayload, updateBOQItemPayload,
+  createBOQItemPayload, updateBOQItemPayload, createBoqAttachmentsFormData,
 } from '@/models/boq';
 
 const api = createApiClient('/api/Boqs');
@@ -25,8 +26,13 @@ export const boqRepository = {
   // REAL API
   async getBOQByProjectCode(projectCode) {
     try {
-      const data = await api.get(`/GetBoqByProjectCode?${new URLSearchParams({ projectCode }).toString()}`);
-      return data ? createBOQ(data) : { projectCode, id: null, boqItems: [] };
+      let first = null;
+      const items = await fetchAllPages(async (skip, take) => {
+        const page = await api.get('/GetBoqByProjectCode', { projectCode, skip, take });
+        first ??= page;
+        return { rows: page?.boqItems ?? [], total: page?.total ?? 0 };
+      });
+      return first ? createBOQ({ ...first, boqItems: items }) : { projectCode, id: null, boqItems: [] };
     } catch (err) {
       if (isNotFound(err)) return { projectCode, id: null, boqItems: [] };
       throw err;
@@ -109,8 +115,11 @@ export const boqRepository = {
    */
   async getBOQItemHistory(boqItemId) {
     try {
-      const data = await api.get(`/GetBoqItemHistory?ItemId=${encodeURIComponent(boqItemId)}`);
-      return (data ?? []).map(createBOQItemHistoryEntry);
+      const data = await fetchAllPages(async (skip, take) => {
+        const page = await api.get('/GetBoqItemHistory', { ItemId: boqItemId, skip, take });
+        return { rows: page?.history ?? [], total: page?.total ?? 0 };
+      });
+      return data.map(createBOQItemHistoryEntry);
     } catch (err) {
       if (isNotFound(err)) return [];
       throw err;
@@ -133,6 +142,21 @@ export const boqRepository = {
    * @param {string} [params.boqItemId]
    * @returns {Promise<object[]>}
    */
+  /** @returns {Promise<string[]>} the new files' ids */
+  async addBoqAttachments(boqId, files) {
+    const data = await api.post('/AddBoqAttachments', createBoqAttachmentsFormData(boqId, files));
+    return data?.attachmentIds ?? [];
+  },
+
+  async deleteBoqAttachment(boqId, attachmentId) {
+    const data = await api.post('/DeleteBoqAttachment', { boqId, attachmentId });
+    return data?.succeeded === true || data?.success === true;
+  },
+
+  async downloadBoqAttachment(boqId, contentId, fallbackFileName) {
+    return await api.download('/DownloadBoqAttachment', { boqId, contentId }, fallbackFileName);
+  },
+
   async previewInvoicingPlan({ anchorDate, billingFrequencyId, contractStartDate, contractFinishDate, boqItemId }) {
     const query = {
       AnchorDate:          anchorDate,

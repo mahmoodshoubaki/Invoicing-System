@@ -7,6 +7,7 @@ import {
   BuilderActions, emptyDefinition, emptyHistory, HistoryActions, historyReducer, isDirty,
 } from '@/lib/workflowBuilderState';
 import { fetchAllRoles } from '@/store/slices/rolesSlice';
+import { fetchGroups } from '@/store/slices/groupsSlice';
 import {
   fetchApiDomains, fetchBuilderCatalogs, fetchDefinition, fetchDefinitionVersions,
 } from '@/store/slices/workflowSlice';
@@ -43,6 +44,7 @@ export function useBuilderDocument({ code, versionParam }) {
     // Roles fill the humanTask assignee picker; approved hosts let the http.call
     // URL field warn at design time instead of the run failing later.
     dispatchRedux(fetchAllRoles());
+    dispatchRedux(fetchGroups());
     dispatchRedux(fetchApiDomains(true));
   }, [dispatchRedux]);
 

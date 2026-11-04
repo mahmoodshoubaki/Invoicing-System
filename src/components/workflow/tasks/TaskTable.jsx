@@ -104,7 +104,7 @@ function rowState(task, canAct) {
  */
 function TaskTable({
   tasks, filter = TASK_FILTERS.ALL, total = 0, page = 1, onPageChange, pageSize = TASK_PAGE_SIZE, onPageSizeChange = null, isLoading = false,
-  onComplete, onRequireComment, onOpenForm, completingTaskId, canAct, canReassign, canViewRuns, onReassign,
+  onComplete, onAsk, onOpenForm, completingTaskId, canAct, canReassign, canViewRuns, onReassign,
 }) {
   const columns = useMemo(() => [
     {
@@ -178,7 +178,7 @@ function TaskTable({
       label: 'Assigned to',
       sortable: false,
       render: (_, task) => (
-        <AssigneeList users={task.assignedUsers} roles={task.assignedRoles} compact />
+        <AssigneeList users={task.assignedUsers} roles={task.assignedRoles} groups={task.assignedGroups} compact />
       ),
     },
     {
@@ -282,8 +282,8 @@ function TaskTable({
                   key={button.key}
                   type="button"
                   disabled={busy}
-                  onClick={() => (button.requiresComment
-                    ? onRequireComment?.(task, button)
+                  onClick={() => (button.requiresComment || button.reasons
+                    ? onAsk?.(task, button)
                     : onComplete({ task, outcomeKey: button.key, comment: null }))}
                   className="inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2.5 py-1 text-[11px] font-semibold transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
                   style={{
@@ -291,9 +291,9 @@ function TaskTable({
                     backgroundColor: button.colorHex ?? '#f1f0ee',
                     color: readableTextOn(button.colorHex, CHROME.textPrimary),
                   }}
-                  title={button.requiresComment ? `${button.label} — asks for a comment` : button.label}
+                  title={button.reasons ? `${button.label} — asks for a reason` : button.requiresComment ? `${button.label} — asks for a comment` : button.label}
                 >
-                  {button.requiresComment && <MessageSquare size={10} aria-hidden="true" />}
+                  {(button.requiresComment || button.reasons) && <MessageSquare size={10} aria-hidden="true" />}
                   {button.label}
                 </button>
               ))}
@@ -323,7 +323,7 @@ function TaskTable({
         );
       },
     },
-  ], [canAct, canReassign, canViewRuns, completingTaskId, onComplete, onOpenForm, onReassign, onRequireComment]);
+  ], [canAct, canReassign, canViewRuns, completingTaskId, onAsk, onComplete, onOpenForm, onReassign]);
 
   // Nothing matches this tab at all — not merely an empty page, which the page
   // clamps away. Said per tab, since "nothing waiting on you" under Completed

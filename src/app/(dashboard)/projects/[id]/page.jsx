@@ -17,6 +17,7 @@ import SubProjectsTab from '@/components/projects/SubProjectsTab';
 import BOQTab from '@/components/projects/BOQTab';
 import InvoicesTab from '@/components/projects/InvoicesTab';
 import ChangeRequestsTab from '@/components/projects/ChangeRequestsTab';
+import { hasMainProject } from '@/lib/changeRequest/projectDraft';
 import { usePermission } from '@/hooks/usePermission';
 import { allow } from '@/constants/workflowPermissions';
 import { CR_PERMISSIONS } from '@/constants/changeRequests';
@@ -241,7 +242,7 @@ export default function ProjectDetailPage() {
               <ChangeRequestsTab
                 projectCode={projectCode}
                 boqId={currentBOQ?.id ?? null}
-                canCreate={allow(can, CR_PERMISSIONS.CREATE)}
+                canCreate={allow(can, CR_PERMISSIONS.CREATE) && hasMainProject(subProjects)}
               />
             )}
           </motion.div>

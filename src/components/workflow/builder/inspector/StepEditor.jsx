@@ -43,6 +43,8 @@ function StepEditor({ step, tab, ctx, stageId, insideParallelBranch, onChange })
           step={step}
           roles={ctx.roles}
           rolesLoading={ctx.rolesLoading}
+          groups={ctx.groups ?? []}
+          groupsLoading={ctx.groupsLoading}
           resolvedById={ctx.resolvedById}
           stageId={stageId}
           stages={ctx.stages}

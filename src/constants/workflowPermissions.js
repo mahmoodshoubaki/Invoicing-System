@@ -142,6 +142,11 @@ export const WORKFLOW_TASK_PERMISSIONS = {
  * @param {Capability} capability
  * @returns {boolean}
  */
+export const GROUP_PERMISSIONS = {
+  VIEW: { module: 'Group', action: 'View', code: 'Groups.View' },
+  MANAGE: { module: 'Group', action: 'Manage', code: 'Groups.Manage' },
+};
+
 export function allow(can, capability) {
   return capability ? can(capability.module, capability.action) : false;
 }

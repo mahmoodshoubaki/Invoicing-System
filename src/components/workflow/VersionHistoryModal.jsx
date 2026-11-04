@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { CheckCircle2, Play, Radio } from 'lucide-react';
+import { CheckCircle2, Copy, Play, Radio } from 'lucide-react';
 
 import Modal, { ConfirmModal } from '@/components/common/Modal';
 import Button from '@/components/common/Button';
@@ -36,7 +36,7 @@ import {
  * `GetDefinitionVersions` returns. A "publish latest" button on the card would
  * have nothing to send.
  */
-export default function VersionHistoryModal({ workflow, open, onClose }) {
+export default function VersionHistoryModal({ workflow, open, onClose, onDuplicateVersion = null }) {
   const dispatch = useDispatch();
   const toast = useToast();
   const { can } = usePermission();
@@ -181,6 +181,11 @@ export default function VersionHistoryModal({ workflow, open, onClose }) {
                 )}
               </div>
 
+              {canManage && onDuplicateVersion && (
+                <Button size="xs" variant="ghost" icon={Copy} onClick={() => onDuplicateVersion(version.version)}>
+                  Duplicate
+                </Button>
+              )}
               {version.isActive ? (
                 <CheckCircle2 size={16} style={{ color: STATUS.good }} aria-hidden="true" />
               ) : (

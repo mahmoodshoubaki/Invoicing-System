@@ -11,7 +11,7 @@ import { CHROME } from '@/theme/vizPalette';
  * label. Ranked bars compare exactly, direct-label every row, and pair each
  * status with an icon + text so meaning never rides on hue alone.
  *
- * @param {{data: Array<{name: string, value: number, color: string, icon: Function}>}} props
+ * @param {{data: Array<{name: string, value: number, color: string, icon: Function, detail?: string}>}} props
  */
 export default function StatusBreakdown({ data = [] }) {
   const total = data.reduce((sum, d) => sum + d.value, 0);
@@ -55,6 +55,7 @@ export default function StatusBreakdown({ data = [] }) {
               )}
               <span className="flex-1 text-xs font-medium" style={{ color: CHROME.textSecondary }}>
                 {item.name}
+                {item.detail && <span className="ml-1.5 font-normal tabular-nums" style={{ color: CHROME.textMuted }}>{item.detail}</span>}
               </span>
               {/* Direct label — every row, since there are few enough rows to
                   label them all without the plot turning into a wall of digits. */}

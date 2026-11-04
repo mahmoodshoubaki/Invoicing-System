@@ -6,16 +6,13 @@ import { useDispatch } from 'react-redux';
 
 import { useToast } from '@/hooks/useToast';
 import { createInvoice } from '@/store/slices/invoicesSlice';
-import { claimReferenceProblem, toClaimReference } from '@/lib/claimReference';
 
 const INITIAL_FORM = {
   // boqLineItems: { [boqItemId]: { quantity: '' } }
   boqLineItems: {},
   vat: '0.15',
-  // Optional, 12 digits (2026-10-13) — typed as text, sent as a number.
-  financialClaimReference: '',
-  // No invoice number or baseline date (2026-10-11): stage 2 fills them in,
-  // through the workflow's task — see InvoiceDetailsSection.
+  // No invoice number, baseline date, financial claim reference or receipt
+  // issue date: workflow tasks fill them in — see InvoiceDetailsSection.
 };
 
 /**
@@ -88,8 +85,6 @@ export function useNewInvoiceForm({ projectCode, boqItems, projectFinancials }) 
       });
     }
 
-    const claimProblem = claimReferenceProblem(form.financialClaimReference);
-    if (claimProblem) e.financialClaimReference = claimProblem;
     // if (form.vat === '' || isNaN(Number(form.vat)) || Number(form.vat) < 0) {
     //   e.vat = 'Valid VAT rate is required';
     // }
@@ -126,7 +121,6 @@ export function useNewInvoiceForm({ projectCode, boqItems, projectFinancials }) 
 
       await dispatch(createInvoice({
         projectCode,
-        financialClaimReference: toClaimReference(form.financialClaimReference),
         wip: projectFinancials.wip,
         revenue: projectFinancials.totalRevenue,
         // Who submitted it is the backend's to record, from the signed-in user.

@@ -7,18 +7,19 @@
  * the sub-project as loaded. Typing a value back to what it was removes the
  * edit, so "changed" always means different.
  *
- * The finish date is never typed: it is the start plus whole months of
- * duration, worked out the server's way. The project's contract dates are the
- * main project's — a sub-project coded like "23/116" with nothing after it —
- * or, without one, the earliest start to the latest finish of them all.
+ * The finish date follows the server: a typed one is kept as typed, otherwise
+ * a changed start or duration gives start + whole months. The project's
+ * contract dates are the main project's (a code like "23/116"), or else the
+ * earliest start to the latest finish of them all.
  */
 
 const day = (value) => (value ? String(value).slice(0, 10) : '');
 const MAIN_PROJECT_CODE = /^\d+\/\d+$/;
 
+/** The project fields a request can change — on the main project only. The value is read-only. */
 export const PROJECT_FIELDS = [
-  { key: 'projectValue', label: 'Project value', number: true },
   { key: 'contractStartDate', label: 'Contract start date', date: true },
+  { key: 'contractFinishDate', label: 'Contract finish date', date: true },
   { key: 'contractDuration', label: 'Contract duration (months)', number: true },
 ];
 
@@ -33,11 +34,19 @@ export function subProjectOriginals(subProjects) {
       values: {
         projectValue: sp.projectValue == null ? '' : String(sp.projectValue),
         contractStartDate: day(sp.contractStartDate),
+        contractFinishDate: day(sp.contractFinishDate),
         contractDuration: sp.contractDuration == null ? '' : String(sp.contractDuration),
       },
       contractFinishDate: day(sp.contractFinishDate),
+      isMain: sp.isMainProject === true || MAIN_PROJECT_CODE.test(String(sp.projectCode ?? '').trim()),
     }));
 }
+
+/** Whether these sub-projects (as loaded) have a main project — without one no change request can be raised. */
+export const hasMainProject = (rawSubProjects) => subProjectOriginals(rawSubProjects).some((p) => p.isMain);
+
+/** The main project, which holds the contract dates — or null. */
+export const mainProjectOf = (subProjects) => (subProjects ?? []).find((p) => p.isMain) ?? null;
 
 const blank = (value) => String(value ?? '').trim() === '';
 
@@ -50,7 +59,7 @@ function same(field, a, b) {
 export function applyProjectEdit(edits, originals, uid, key, value) {
   const original = originals.find((o) => o.uid === uid);
   const field = PROJECT_FIELDS.find((f) => f.key === key);
-  if (!original || !field) return edits;
+  if (!original || !original.isMain || !field) return edits;
   const mine = { ...(edits[uid] ?? {}) };
   if (same(field, value, original.values[key])) delete mine[key];
   else mine[key] = value;
@@ -70,19 +79,70 @@ export function finishDateOf(start, months) {
   return target.toISOString().slice(0, 10);
 }
 
-/** Each sub-project as the request would leave it; a changed one has its finish worked out again. */
+const dayValue = (day) => Date.parse(`${day}T00:00:00Z`);
+
+/** The whole months from `start` whose finish lands nearest `end`. '' without both. */
+export function monthsToReach(start, end) {
+  if (!start || !end) return '';
+  const [y1, m1] = start.split('-').map(Number);
+  const [y2, m2] = end.split('-').map(Number);
+  const guess = (y2 - y1) * 12 + (m2 - m1);
+  let best = Math.max(0, guess);
+  let bestGap = Infinity;
+  for (const months of [guess - 1, guess, guess + 1]) {
+    if (months < 0) continue;
+    const gap = Math.abs(dayValue(finishDateOf(start, months)) - dayValue(end));
+    if (gap < bestGap) {
+      best = months;
+      bestGap = gap;
+    }
+  }
+  return String(best);
+}
+
+/** The finish date the server would store for these edits of one sub-project. */
+export function proposedFinish(original, mine) {
+  if (!mine) return original.contractFinishDate;
+  if (mine.contractFinishDate) return mine.contractFinishDate;
+  const values = { ...original.values, ...mine };
+  return finishDateOf(values.contractStartDate, values.contractDuration) || original.contractFinishDate;
+}
+
+/** Each sub-project as the request would leave it. */
 export function proposedSubProjects(originals, edits) {
   return originals.map((o) => {
     const mine = edits[o.uid];
     if (!mine) return o;
-    const values = { ...o.values, ...mine };
-    return { ...o, values, contractFinishDate: finishDateOf(values.contractStartDate, values.contractDuration) };
+    const contractFinishDate = proposedFinish(o, mine);
+    return { ...o, values: { ...o.values, ...mine, contractFinishDate }, contractFinishDate };
   });
+}
+
+/**
+ * One contract date typed on the main project, with the other two kept in
+ * step: an end date sets the duration to the nearest whole months, a duration
+ * drops a typed end date (it follows start + duration), and a new start
+ * re-measures the duration to a typed end date.
+ */
+export function editContractDate(edits, originals, uid, key, value) {
+  const original = originals.find((o) => o.uid === uid);
+  if (!original?.isMain) return edits;
+  let next = applyProjectEdit(edits, originals, uid, key, value);
+  const current = () => ({ ...original.values, ...(next[uid] ?? {}) });
+  const remeasure = (start, end) => {
+    const months = monthsToReach(start, end);
+    if (Number(months) >= 1) next = applyProjectEdit(next, originals, uid, 'contractDuration', months);
+  };
+
+  if (key === 'contractFinishDate') remeasure(current().contractStartDate, value);
+  else if (key === 'contractDuration') next = applyProjectEdit(next, originals, uid, 'contractFinishDate', original.values.contractFinishDate);
+  else if (key === 'contractStartDate' && next[uid]?.contractFinishDate) remeasure(value, next[uid].contractFinishDate);
+  return next;
 }
 
 /** The project's contract dates from its sub-projects. Blank when none says. */
 export function contractWindow(subProjects) {
-  const main = subProjects.filter((p) => MAIN_PROJECT_CODE.test(String(p.code).trim()));
+  const main = subProjects.filter((p) => p.isMain ?? MAIN_PROJECT_CODE.test(String(p.code).trim()));
   const dated = main.length ? main : subProjects;
   const starts = dated.map((p) => p.values.contractStartDate).filter(Boolean).sort();
   const ends = dated.map((p) => p.contractFinishDate).filter(Boolean).sort();

@@ -16,12 +16,13 @@ const count = (list) => (list ?? []).length;
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 export function summariseStep(step, ctx) {
-  const { roles, resolvedById, actions, fields, notificationTypes } = ctx;
+  const { roles, groups = [], resolvedById, actions, fields, notificationTypes } = ctx;
 
   switch (step.type) {
     case STEP_TYPE.HUMAN_TASK: {
       const names = [
         ...(step.assignToRoleIds ?? []).map((id) => roles.find((r) => r.id === id)?.name),
+        ...(step.assignToGroupIds ?? []).map((id) => groups.find((g) => g.id === id)?.name),
         ...(step.assignToUserIds ?? []).map((id) => resolvedById[id]?.displayName),
         // `{{approver}}`, `{{submittedBy}}` — named by what holds the person.
         ...(step.assignToExpressions ?? []).map((expression) => {
@@ -67,8 +68,8 @@ export function summariseStep(step, ctx) {
     case STEP_TYPE.SEND_NOTIFICATION: {
       const type = notificationTypes?.find((t) => t.key === step.notificationTypeKey);
       const what = type?.englishName ?? (step.notificationTypeKey != null ? `type ${step.notificationTypeKey}` : 'no type chosen');
-      const to = count(step.toUserIds) + count(step.toRoleIds) + count(step.toExpressions) + count(step.toEmails);
-      const cc = count(step.ccUserIds) + count(step.ccRoleIds) + count(step.ccExpressions) + count(step.ccEmails);
+      const to = count(step.toUserIds) + count(step.toRoleIds) + count(step.toGroupIds) + count(step.toExpressions) + count(step.toEmails);
+      const cc = count(step.ccUserIds) + count(step.ccRoleIds) + count(step.ccGroupIds) + count(step.ccExpressions) + count(step.ccEmails);
       const recipients = to === 0 ? 'nobody yet' : plural(to, 'recipient');
       return `${what} → ${recipients}${cc > 0 ? ` · ${cc} in CC` : ''}`;
     }

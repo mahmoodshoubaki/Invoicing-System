@@ -22,7 +22,7 @@
  */
 
 /** Categorical slots, assigned in fixed order — never cycled, never by rank. */
-export const SERIES = ['#f8485e', '#2a78d6', '#158a62', '#4a3aa7', '#b07800'];
+export const SERIES = ['#f8485e', '#2a78d6', '#158a62', '#4a3aa7', '#b07800', '#ec835a'];
 
 /** Named aliases for the slots this app actually uses, so charts read by role. */
 export const SERIES_ROLE = {
@@ -31,6 +31,7 @@ export const SERIES_ROLE = {
   collected: SERIES[2], // green — semantically "money in"
   wip: SERIES[3],       // violet
   forecast: SERIES[4],  // gold
+  nonCollected: SERIES[5],  // gold
 };
 
 /**
@@ -42,9 +43,6 @@ export const STATUS = {
   warning: '#fab219',
   serious: '#ec835a',
   critical: '#d03b3b',
-  /** In-flight / awaiting action. A deliberately desaturated slate, kept well
-   *  clear of the saturated series blue so a workflow state can never be
-   *  mistaken for a data series. */
   info: '#5f7d95',
   neutral: '#898781',
 };

@@ -192,7 +192,7 @@ function InvoiceDetailContent() {
                 Workflow runs
               </Button>
             )}
-            {can('Invoices', 'Update') && projectCode && (
+            {can('System', 'Administrator') && projectCode && (
               <Link href={`/projects/${encodeURIComponent(projectCode)}/invoices/${id}/edit`}>
                 <Button variant="outline" icon={Edit2} size="sm">Edit</Button>
               </Link>
@@ -244,6 +244,7 @@ function InvoiceDetailContent() {
               <InfoItem icon={Calendar} label="Updated Expected Collection Date" value={formatDate(invoice.expectedCollectionDate)} />
               <InfoItem icon={Calendar} label="Reasons For Update" value={invoice.reasonsForUpdate} />
               <InfoItem icon={FileText} label="Financial Claim Reference" value={invoice.financialClaimReference} valueClass="font-mono" />
+              <InfoItem icon={Calendar} label="Receipt Issue Date" value={formatDate(invoice.receiptIssueDate)} />
             </div>
           </Card>
 

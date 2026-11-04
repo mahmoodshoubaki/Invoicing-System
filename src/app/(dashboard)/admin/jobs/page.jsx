@@ -11,6 +11,7 @@ import Skeleton from '@/components/ui/Skeleton';
 import ErrorNote from '@/components/ui/ErrorNote';
 import LookupBadge from '@/components/ui/LookupBadge';
 import CronField from '@/components/workflow/builder/CronField';
+import HangfireDashboardLink from '@/components/admin/jobs/HangfireDashboardLink';
 import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 import { describeCron, looksLikeCron } from '@/utils/cron';
@@ -37,6 +38,9 @@ const STATE_LOOK = {
 };
 
 const MODULE_ORDER = ['Workflow', 'Notifications'];
+
+// Module-level so PageHeader's memo holds across the page's polling re-renders.
+const HEADER_ACTIONS = <HangfireDashboardLink />;
 
 /** The schedule in words, with the raw expression beside it for whoever reads cron. */
 function Schedule({ schedule }) {
@@ -248,6 +252,7 @@ export default function BackgroundJobsPage() {
       <PageHeader
         title="Background jobs"
         subtitle="What runs on its own, when it runs, and how it went last time. Times are the server's."
+        actions={HEADER_ACTIONS}
       />
 
       {actionError && <div className="mb-4"><ErrorNote error={actionError} /></div>}

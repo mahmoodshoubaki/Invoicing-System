@@ -100,10 +100,10 @@ export function useRunActions({ instanceId, run, load }) {
    * either way — the handover creates a new to-do with a new id, and a refusal
    * (WF-005) usually means somebody answered it first.
    */
-  const handleReassign = useCallback(async ({ toUserIds, toRoleIds }) => {
+  const handleReassign = useCallback(async ({ toUserIds, toRoleIds, toGroupIds }) => {
     setReassigning(true);
     try {
-      await workflowRepository.reassignTask({ instanceId, taskId: handingOn.taskId, toUserIds, toRoleIds });
+      await workflowRepository.reassignTask({ instanceId, taskId: handingOn.taskId, toUserIds, toRoleIds, toGroupIds });
       setHandingOn(null);
       toast.success('Task handed on', 'It is in their list now, with the same due date.');
     } catch (err) {

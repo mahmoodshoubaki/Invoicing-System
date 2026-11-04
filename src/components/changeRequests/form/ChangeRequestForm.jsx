@@ -7,9 +7,11 @@ import Reveal from '@/components/motion/Reveal';
 import { CR_RULES } from '@/constants/changeRequests';
 import { CHROME } from '@/theme/vizPalette';
 import ReasonsSection from './ReasonsSection';
+import TypeAndEffectSection from './TypeAndEffectSection';
 import DetailsSection from './DetailsSection';
 import ProjectChangesSection from './ProjectChangesSection';
 import ItemChangesSection from './ItemChangesSection';
+import RequestFilesSection from './RequestFilesSection';
 import ChangeSummary from './ChangeSummary';
 import ChangeRequestActions from './ChangeRequestActions';
 import { useChangeRequestForm } from './useChangeRequestForm';
@@ -31,6 +33,7 @@ import { useScrollToProblem } from './useScrollToProblem';
  */
 export default function ChangeRequestForm({
   boqItems, statusNameOf, subProjects, reasons, initial = null, onSubmit, cancelHref, submitLabel,
+  changeRequestId = null,
 }) {
   const form = useChangeRequestForm({ boqItems, statusNameOf, subProjects, initial, onSubmit });
   const rootRef = useRef(null);
@@ -49,10 +52,12 @@ export default function ChangeRequestForm({
       </div>
 
       <Reveal className="flex flex-col gap-5">
+        <TypeAndEffectSection form={form} />
         <ReasonsSection form={form} reasons={reasons} />
         <DetailsSection form={form} />
         <ProjectChangesSection form={form} subProjects={subProjects} />
         <ItemChangesSection form={form} boqItems={boqItems} statusNameOf={statusNameOf} />
+        <RequestFilesSection form={form} changeRequestId={changeRequestId} />
         <ChangeSummary form={form} subProjects={subProjects} boqItems={boqItems} />
       </Reveal>
 

@@ -7,12 +7,15 @@ import { AlarmClock, Info, UserPlus } from 'lucide-react';
 import Modal from '@/components/common/Modal';
 import Button from '@/components/common/Button';
 import UserPicker from '@/components/workflow/builder/UserPicker';
+import RoleChips from '@/components/workflow/builder/RoleChips';
+import GroupChips from '@/components/workflow/builder/GroupChips';
 import AssigneeList from '@/components/workflow/AssigneeList';
 import ProjectLink from '@/components/workflow/ProjectLink';
 import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 import { formatDateTime } from '@/utils/formatters';
 import { fetchAllRoles, selectRoles, selectRolesLoading } from '@/store/slices/rolesSlice';
+import { fetchGroups, selectGroups, selectGroupsLoading } from '@/store/slices/groupsSlice';
 import { resolveAssignees, selectAssigneesById } from '@/store/slices/workflowSlice';
 
 /**
@@ -36,13 +39,17 @@ export default function ReassignDialog({ task, open, busy, onClose, onConfirm })
 
   const roles = useSelector(selectRoles);
   const rolesLoading = useSelector(selectRolesLoading);
+  const groups = useSelector(selectGroups);
+  const groupsLoading = useSelector(selectGroupsLoading);
   const resolvedById = useSelector(selectAssigneesById);
 
   const [userIds, setUserIds] = useState([]);
   const [roleIds, setRoleIds] = useState([]);
+  const [groupIds, setGroupIds] = useState([]);
 
   useEffect(() => {
     dispatch(fetchAllRoles());
+    dispatch(fetchGroups());
   }, [dispatch]);
 
   /*
@@ -59,10 +66,7 @@ export default function ReassignDialog({ task, open, busy, onClose, onConfirm })
 
   // At least one of either, or the server refuses with WF-006. Checked here so
   // that is never how somebody finds out.
-  const ready = userIds.length > 0 || roleIds.length > 0;
-
-  const toggleRole = (id) =>
-    setRoleIds((prev) => (prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]));
+  const ready = userIds.length > 0 || roleIds.length > 0 || groupIds.length > 0;
 
   const overdueNote = useMemo(() => Boolean(task?.dueOn), [task]);
 
@@ -79,7 +83,7 @@ export default function ReassignDialog({ task, open, busy, onClose, onConfirm })
             icon={UserPlus}
             loading={busy}
             disabled={!ready}
-            onClick={() => onConfirm({ toUserIds: userIds, toRoleIds: roleIds })}
+            onClick={() => onConfirm({ toUserIds: userIds, toRoleIds: roleIds, toGroupIds: groupIds })}
           >
             Hand it on
           </Button>
@@ -113,6 +117,7 @@ export default function ReassignDialog({ task, open, busy, onClose, onConfirm })
           <AssigneeList
             users={task?.assignedUsers ?? []}
             roles={task?.assignedRoles ?? []}
+            groups={task?.assignedGroups ?? []}
             emptyText="Not reported for this to-do."
           />
         </div>
@@ -139,33 +144,12 @@ export default function ReassignDialog({ task, open, busy, onClose, onConfirm })
 
         <div>
           <p className="mb-1 text-[11px] font-medium" style={{ color: CHROME.textSecondary }}>Roles</p>
-          {rolesLoading && roles.length === 0 ? (
-            <p className="text-[11px]" style={{ color: CHROME.textMuted }}>Loading roles…</p>
-          ) : roles.length === 0 ? (
-            <p className="text-[11px]" style={{ color: CHROME.textMuted }}>No roles available.</p>
-          ) : (
-            <ul className="flex flex-wrap gap-1.5">
-              {roles.map((role) => {
-                const on = roleIds.includes(role.id);
-                return (
-                  <li key={role.id}>
-                    <button
-                      type="button"
-                      onClick={() => toggleRole(role.id)}
-                      aria-pressed={on}
-                      className="rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors"
-                      style={{
-                        backgroundColor: on ? withAlpha(STATUS.info, 0.14) : '#f1f0ee',
-                        color: on ? STATUS.info : CHROME.textSecondary,
-                      }}
-                    >
-                      {role.name}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+          <RoleChips roles={roles} loading={rolesLoading} selectedIds={roleIds} onChange={setRoleIds} />
+        </div>
+
+        <div>
+          <p className="mb-1 text-[11px] font-medium" style={{ color: CHROME.textSecondary }}>Groups</p>
+          <GroupChips groups={groups} loading={groupsLoading} selectedIds={groupIds} onChange={setGroupIds} />
         </div>
 
         <p
@@ -181,7 +165,7 @@ export default function ReassignDialog({ task, open, busy, onClose, onConfirm })
 
         {!ready && (
           <p className="text-[11px]" style={{ color: CHROME.textMuted }}>
-            Name at least one person or role.
+            Name at least one person, role or group.
           </p>
         )}
       </div>

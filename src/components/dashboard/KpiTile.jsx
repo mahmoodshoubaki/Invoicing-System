@@ -1,7 +1,8 @@
 'use client';
 
 import { memo } from 'react';
-import { ArrowDownRight, ArrowUpRight, Minus } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowDownRight, ArrowUpRight, ChevronRight, Minus } from 'lucide-react';
 import AnimatedCounter from '@/components/motion/AnimatedCounter';
 import Sparkline from '@/components/charts/Sparkline';
 import { CHROME } from '@/theme/vizPalette';
@@ -15,18 +16,20 @@ const DELTA_STYLES = {
 /**
  * A single KPI tile: label, animated value, optional trend sparkline and a
  * delta chip. The delta always pairs an arrow icon with text, so direction is
- * never carried by colour alone.
+ * never carried by colour alone. Given `href`, the whole tile is a link.
  */
 function KpiTile({
-  label, value, format, icon: Icon, accent, trend, delta, deltaType = 'neutral', footnote,
+  label, value, format, icon: Icon, accent, trend, delta, deltaType = 'neutral', footnote, href = null,
 }) {
   const { cls, Icon: DeltaIcon } = DELTA_STYLES[deltaType] ?? DELTA_STYLES.neutral;
+  const Shell = href ? Link : 'div';
 
   return (
     // No animation (2026-10-08): no spring lift, no fading bloom. Hover shows
     // the deeper shadow and the accent wash, instantly.
-    <div
-      className="group relative overflow-hidden rounded-2xl border border-[#e9e7e5] bg-white p-5 shadow-[var(--shadow-card)] hover:shadow-[0_18px_38px_-14px_rgb(60_60_58/0.20)]"
+    <Shell
+      {...(href ? { href } : {})}
+      className="group relative block overflow-hidden rounded-2xl border border-[#e9e7e5] bg-white p-5 shadow-[var(--shadow-card)] outline-none hover:shadow-[0_18px_38px_-14px_rgb(60_60_58/0.20)] focus-visible:ring-2 focus-visible:ring-[#f8485e]/40"
     >
       {/* Accent wash shown on hover */}
       <div
@@ -49,8 +52,8 @@ function KpiTile({
         )}
       </div>
 
-      <p className="relative mt-3 text-2xl font-bold tracking-tight" style={{ color: CHROME.textPrimary }}>
-        <AnimatedCounter value={value} format={format} />
+      <p className="relative mt-3 text-2xl font-bold tracking-tight" style={{ color: value == null ? CHROME.textMuted : CHROME.textPrimary }}>
+        {value == null ? '—' : <AnimatedCounter value={value} format={format} />}
       </p>
 
       <div className="relative mt-3 flex items-end justify-between gap-3">
@@ -68,8 +71,16 @@ function KpiTile({
           )}
         </div>
         {trend?.length > 1 && <Sparkline values={trend} color={accent} width={84} height={28} />}
+        {href && (
+          <ChevronRight
+            size={15}
+            className="shrink-0 transition-transform group-hover:translate-x-0.5"
+            style={{ color: CHROME.textMuted }}
+            aria-hidden="true"
+          />
+        )}
       </div>
-    </div>
+    </Shell>
   );
 }
 

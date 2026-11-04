@@ -3,7 +3,7 @@
 import { useCallback, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronLeft, FileDiff, PencilLine, Workflow } from 'lucide-react';
+import { ChevronLeft, FileDiff, History, PencilLine, Workflow } from 'lucide-react';
 
 import SubPageHeader from '@/components/common/SubPageHeader';
 import Button from '@/components/common/Button';
@@ -13,17 +13,21 @@ import ChangeRequestStatusBadge from '@/components/changeRequests/view/ChangeReq
 import ChangeRequestOverview from '@/components/changeRequests/view/ChangeRequestOverview';
 import ChangeRequestTaskPanel from '@/components/changeRequests/view/ChangeRequestTaskPanel';
 import TargetRunsModal from '@/components/workflow/runs/TargetRunsModal';
+import ChangeRequestHistoryModal from '@/components/changeRequests/history/ChangeRequestHistoryModal';
 import ProjectSummaryCard from '@/components/projects/ProjectSummaryCard';
-import { useProjectSummary } from '@/components/projects/useProjectSummary';
+import { useProjectHeader } from '@/components/projects/useProjectHeader';
 import ChangeRequestStepper from '@/components/changeRequests/progress/ChangeRequestStepper';
 import FieldChangesTable from '@/components/changeRequests/view/FieldChangesTable';
 import CycleChangesTable from '@/components/changeRequests/view/CycleChangesTable';
+import NewItemsTable from '@/components/changeRequests/view/NewItemsTable';
+import AttachmentList from '@/components/common/AttachmentList';
 import { changeRequestRepository } from '@/repositories/changeRequestRepository';
 import { useLoadOnChange } from '@/hooks/useLoadOnChange';
 import { usePermission } from '@/hooks/usePermission';
 import { allow, WORKFLOW_INSTANCE_PERMISSIONS } from '@/constants/workflowPermissions';
 import { TARGET_TYPE } from '@/constants/workflow';
-import { CR_PERMISSIONS, CR_STATUS } from '@/constants/changeRequests';
+import { CR_STATUS } from '@/constants/changeRequests';
+import { SYSTEM_PERMISSIONS } from '@/constants/notifications';
 import { ROUTES } from '@/constants/routes';
 import { CHROME } from '@/theme/vizPalette';
 
@@ -32,9 +36,9 @@ import { CHROME } from '@/theme/vizPalette';
  * it only to whoever may see it (ViewAll, its requester, or whoever its
  * workflow waits on). The summary first, then every change old → new.
  *
- * A request sent back (Returned) can be edited and sent again by its requester
- * — offered to anyone with ChangeRequests.Update, since the app does not know
- * who is signed in by id; the server refuses anyone else.
+ * A request sent back (Returned) can be edited and sent again by its requester,
+ * when that requester is a System.Administrator — the server's `canEdit` says
+ * requester + Returned, and UpdateChangeRequest needs System.Administrator.
  *
  * A workflow can also hand the request back through a task (2026-10-20) — it
  * stays Submitted then, so who has it is read from `waitingOn`, and the task
@@ -51,7 +55,8 @@ export default function ChangeRequestPage() {
   const [cr, setCr] = useState(null);
   const [error, setError] = useState(null);
   const [runsOpen, setRunsOpen] = useState(false);
-  const project = useProjectSummary(projectCode);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const project = useProjectHeader(projectCode);
   const canViewRuns = allow(can, WORKFLOW_INSTANCE_PERMISSIONS.VIEW);
 
   const load = useCallback(async () => {
@@ -65,10 +70,10 @@ export default function ChangeRequestPage() {
   useLoadOnChange(load);
 
   const tabHref = ROUTES.PROJECT_CHANGE_REQUESTS(encoded);
-  const canResubmit = cr?.statusId === CR_STATUS.RETURNED && allow(can, CR_PERMISSIONS.UPDATE);
+  const canResubmit = cr?.canEdit === true && allow(can, SYSTEM_PERMISSIONS.ADMINISTRATOR);
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto max-w-7xl">
       {/* Rendered only for someone who may see runs, so it never asks for them otherwise. */}
       {canViewRuns && cr && (
         <TargetRunsModal
@@ -77,6 +82,14 @@ export default function ChangeRequestPage() {
           targetTypeKey={TARGET_TYPE.BOQ_CHANGE_REQUEST}
           targetId={cr.id}
           recordLabel={cr.number || 'this change request'}
+        />
+      )}
+      {cr && (
+        <ChangeRequestHistoryModal
+          open={historyOpen}
+          onClose={() => setHistoryOpen(false)}
+          changeRequest={cr}
+          projectCode={projectCode}
         />
       )}
       <SubPageHeader
@@ -95,6 +108,11 @@ export default function ChangeRequestPage() {
             <Link href={tabHref}>
               <Button variant="ghost" icon={ChevronLeft} size="sm">Back</Button>
             </Link>
+            {cr && (
+              <Button variant="outline" icon={History} size="sm" onClick={() => setHistoryOpen(true)}>
+                History
+              </Button>
+            )}
             {canViewRuns && cr && (
               <Button variant="outline" icon={Workflow} size="sm" onClick={() => setRunsOpen(true)}>
                 Workflow runs
@@ -109,12 +127,7 @@ export default function ChangeRequestPage() {
         }
       />
 
-      <ProjectSummaryCard
-        projectCode={projectCode}
-        contractName={project.contractName}
-        subProjects={project.subProjects}
-        loading={project.loading}
-      />
+      <ProjectSummaryCard projectCode={projectCode} header={project.header} status={project.status} />
       {cr && <ChangeRequestStepper changeRequest={cr} />}
 
       {error && !cr ? (
@@ -139,6 +152,14 @@ export default function ChangeRequestPage() {
               <CycleChangesTable changes={cr.cycleChanges} />
             </div>
           )}
+          {cr.newItems.length > 0 && <NewItemsTable items={cr.newItems} projectCode={projectCode} />}
+          <div className="flex flex-col gap-3 rounded-xl border border-gray-100 bg-white p-5">
+            <p className="text-sm font-semibold" style={{ color: CHROME.textPrimary }}>Files</p>
+            <AttachmentList
+              files={cr.attachments}
+              download={(file) => changeRequestRepository.downloadAttachment(cr.id, file.contentId, file.fileName)}
+            />
+          </div>
           <ChangeRequestTaskPanel changeRequestId={cr.id} onAnswered={load} />
         </div>
       )}

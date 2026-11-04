@@ -17,6 +17,8 @@ import ProjectSummarySection from '@/components/invoices/new/ProjectSummarySecti
 import BoqItemPicker from '@/components/invoices/new/BoqItemPicker';
 import InvoiceDetailsSection from '@/components/invoices/new/InvoiceDetailsSection';
 import { useInvoiceSources } from '@/components/invoices/new/useInvoiceSources';
+import ProjectNotReady from '@/components/projects/ProjectNotReady';
+import { useProjectReadiness } from '@/components/projects/useProjectReadiness';
 import { useNewInvoiceForm } from '@/components/invoices/new/useNewInvoiceForm';
 import { formatCurrency } from '@/utils/formatters';
 import { useToast } from '@/hooks/useToast';
@@ -35,9 +37,10 @@ export default function NewInvoicePage() {
   const sources = useInvoiceSources(projectCode);
   const { project, boqItems, boqItemsLoading } = sources;
   const invoice = useNewInvoiceForm({ projectCode, boqItems, projectFinancials: sources.projectFinancials });
+  const readiness = useProjectReadiness(projectCode);
   const projectHref = `/projects/${encodeURIComponent(projectCode)}`;
 
-  if (sources.projectLoading || !project) {
+  if (sources.projectLoading || !project || readiness.checking) {
     return (
       <div className="flex items-center justify-center h-64">
         <LoadingSpinner />
@@ -77,6 +80,12 @@ export default function NewInvoicePage() {
           }
         />
 
+        {!readiness.ready && (
+          <div className="max-w-3xl">
+            <ProjectNotReady missing={readiness.missing} failed={readiness.failed} />
+          </div>
+        )}
+
         <Reveal className="flex max-w-3xl flex-col gap-5">
           <ProjectSummarySection
             project={project}
@@ -85,9 +94,9 @@ export default function NewInvoicePage() {
             currency={currency}
           />
 
-          <BoqItemPicker boqItems={boqItems} loading={boqItemsLoading} currency={currency} invoice={invoice} />
+          {readiness.ready && <BoqItemPicker boqItems={boqItems} loading={boqItemsLoading} currency={currency} invoice={invoice} />}
 
-          {!boqItemsLoading && boqItems.length > 0 && (
+          {readiness.ready && !boqItemsLoading && boqItems.length > 0 && (
             <>
               <InvoiceDetailsSection form={invoice.form} errors={invoice.errors} set={invoice.set} />
 

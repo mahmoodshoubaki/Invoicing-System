@@ -27,9 +27,14 @@ const BACKEND_URL = process.env.BACKEND_API_URL;
 const allowSelfSigned = process.env.NODE_ENV !== 'production'
   || process.env.BACKEND_ALLOW_SELF_SIGNED === 'true';
 
-const dispatcher = allowSelfSigned
-  ? new Agent({ connect: { rejectUnauthorized: false } })
-  : undefined;
+const tls = allowSelfSigned ? { connect: { rejectUnauthorized: false } } : {};
+const dispatcher = allowSelfSigned ? new Agent(tls) : undefined;
+
+// The data migration import uploads up to 2 GB and then saves it all, so its
+// answer can take far longer than undici's default 5 minutes.
+const LONG_WAIT_MS = 60 * 60 * 1000;
+const longDispatcher = new Agent({ ...tls, headersTimeout: LONG_WAIT_MS, bodyTimeout: LONG_WAIT_MS });
+const waitsLong = (path) => path[0]?.toLowerCase() === 'api' && path[1]?.toLowerCase() === 'datamigration';
 
 async function proxy(request, { params }) {
   const { path } = await params;
@@ -41,18 +46,19 @@ async function proxy(request, { params }) {
 
   const hasBody = !['GET', 'HEAD'].includes(request.method);
 
-  // .text() would UTF-8-decode/re-encode the body, corrupting anything
-  // binary (e.g. multipart/form-data file uploads) — arrayBuffer()
-  // forwards the exact bytes regardless of content type.
-  const bodyBuffer = hasBody ? await request.arrayBuffer() : undefined;
+  // Streamed, not read whole first: the bytes go on as they arrive, untouched
+  // (binary multipart included), and a large upload never sits in memory.
+  // Backpressure from the backend slows the browser's upload instead.
+  const body = hasBody && request.body ? request.body : undefined;
 
   let backendRes;
   try {
     backendRes = await undiciFetch(targetUrl, {
       method: request.method,
       headers,
-      body: bodyBuffer,
-      dispatcher,
+      body,
+      ...(body ? { duplex: 'half' } : {}),
+      dispatcher: waitsLong(path) ? longDispatcher : dispatcher,
     });
   } catch (err) {
     console.error('[BFF proxy] Could not reach backend at', targetUrl, err);

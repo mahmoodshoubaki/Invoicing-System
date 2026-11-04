@@ -3,7 +3,7 @@
 import { memo } from 'react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
-import { CalendarClock, CircleDot, GitBranch, History, Pencil, Play, Target, Zap } from 'lucide-react';
+import { CalendarClock, CircleDot, Copy, GitBranch, History, Pencil, Play, Target, Zap } from 'lucide-react';
 
 import { revealItem } from '@/components/motion/Reveal';
 import { formatDate } from '@/utils/formatters';
@@ -36,7 +36,7 @@ function Meta({ icon: Icon, children }) {
  * interesting one — somebody saved changes that are not live — and it is
  * invisible if you only show "active v2".
  */
-function WorkflowCard({ workflow, canManage, canRun, onOpenVersions, onStart }) {
+function WorkflowCard({ workflow, canManage, canRun, onOpenVersions, onStart, onDuplicate }) {
   const TriggerIcon = TRIGGER_ICONS[workflow.triggerTypeKey] ?? GitBranch;
 
   // Since drafts (2026-10-11) a workflow is live, has a draft, both, or — only
@@ -113,9 +113,21 @@ function WorkflowCard({ workflow, canManage, canRun, onOpenVersions, onStart }) 
           )}
 
           {canManage && (
+            <button
+              type="button"
+              onClick={() => onDuplicate(workflow)}
+              className="ml-auto inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-[#f6f5f3]"
+              style={{ color: CHROME.textSecondary }}
+            >
+              <Copy size={13} aria-hidden="true" />
+              Duplicate
+            </button>
+          )}
+
+          {canManage && (
             <Link
               href={`${ROUTES.WORKFLOW_BUILDER}?code=${encodeURIComponent(workflow.code)}`}
-              className="ml-auto inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-[#f6f5f3]"
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-[#f6f5f3]"
               style={{ color: CHROME.textSecondary }}
             >
               <Pencil size={13} aria-hidden="true" />

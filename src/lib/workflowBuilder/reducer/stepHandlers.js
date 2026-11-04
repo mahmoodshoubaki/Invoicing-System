@@ -50,7 +50,7 @@ function pruneAssignees(state, action) {
             reason: invalid.get(id).reason,
             // Whether the step still has somebody decides whether this is a
             // blocking problem or just a change the author should know about.
-            stillAssigned: kept.length + (step.assignToRoleIds?.length ?? 0) > 0,
+            stillAssigned: kept.length + (step.assignToRoleIds?.length ?? 0) + (step.assignToGroupIds?.length ?? 0) > 0,
           });
         }
         next.assignToUserIds = kept;

@@ -13,7 +13,9 @@ import ChangeRequestStatusBadge from '@/components/changeRequests/view/ChangeReq
 import { useBoqChangeRequests } from '@/components/changeRequests/useBoqChangeRequests';
 import { CR_RULES } from '@/constants/changeRequests';
 import { ROUTES } from '@/constants/routes';
-import { selectChangeRequestReasonsMap } from '@/store/slices/lookupsSlice';
+import {
+  selectChangeRequestProjectEffectsMap, selectChangeRequestReasonsMap, selectChangeRequestTypesMap,
+} from '@/store/slices/lookupsSlice';
 import { CHROME } from '@/theme/vizPalette';
 import { formatDateTime } from '@/utils/formatters';
 
@@ -23,6 +25,8 @@ import { formatDateTime } from '@/utils/formatters';
 function ChangeRequestsTab({ projectCode, boqId, canCreate }) {
   const router = useRouter();
   const reasonsMap = useSelector(selectChangeRequestReasonsMap);
+  const typesMap = useSelector(selectChangeRequestTypesMap);
+  const effectsMap = useSelector(selectChangeRequestProjectEffectsMap);
   const list = useBoqChangeRequests(boqId, true);
   const encoded = encodeURIComponent(projectCode);
 
@@ -33,6 +37,16 @@ function ChangeRequestsTab({ projectCode, boqId, canCreate }) {
       key: 'reasonKeys',
       label: 'Reasons',
       render: (keys) => <span className="text-xs">{keys.map((k) => reasonsMap[k]?.label ?? k).join(', ') || '—'}</span>,
+    },
+    {
+      key: 'typeKeys',
+      label: 'Type',
+      render: (keys) => <span className="text-xs">{keys.map((k) => typesMap[k]?.label ?? k).join(', ') || '—'}</span>,
+    },
+    {
+      key: 'projectEffectKey',
+      label: 'Project effect',
+      render: (key) => <span className="text-xs">{key != null ? effectsMap[key]?.label ?? key : '—'}</span>,
     },
     { key: 'affectedAreas', label: 'Changes', render: (areas) => <span className="text-xs" style={{ color: CHROME.textMuted }}>{areas.join(', ') || '—'}</span> },
     { key: 'requestedByName', label: 'Raised by', render: (name) => <span className="text-xs">{name ?? '—'}</span> },

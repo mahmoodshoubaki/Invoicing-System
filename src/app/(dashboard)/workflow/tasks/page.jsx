@@ -13,11 +13,12 @@ import Reveal, { revealItem } from '@/components/motion/Reveal';
 import TaskTable, {
   TASK_FILTERS, TASK_FILTER_STATUS, TASK_PAGE_SIZE,
 } from '@/components/workflow/tasks/TaskTable';
-import TaskCommentDialog from '@/components/workflow/tasks/TaskCommentDialog';
+import TaskAnswerDialog from '@/components/workflow/tasks/TaskAnswerDialog';
 import TaskFormDialog from '@/components/workflow/taskForm/TaskFormDialog';
 import ReassignDialog from '@/components/workflow/tasks/ReassignDialog';
 import { usePermission } from '@/hooks/usePermission';
 import { useToast } from '@/hooks/useToast';
+import { reasonToSend } from '@/lib/taskReasons';
 import { usePolling } from '@/hooks/usePolling';
 import { allow, WORKFLOW_INSTANCE_PERMISSIONS, WORKFLOW_TASK_PERMISSIONS } from '@/constants/workflowPermissions';
 import { CHROME } from '@/theme/vizPalette';
@@ -88,7 +89,7 @@ export default function MyTasksPage() {
   /** Which to-do the hand-on dialog is open for. */
   const [handingOn, setHandingOn] = useState(null);
   /** The to-do and outcome waiting on a comment before they can be sent. */
-  const [commentFor, setCommentFor] = useState(null);
+  const [askFor, setAskFor] = useState(null);
   /** The to-do whose fields are being filled in (2026-10-11). */
   const [formFor, setFormFor] = useState(null);
 
@@ -124,13 +125,14 @@ export default function MyTasksPage() {
 
   usePolling(load, POLL_INTERVAL_MS, canView);
 
-  const handleReassign = useCallback(async ({ toUserIds, toRoleIds }) => {
+  const handleReassign = useCallback(async ({ toUserIds, toRoleIds, toGroupIds }) => {
     const task = handingOn;
     const result = await dispatch(reassignTask({
       instanceId: task.instanceId,
       taskId: task.taskId,
       toUserIds,
       toRoleIds,
+      toGroupIds,
     }));
 
     if (reassignTask.rejected.match(result)) {
@@ -157,9 +159,9 @@ export default function MyTasksPage() {
   }, [dispatch, handingOn, load, toast]);
 
   const handleComplete = useCallback(
-    async ({ task, outcomeKey, comment }) => {
+    async ({ task, outcomeKey, comment, reasonKey = null, otherReason = null }) => {
       const result = await dispatch(
-        completeTask({ instanceId: task.instanceId, taskId: task.taskId, outcomeKey, comment })
+        completeTask({ instanceId: task.instanceId, taskId: task.taskId, outcomeKey, comment, reasonKey, otherReason })
       );
 
       if (completeTask.rejected.match(result)) {
@@ -194,10 +196,9 @@ export default function MyTasksPage() {
     [dispatch, load, toast]
   );
 
-  // Outcomes that demand a reason open a dialog; the rest submit straight away.
-  // That split is the workflow author's, expressed as `requiresComment`.
-  const handleRequireComment = useCallback((task, outcome) => {
-    setCommentFor({ task, outcome });
+  // Outcomes that ask for a comment or a reason open a dialog; the rest submit straight away.
+  const handleAsk = useCallback((task, outcome) => {
+    setAskFor({ task, outcome });
   }, []);
 
   /*
@@ -213,11 +214,12 @@ export default function MyTasksPage() {
     load();
   }, [load, toast]);
 
-  const handleCommentConfirm = useCallback(async ({ comment }) => {
-    const { task, outcome } = commentFor;
-    await handleComplete({ task, outcomeKey: outcome.key, comment });
-    setCommentFor(null);
-  }, [commentFor, handleComplete]);
+  const handleAnswerConfirm = useCallback(async ({ comment, reasonKey, otherReason }) => {
+    const { task, outcome } = askFor;
+    const reason = reasonToSend(outcome, { reasonKey, otherReason });
+    await handleComplete({ task, outcomeKey: outcome.key, comment, ...reason });
+    setAskFor(null);
+  }, [askFor, handleComplete]);
 
   if (!canView) {
     return (
@@ -302,7 +304,7 @@ export default function MyTasksPage() {
                   onPageSizeChange={onPageSizeChange}
                   isLoading={isLoading}
                   onComplete={handleComplete}
-                  onRequireComment={handleRequireComment}
+                  onAsk={handleAsk}
                   onOpenForm={setFormFor}
                   completingTaskId={completingTaskId}
                   canAct={canAct}
@@ -327,15 +329,15 @@ export default function MyTasksPage() {
 
       {/* Keyed per task and outcome, so a comment typed for one answer never
           rides along with a different one. */}
-      {commentFor && (
-        <TaskCommentDialog
-          key={`${commentFor.task.taskId}:${commentFor.outcome.key}`}
-          task={commentFor.task}
-          outcome={commentFor.outcome}
+      {askFor && (
+        <TaskAnswerDialog
+          key={`${askFor.task.taskId}:${askFor.outcome.key}`}
+          task={askFor.task}
+          outcome={askFor.outcome}
           open
-          busy={completingTaskId === commentFor.task.taskId}
-          onClose={() => setCommentFor(null)}
-          onConfirm={handleCommentConfirm}
+          busy={completingTaskId === askFor.task.taskId}
+          onClose={() => setAskFor(null)}
+          onConfirm={handleAnswerConfirm}
         />
       )}
 

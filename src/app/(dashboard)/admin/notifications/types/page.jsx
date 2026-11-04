@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, Bell, Lock, Mail, PauseCircle, Plus, Search } from 'lucide-react';
+import { AlertTriangle, Bell, Copy, Lock, Mail, PauseCircle, Plus, Search } from 'lucide-react';
 
 import PageHeader from '@/components/common/PageHeader';
 import Card from '@/components/common/Card';
@@ -12,6 +12,8 @@ import Skeleton from '@/components/ui/Skeleton';
 import ErrorNote from '@/components/ui/ErrorNote';
 import LookupBadge from '@/components/ui/LookupBadge';
 import TypeFormModal from '@/components/notifications/admin/TypeFormModal';
+import DuplicateTypeDialog from '@/components/notifications/admin/duplicate/DuplicateTypeDialog';
+import { useDuplicateType } from '@/components/notifications/admin/duplicate/useDuplicateType';
 import { controlClass } from '@/components/ui/kit';
 import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
@@ -36,7 +38,7 @@ const CHANNELS = [
   { key: CHANNEL.IN_APP, label: 'In-app', icon: Bell },
 ];
 
-const TypeRow = memo(function TypeRow({ type, priority, onOpen }) {
+const TypeRow = memo(function TypeRow({ type, priority, onOpen, onDuplicate }) {
   const state = stateOf(type);
   return (
     <tr
@@ -94,6 +96,20 @@ const TypeRow = memo(function TypeRow({ type, priority, onOpen }) {
         )}
         {state === 'sending' && <span className="text-[11px]" style={{ color: CHROME.textMuted }}>Sending</span>}
       </td>
+      {onDuplicate && (
+        <td className="px-3 py-3 text-right">
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onDuplicate(type); }}
+            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors hover:bg-[#f1f0ee]"
+            style={{ color: CHROME.textSecondary }}
+            aria-label={`Duplicate ${type.englishName}`}
+          >
+            <Copy size={11} aria-hidden="true" />
+            Duplicate
+          </button>
+        </td>
+      )}
     </tr>
   );
 });
@@ -109,6 +125,7 @@ export default function NotificationTypesPage() {
   const canManage = allow(can, NOTIFICATION_PERMISSIONS.MANAGE);
 
   const priorities = useNotificationLookup('priorities');
+  const duplicate = useDuplicateType();
 
   const [types, setTypes] = useState([]);
   const [loaded, setLoaded] = useState(false);
@@ -216,17 +233,35 @@ export default function NotificationTypesPage() {
                   <th className="px-3 py-2 font-semibold">Priority</th>
                   <th className="px-3 py-2 font-semibold">Channels</th>
                   <th className="px-4 py-2 text-right font-semibold">Today</th>
+                  {canManage && <th className="px-3 py-2"><span className="sr-only">Actions</span></th>}
                 </tr>
               </thead>
               <tbody>
                 {shown.map((type) => (
-                  <TypeRow key={type.notificationTypeId} type={type} priority={priorities.byKey[type.priorityKey]} onOpen={open} />
+                  <TypeRow
+                    key={type.notificationTypeId}
+                    type={type}
+                    priority={priorities.byKey[type.priorityKey]}
+                    onOpen={open}
+                    onDuplicate={canManage ? duplicate.open : null}
+                  />
                 ))}
               </tbody>
             </table>
           </div>
         )}
       </Card>
+
+      {duplicate.type && (
+        <DuplicateTypeDialog
+          key={duplicate.type.notificationTypeId}
+          type={duplicate.type}
+          step={duplicate.step}
+          error={duplicate.error}
+          onClose={duplicate.close}
+          onConfirm={duplicate.confirm}
+        />
+      )}
 
       {adding && (
         <TypeFormModal

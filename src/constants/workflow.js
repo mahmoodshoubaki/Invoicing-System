@@ -62,11 +62,14 @@ export const FILES_TYPE = 'files';
  * JSON list, drawn with the create form's parts and never compared.
  */
 export const CR_REASONS_TYPE = 'changeRequestReasons';
+export const CR_TYPES_TYPE = 'changeRequestTypes';
 export const CR_FIELD_CHANGES_TYPE = 'changeRequestFieldChanges';
 export const CR_CYCLE_CHANGES_TYPE = 'changeRequestCycleChanges';
+export const CR_NEW_ITEMS_TYPE = 'changeRequestNewItems';
 
 const NOT_COMPARABLE = new Set([
-  INVOICING_PLAN_TYPE, LIST_TYPE, FILES_TYPE, CR_REASONS_TYPE, CR_FIELD_CHANGES_TYPE, CR_CYCLE_CHANGES_TYPE,
+  INVOICING_PLAN_TYPE, LIST_TYPE, FILES_TYPE, CR_REASONS_TYPE, CR_TYPES_TYPE, CR_FIELD_CHANGES_TYPE, CR_CYCLE_CHANGES_TYPE,
+  CR_NEW_ITEMS_TYPE,
 ]);
 
 /** Whether a field may be read by a condition, a search or a value menu. */
@@ -113,6 +116,7 @@ export const TASK_STATUS = {
 export const ASSIGNEE_TYPE = {
   USER: 1,
   ROLE: 2,
+  GROUP: 3,
 };
 
 /**

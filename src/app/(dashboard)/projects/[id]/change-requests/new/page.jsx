@@ -11,6 +11,9 @@ import Button from '@/components/common/Button';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import ChangeRequestForm from '@/components/changeRequests/form/ChangeRequestForm';
 import ProjectSummaryCard from '@/components/projects/ProjectSummaryCard';
+import ProjectNotReady from '@/components/projects/ProjectNotReady';
+import { mainProjectOf } from '@/lib/changeRequest/projectDraft';
+import { useProjectReadiness } from '@/components/projects/useProjectReadiness';
 import ChangeRequestStepper from '@/components/changeRequests/progress/ChangeRequestStepper';
 import { useChangeRequestPageData } from '@/components/changeRequests/useChangeRequestPageData';
 import { useBoqChangeRequests } from '@/components/changeRequests/useBoqChangeRequests';
@@ -35,20 +38,33 @@ export default function NewChangeRequestPage() {
   const toast = useToast();
   const { can } = usePermission();
   const data = useChangeRequestPageData(projectCode);
+  const readiness = useProjectReadiness(projectCode);
   const existing = useBoqChangeRequests(data.boq?.id ?? null, allow(can, CR_PERMISSIONS.VIEW));
 
   const encoded = encodeURIComponent(projectCode);
   const tabHref = ROUTES.PROJECT_CHANGE_REQUESTS(encoded);
 
-  const submit = useCallback(async (body) => {
-    const created = await changeRequestRepository.createChangeRequest({ boqId: data.boq?.id, ...body });
+  const submit = useCallback(async (body, files) => {
+    const created = await changeRequestRepository.createChangeRequest({ boqId: data.boq?.id, ...body }, files.added);
     toast.success(`${created.number || 'Change request'} submitted`, 'It now waits on the approver. Its items are locked until it is decided.');
     router.push(ROUTES.PROJECT_CHANGE_REQUEST(encoded, created.changeRequestId));
   }, [data.boq?.id, encoded, router, toast]);
 
   let body;
-  if (data.loading || !existing.ready) {
+  if (data.loading || !existing.ready || readiness.checking) {
     body = <div className="flex h-64 items-center justify-center"><LoadingSpinner /></div>;
+  } else if (!readiness.ready) {
+    body = <ProjectNotReady missing={readiness.missing} failed={readiness.failed} />;
+  } else if (!mainProjectOf(data.subProjects)) {
+    body = (
+      <p className="flex items-start gap-2 rounded-xl border border-gray-100 bg-white px-4 py-4 text-sm" style={{ color: CHROME.textSecondary }}>
+        <Lock size={15} className="mt-0.5 shrink-0" style={{ color: CHROME.textMuted }} aria-hidden="true" />
+        <span>
+          EPM has no main project for {projectCode} (a code like 23/116), so no change request can be raised. The
+          contract dates belong to the main project.
+        </span>
+      </p>
+    );
   } else if (existing.open) {
     body = (
       <p className="flex items-start gap-2 rounded-xl border border-gray-100 bg-white px-4 py-4 text-sm" style={{ color: CHROME.textSecondary }}>
@@ -78,7 +94,7 @@ export default function NewChangeRequestPage() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto max-w-7xl">
         <SubPageHeader
           eyebrow="Change request"
           title="New change request"
@@ -87,7 +103,7 @@ export default function NewChangeRequestPage() {
             { label: "Home", href: "/" },
             { label: "Projects", href: "/projects" },
             {
-              label: data.project?.contractName ?? projectCode,
+              label: readiness.header?.contractName ?? projectCode,
               href: ROUTES.PROJECT_DETAIL(encoded),
             },
             { label: "Change requests", href: tabHref },
@@ -101,12 +117,7 @@ export default function NewChangeRequestPage() {
             </Link>
           }
         />
-        <ProjectSummaryCard
-          projectCode={projectCode}
-          contractName={data.project?.contractName ?? null}
-          subProjects={data.subProjects}
-          loading={data.loading}
-        />
+        <ProjectSummaryCard projectCode={projectCode} header={readiness.header} status={readiness.status} />
         <ChangeRequestStepper changeRequest={null} />
         {body}
       </div>

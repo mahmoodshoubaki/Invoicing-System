@@ -18,7 +18,7 @@ const NO_IDS = new Set();
  *
  * @param {{
  *   state: Object,
- *   lookups: { roles, rolesLoading, resolvedById, actions, approvedHosts },
+ *   lookups: { roles, rolesLoading, groups, groupsLoading, resolvedById, actions, approvedHosts },
  *   catalogs: ReturnType<import('./useBuilderCatalogs').useBuilderCatalogs>,
  *   editing: ReturnType<import('./useBuilderEditing').useBuilderEditing>,
  *   clip: ReturnType<import('./useBuilderClipboard').useBuilderClipboard>,
@@ -28,7 +28,7 @@ const NO_IDS = new Set();
  * }} options
  */
 export function useStepTreeContext({ state, lookups, catalogs, editing, clip, notificationTypes, canvas, serverProblems }) {
-  const { roles, rolesLoading, resolvedById, actions, approvedHosts } = lookups;
+  const { roles, rolesLoading, groups, groupsLoading, resolvedById, actions, approvedHosts } = lookups;
   const { fields, fieldsByTargetType, declaredVariables, taskFields } = catalogs;
   const { onUpdateStep, onRemoveStep, onMoveStep, onCommitStepTitle } = editing;
   const { selection, onSelect, clipboard, pasteSteps, stepClipBranchProblem, clipLabel, clipVerb, isCut, cutIds } = clip;
@@ -44,7 +44,7 @@ export function useStepTreeContext({ state, lookups, catalogs, editing, clip, no
 
   return useMemo(
     () => ({
-      roles, rolesLoading, resolvedById, actions, approvedHosts, fields,
+      roles, rolesLoading, groups, groupsLoading, resolvedById, actions, approvedHosts, fields,
       stages: state.graph.stages,
       lists: availableLists(state),
       // A For-each editor needs the row shape of the list it walks, which is
@@ -86,7 +86,7 @@ export function useStepTreeContext({ state, lookups, catalogs, editing, clip, no
       humanTaskSteps,
       humanTaskIds: new Set(humanTaskSteps.map((t) => t.id)),
     }),
-    [roles, rolesLoading, resolvedById, actions, approvedHosts, fields, state, fieldsByTargetType, declaredVariables, taskFields,
+    [roles, rolesLoading, groups, groupsLoading, resolvedById, actions, approvedHosts, fields, state, fieldsByTargetType, declaredVariables, taskFields,
       canvas, onUpdateStep, onRemoveStep, onMoveStep, onCommitStepTitle, selection, onSelect, clipboard, pasteSteps,
       stepClipBranchProblem, clipLabel, clipVerb, isCut, cutIds, notificationTypes, humanTaskSteps, serverProblems]
   );

@@ -6,6 +6,7 @@ import { selectChangeRequestReasonsMap } from '@/store/slices/lookupsSlice';
 import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 import { formatDateTime } from '@/utils/formatters';
+import TypeAndEffect from './TypeAndEffect';
 
 function Count({ value, label }) {
   return (
@@ -36,10 +37,12 @@ export default function ChangeRequestOverview({ changeRequest: cr }) {
           </span>
         ))}
       </div>
-      <div className="grid grid-cols-3 gap-2">
+      <TypeAndEffect types={cr.types} otherTypeText={cr.otherTypeText} projectEffect={cr.projectEffect} />
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <Count value={cr.summary.changedItemCount} label="items changed" />
         <Count value={cr.summary.changedProjectFieldCount} label="project fields changed" />
         <Count value={cr.summary.changedCycleCount} label="plan cycles changed" />
+        <Count value={cr.summary.newItemCount} label="new items" />
       </div>
       <p className="text-xs" style={{ color: CHROME.textMuted }}>
         Raised by <strong style={{ color: CHROME.textPrimary }}>{cr.requestedByName ?? 'someone'}</strong>

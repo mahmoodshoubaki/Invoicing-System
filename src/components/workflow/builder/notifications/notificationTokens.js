@@ -25,6 +25,7 @@ const LABELS = {
   CompletedByName: 'Answered by',
   CompletedOn: 'Answered on',
   Comment: 'Comment',
+  OutcomeReason: 'Reason given with the answer',
   ReassignedByName: 'Handed over by',
   NewAssigneeNames: 'Handed to',
   Reason: 'Why it was cancelled',

@@ -10,7 +10,9 @@ import { uniqueSlug } from '@/utils/slug';
 import { readPlaceholder, writeName } from '@/utils/workflowPlaceholder';
 import UserPicker from './UserPicker';
 import RoleChips from './RoleChips';
+import GroupChips from './GroupChips';
 import DurationFields from './DurationFields';
+import ButtonReasonsEditor from './ButtonReasonsEditor';
 
 const controlClass =
   'rounded-md border border-gray-200 bg-white px-2 py-1.5 text-xs outline-none focus:border-primary';
@@ -138,6 +140,10 @@ export const ExpressionAssignees = memo(function ExpressionAssignees({ expressio
           })}
         </select>
       )}
+
+      <p className="text-[10px]" style={{ color: CHROME.textMuted }}>
+        Must give a person (username or user id). Pick roles and groups in their own pickers.
+      </p>
     </div>
   );
 });
@@ -146,9 +152,10 @@ export const ExpressionAssignees = memo(function ExpressionAssignees({ expressio
  * The task itself — who answers, by when, and with which buttons. Who hears
  * about it is the Notifications tab (TaskNotificationsPanel), beside this one.
  */
-function HumanTaskEditor({ step, stageId, stages, roles, rolesLoading, resolvedById, fields, onChange }) {
+function HumanTaskEditor({ step, stageId, stages, roles, rolesLoading, groups = [], groupsLoading = false, resolvedById, fields, onChange }) {
   const outcomes = step.outcomes ?? [];
   const assignedRoles = step.assignToRoleIds ?? [];
+  const assignedGroups = step.assignToGroupIds ?? [];
 
   const patchOutcome = (index, patch) =>
     onChange({ outcomes: outcomes.map((o, i) => (i === index ? { ...o, ...patch } : o)) });
@@ -167,7 +174,17 @@ function HumanTaskEditor({ step, stageId, stages, roles, rolesLoading, resolvedB
       </div>
 
       <div>
-        <Label hint="— as well as, or instead of, roles">Assign to people</Label>
+        <Label>Assign to groups</Label>
+        <GroupChips
+          groups={groups}
+          loading={groupsLoading}
+          selectedIds={assignedGroups}
+          onChange={(assignToGroupIds) => onChange({ assignToGroupIds })}
+        />
+      </div>
+
+      <div>
+        <Label hint="— as well as, or instead of, roles and groups">Assign to people</Label>
         <UserPicker
           resolvedById={resolvedById}
           selectedIds={step.assignToUserIds ?? []}
@@ -191,7 +208,7 @@ function HumanTaskEditor({ step, stageId, stages, roles, rolesLoading, resolvedB
         />
       </div>
 
-      {assignedRoles.length + (step.assignToUserIds?.length ?? 0) + (step.assignToExpressions?.length ?? 0) > 1 && (
+      {assignedRoles.length + assignedGroups.length + (step.assignToUserIds?.length ?? 0) + (step.assignToExpressions?.length ?? 0) > 1 && (
         <p
           className="flex items-start gap-1.5 rounded-md px-2 py-1.5 text-[11px]"
           style={{ backgroundColor: '#fbfaf9', color: CHROME.textMuted }}
@@ -374,6 +391,11 @@ function HumanTaskEditor({ step, stageId, stages, roles, rolesLoading, resolvedB
                     {outcome.label || 'Button'}
                   </span>
                 </div>
+
+                <ButtonReasonsEditor
+                  reasons={outcome.reasons ?? null}
+                  onChange={(reasons) => patchOutcome(index, { reasons })}
+                />
               </li>
             ))}
           </ul>

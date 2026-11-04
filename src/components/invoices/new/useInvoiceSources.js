@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/useToast';
 import { aggregateSubProjectFinancials } from '@/models/project';
 import {
   fetchMainProjectDetails, fetchSubProjectsSummary, selectMainDetailsLoading, selectMainProjectDetails, selectSubProjects,
+  selectSubProjectsLoading,
 } from '@/store/slices/projectsSlice';
 import {
   clearInvoiceableBOQItems, fetchInvoiceableBOQItems, selectInvoiceableBOQItems, selectInvoiceableBOQItemsLoading,
@@ -28,6 +29,7 @@ export function useInvoiceSources(projectCode) {
   const project = useSelector(selectMainProjectDetails);
   const projectLoading = useSelector(selectMainDetailsLoading);
   const subProjects = useSelector(selectSubProjects);
+  const subProjectsLoading = useSelector(selectSubProjectsLoading);
   const boqItems = useSelector(selectInvoiceableBOQItems);
   const boqItemsLoading = useSelector(selectInvoiceableBOQItemsLoading);
   const [redirecting, setRedirecting] = useState(false);
@@ -70,5 +72,5 @@ export function useInvoiceSources(projectCode) {
     return () => { dispatch(clearInvoiceableBOQItems()); };
   }, [dispatch]);
 
-  return { project, projectLoading, projectFinancials, boqItems, boqItemsLoading };
+  return { project, projectLoading, subProjects, subProjectsLoading, projectFinancials, boqItems, boqItemsLoading };
 }

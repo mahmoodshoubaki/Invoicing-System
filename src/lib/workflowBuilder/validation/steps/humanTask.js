@@ -1,5 +1,6 @@
 import { isDurationEmpty, readDuration, validateDuration } from '@/utils/workflowDuration';
 import { readPlaceholder } from '@/utils/workflowPlaceholder';
+import { reasonsListProblems } from '@/lib/taskReasons';
 
 import { unknownTypeErrors } from '../notificationTypes';
 
@@ -47,7 +48,7 @@ function checkTaskFields(step, { where, fields, taskFields, errors }) {
 export function checkHumanTask(step, { where, fields, taskFields, stageIds, notificationTypeKeys, errors }) {
   const expressions = step.assignToExpressions ?? [];
   const assignees =
-    (step.assignToUserIds?.length ?? 0) + (step.assignToRoleIds?.length ?? 0) + expressions.length;
+    (step.assignToUserIds?.length ?? 0) + (step.assignToRoleIds?.length ?? 0) + (step.assignToGroupIds?.length ?? 0) + expressions.length;
   if (assignees === 0) errors.push(`${where} is not assigned to anyone, so nobody could ever answer it.`);
 
   /*
@@ -86,6 +87,11 @@ export function checkHumanTask(step, { where, fields, taskFields, stageIds, noti
   const keys = outcomes.map((o) => o.key);
   if (new Set(keys).size !== keys.length) errors.push(`${where} has two outcomes sharing a key.`);
   if (outcomes.some((o) => !o.key?.trim())) errors.push(`${where} has an outcome with no key.`);
+  for (const outcome of outcomes.filter((o) => o.reasons)) {
+    for (const problem of reasonsListProblems(outcome.reasons)) {
+      errors.push(`${where}, button "${outcome.label || outcome.key}", ${problem}.`);
+    }
+  }
 
   checkTaskFields(step, { where, fields, taskFields, errors });
 

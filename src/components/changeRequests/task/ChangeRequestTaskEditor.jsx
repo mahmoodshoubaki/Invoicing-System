@@ -5,6 +5,7 @@ import { Info } from 'lucide-react';
 
 import Reveal from '@/components/motion/Reveal';
 import ReasonsSection from '@/components/changeRequests/form/ReasonsSection';
+import TypeAndEffectSection from '@/components/changeRequests/form/TypeAndEffectSection';
 import DetailsSection from '@/components/changeRequests/form/DetailsSection';
 import ProjectChangesSection from '@/components/changeRequests/form/ProjectChangesSection';
 import ItemChangesSection from '@/components/changeRequests/form/ItemChangesSection';
@@ -15,7 +16,10 @@ import { asksForChanges, changeRequestTaskValues, splitChangeRequestErrors } fro
 import { CHROME } from '@/theme/vizPalette';
 
 /** Whether a mapped refusal put anything under a box. */
-const anyBox = (p) => Boolean(p.reasons || p.details || Object.keys(p.project).length || Object.keys(p.items).length);
+const anyBox = (p) => Boolean(
+  p.reasons || p.typeKeys || p.otherTypeText || p.projectEffectKey || p.details
+  || Object.keys(p.project).length || Object.keys(p.items).length
+);
 
 /** What the task leaves as the request has it, said once above the changes. */
 function lockedNote(asks) {
@@ -71,6 +75,7 @@ export default function ChangeRequestTaskEditor({ parts, asks, reasons, data, ha
     <div ref={rootRef}>
       <Reveal className="flex flex-col gap-4">
         {parts.reasons && <ReasonsSection form={form} reasons={reasons} />}
+        {(parts.types || parts.otherType || parts.effect) && <TypeAndEffectSection form={form} />}
         {parts.details && <DetailsSection form={form} />}
         {changes && (note || keptCount > 0) && (
           <div className="flex items-start gap-1.5 rounded-xl bg-[#f6f5f3] px-4 py-3 text-xs leading-relaxed" style={{ color: CHROME.textSecondary }}>

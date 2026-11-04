@@ -1,4 +1,5 @@
 import { createApiClient } from '@/lib/apiClient';
+import { fetchAllPages } from '@/lib/fetchAllPages';
 import {
   mapDefinitionRow,
   mapDefinition,
@@ -132,11 +133,14 @@ export const workflowRepository = {
    * @returns {Promise<Object[]>}
    */
   async getDefinitions({ targetTypeKey = null, activeOnly = null } = {}) {
-    const data = await definitionsApi.get(
-      '/GetDefinitions',
-      cleanParams({ TargetTypeKey: targetTypeKey, ActiveOnly: activeOnly })
-    );
-    return (data?.workflows ?? []).map(mapDefinitionRow);
+    const rows = await fetchAllPages(async (skip, take) => {
+      const page = await definitionsApi.get(
+        '/GetDefinitions',
+        cleanParams({ TargetTypeKey: targetTypeKey, ActiveOnly: activeOnly, Skip: skip, Take: take })
+      );
+      return { rows: page?.workflows ?? [], total: page?.total ?? 0 };
+    });
+    return rows.map(mapDefinitionRow);
   },
 
   /**
@@ -511,7 +515,7 @@ export const workflowRepository = {
    * its own permission, so somebody covering for a colleague can pass work on
    * without `ActAll`, which would also let them decide the outcome.
    *
-   * @param {Object} args  { instanceId, taskId, toUserIds, toRoleIds }
+   * @param {Object} args  { instanceId, taskId, toUserIds, toRoleIds, toGroupIds }
    * @returns {Promise<{taskId: string, replacedTaskId: string}>}
    */
   async reassignTask(args) {

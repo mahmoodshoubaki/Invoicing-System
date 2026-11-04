@@ -9,6 +9,7 @@ import {
   checkBeforeSubmit, filesToSend, hasFilesField, initialValues, splitServerErrors, valuesToSend,
 } from '@/lib/taskFieldValues';
 import { planValueFromPreview } from '@/lib/invoicingPlanValue';
+import { reasonProblem, reasonToSend } from '@/lib/taskReasons';
 import { changeRequestFieldNames, changeRequestTaskParts } from '@/lib/changeRequest/taskFields';
 
 /** WF-056: the run is about several records, so there is no one record to save to. */
@@ -111,11 +112,13 @@ export function useTaskForm(task, onCompleted, context = null) {
     setCommentError(null);
   }, []);
 
-  const press = useCallback(async (button) => {
+  const press = useCallback(async (button, reason = null) => {
     const checked = checkBeforeSubmit(ownFields, values, button, comment);
     setFieldErrors(checked.fieldErrors);
     setCommentError(checked.commentError);
-    setErrors([]);
+    const reasonError = reasonProblem(button, reason ?? undefined);
+    setErrors(reasonError ? [reasonError] : []);
+    if (reasonError) return;
     // The change request's editor checks its own parts, and shows what is wrong there.
     const request = button.requiresFields && asksForRequest ? requestRef.current : null;
     if (button.requiresFields && asksForRequest && !request) {
@@ -135,6 +138,7 @@ export function useTaskForm(task, onCompleted, context = null) {
         outcomeKey: button.key,
         comment: comment.trim() || null,
         values: { ...valuesToSend(ownFields, values, button), ...(sent?.values ?? {}) },
+        ...reasonToSend(button, reason ?? undefined),
       };
       const instance = button.requiresFields && hasFilesField(ownFields)
         ? await workflowRepository.completeTaskWithFiles(args, filesToSend(ownFields, values, button))

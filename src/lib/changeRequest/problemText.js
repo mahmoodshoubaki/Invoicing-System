@@ -11,7 +11,7 @@
 
 import { formatDate } from '@/utils/formatters';
 
-const ABOUT_ITEM = /^'(.+?)'(?::\s*|\s+)([\s\S]*)$/;
+const ABOUT_ITEM = /^'(.+?)'( \(new item\))?(?::\s*|\s+)([\s\S]*)$/;
 const LATE_CYCLE = /^plan cycle (\d+) on (\d{4}-\d{2}-\d{2}) would be after the new contract finish date \((\d{4}-\d{2}-\d{2})\)\.?$/i;
 const NO_CYCLE = /^would have no invoicing plan cycle left\.?$/i;
 const ISO_DAY = /\b(\d{4}-\d{2}-\d{2})(?:T[\d:.]+)?\b/g;
@@ -56,8 +56,8 @@ export function groupProblems(messages, { inRequest = [] } = {}) {
       general.push(withDates(text));
       continue;
     }
-    const item = itemOf(about[1]);
-    const rest = about[2].trim();
+    const item = itemOf(about[2] ? `${about[1]} (new item)` : about[1]);
+    const rest = about[3].trim();
     const late = LATE_CYCLE.exec(rest);
     if (late) {
       item.late.push({ number: Number(late[1]), date: late[2] });

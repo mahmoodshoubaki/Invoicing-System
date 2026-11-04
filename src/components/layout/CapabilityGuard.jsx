@@ -11,13 +11,26 @@ import { usePermission } from '@/hooks/usePermission';
  * patterns go before broader prefixes.
  */
 const ROUTE_CAPABILITIES = [
+  { prefix: '/dashboard/delayed-cycles', module: 'Boqs', action: 'View' },
+  { prefix: '/dashboard/sla-violations', module: 'WorkflowInstances', action: 'View' },
+  {
+    prefix: '/dashboard/pending-approvals',
+    anyOf: [
+      { module: 'Invoices', action: 'View' },
+      { module: 'ChangeRequests', action: 'View' },
+      { module: 'Boqs', action: 'View' },
+    ],
+  },
+  // Editing a BOQ item, an invoice or a change request is System.Administrator
+  // only, as UpdateBoqItem, UpdateInvoice and UpdateChangeRequest are.
   { test: (p) => /^\/projects\/[^/]+\/boq\/new(\/|$)/.test(p), module: 'Boqs', action: 'Create' },
-  { test: (p) => /^\/projects\/[^/]+\/boq\/[^/]+\/edit(\/|$)/.test(p), module: 'Boqs', action: 'Update' },
+  { test: (p) => /^\/projects\/[^/]+\/boq\/[^/]+\/edit(\/|$)/.test(p), module: 'System', action: 'Administrator' },
   { test: (p) => /^\/projects\/[^/]+\/boq(\/|$)/.test(p), module: 'Boqs', action: 'View' },
   { test: (p) => /^\/projects\/[^/]+\/invoices\/new(\/|$)/.test(p), module: 'Invoices', action: 'Create' },
+  { test: (p) => /^\/projects\/[^/]+\/invoices\/[^/]+\/edit(\/|$)/.test(p), module: 'System', action: 'Administrator' },
   // Change requests (2026-10-19): raising one, editing one sent back, reading one.
   { test: (p) => /^\/projects\/[^/]+\/change-requests\/new(\/|$)/.test(p), module: 'ChangeRequests', action: 'Create' },
-  { test: (p) => /^\/projects\/[^/]+\/change-requests\/[^/]+\/edit(\/|$)/.test(p), module: 'ChangeRequests', action: 'Update' },
+  { test: (p) => /^\/projects\/[^/]+\/change-requests\/[^/]+\/edit(\/|$)/.test(p), module: 'System', action: 'Administrator' },
   { test: (p) => /^\/projects\/[^/]+\/change-requests(\/|$)/.test(p), module: 'ChangeRequests', action: 'View' },
   { prefix: '/projects', module: 'Projects', action: 'View' },
   { prefix: '/invoices', module: 'Invoices', action: 'View' },
@@ -29,6 +42,13 @@ const ROUTE_CAPABILITIES = [
   { prefix: '/workflow/tasks', module: 'WorkflowTasks', action: 'View' },
   { prefix: '/workflow', module: 'Workflow', action: 'View' },
   { prefix: '/admin/roles', module: 'Role', action: 'View' },
+  {
+    prefix: '/admin/groups',
+    anyOf: [
+      { module: 'Group', action: 'View' },
+      { module: 'Group', action: 'Manage' },
+    ],
+  },
   // Admin › Workflow (2026-10-13). The workflows list is Workflow.View — somebody
   // who only reads workflows is not an administrator — and the area's landing
   // route only redirects, to the first page this person may read. The builder,
@@ -42,6 +62,8 @@ const ROUTE_CAPABILITIES = [
     ],
   },
   { prefix: '/admin/workflow', module: 'Workflow', action: 'Manage' },
+  // The Hangfire dashboard: the API lets in System.Administrator only.
+  { prefix: '/admin/jobs/dashboard', module: 'System', action: 'Administrator' },
   { prefix: '/admin/jobs', module: 'System', action: 'Manage Jobs' },
   // Admin › Monitoring — each page asks for what reading it needs, ahead of the
   // broad /admin rule (somebody who only watches runs is not an administrator).

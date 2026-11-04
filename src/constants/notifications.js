@@ -22,6 +22,7 @@ export const NOTIFICATION_PERMISSIONS = {
 
 export const SYSTEM_PERMISSIONS = {
   MANAGE_JOBS: { module: 'System', action: 'Manage Jobs', code: 'System.ManageJobs' },
+  ADMINISTRATOR: { module: 'System', action: 'Administrator', code: 'System.Administrator' },
 };
 
 export const CHANNEL = {

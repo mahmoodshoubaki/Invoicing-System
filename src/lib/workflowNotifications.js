@@ -18,6 +18,7 @@ import { STANDARD_TYPE } from '@/constants/notifications';
  */
 export const TASK_VALUE_NAMES = [
   'TaskTitle', 'TaskId', 'DueOn', 'AssigneeNames', 'TaskStatus', 'Outcome', 'CompletedByName', 'CompletedOn', 'Comment',
+  'OutcomeReason',
 ];
 
 /**

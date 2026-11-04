@@ -13,6 +13,7 @@ import uiReducer from '@/store/slices/uiSlice';
 import lookupsReducer from '@/store/slices/lookupsSlice';
 import rolesReducer from '@/store/slices/rolesSlice';
 import usersReducer from '@/store/slices/usersSlice';
+import groupsReducer from '@/store/slices/groupsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -28,6 +29,7 @@ export const store = configureStore({
     lookups: lookupsReducer,
     roles: rolesReducer,
     users: usersReducer,
+    groups: groupsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

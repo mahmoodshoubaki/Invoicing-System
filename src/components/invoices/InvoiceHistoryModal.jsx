@@ -106,6 +106,10 @@ function HistoryEntry({ entry, isLatest, currency, invoiceId, invoiceStatusesMap
                 <p className="font-semibold text-gray-700 mt-0.5">{formatDate(entry.expectedCollectionDate) || '—'}</p>
               </div>
               <div>
+                <p className="text-gray-400 flex items-center gap-1"><Calendar size={11} /> Receipt Issued</p>
+                <p className="font-semibold text-gray-700 mt-0.5">{formatDate(entry.receiptIssueDate) || '—'}</p>
+              </div>
+              <div>
                 <p className="text-gray-400 flex items-center gap-1"><BadgeQuestionMarkIcon size={11} /> Reasons For Update</p>
                 <p className="font-semibold text-gray-700 mt-0.5">{entry.reasonsForUpdate || '—'}</p>
               </div>

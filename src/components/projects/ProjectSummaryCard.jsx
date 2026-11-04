@@ -3,16 +3,8 @@
 import { useSelector } from 'react-redux';
 import { AlertCircle, FolderKanban } from 'lucide-react';
 
-import { contractWindow, hasProjectValue, projectValueTotal } from '@/lib/changeRequest/projectDraft';
 import { formatCurrency, formatDate } from '@/utils';
-import { useProjectTeam } from './useProjectTeam';
 import { colors } from '@/theme';
-
-/**
- * Brand red, a touch see-through — its darker end, so white text on it stays
- * readable (#d9304a is the theme's primary-dark).
- */
-const CARD_BACKGROUND = 'linear-gradient(120deg, rgb(217 48 74 / 0.95) 0%, rgb(186 33 57 / 0.93) 100%)';
 
 /** A value EPM does not have, or that could not be read — said, never left blank. */
 function Flag({ children }) {
@@ -40,26 +32,26 @@ function Fact({ label, value, missing = 'Not set in EPM', loading = false, faile
 }
 
 /**
- * The project a page is about, at a glance (2026-10-21): its code and
- * contract name, its contract dates and value, and its BDM, BU head and CRP.
+ * The project a page is about, at a glance, from GetProjectHeader.
  *
- * The dates and the value are worked out from the EPM sub-projects the way a
- * change request is checked — the main project's dates, or else the earliest
- * start to the latest finish; the value is all of them added up. The people
- * need one more call (GetProjectDetails), made here. Anything EPM does not
- * have is flagged rather than left blank.
- *
- * @param {{
- *   projectCode: string, contractName: string|null,
- *   subProjects: Array,  subProjectOriginals'
- *   loading?: boolean,   the page's project data still loading
- * }} props
+ * @param {{ projectCode: string, header: Object|null, status: 'loading'|'ready'|'error' }} props
+ *   header: mapProjectHeader's
  */
-export default function ProjectSummaryCard({ projectCode, contractName, subProjects, loading = false }) {
+export default function ProjectSummaryCard({ projectCode, header, status }) {
   const currency = useSelector((s) => s.ui.currency);
-  const team = useProjectTeam(projectCode);
-  const dates = contractWindow(subProjects);
-  const several = subProjects.length > 1;
+  const loading = status === 'loading';
+  const failed = status === 'error';
+  const fact = { loading, failed };
+
+  let title;
+  if (loading) title = 'Loading…';
+  else if (failed) title = <Flag>Couldn&rsquo;t load the project</Flag>;
+  else title = header.contractName || <Flag>No contract name in EPM</Flag>;
+
+  let value;
+  if (loading) value = 'Loading…';
+  else if (failed) value = <Flag>Couldn&rsquo;t load</Flag>;
+  else value = header.projectValue != null ? formatCurrency(header.projectValue, currency) : <Flag>Not set in EPM</Flag>;
 
   return (
     <section
@@ -75,29 +67,21 @@ export default function ProjectSummaryCard({ projectCode, contractName, subProje
           <div className="min-w-0">
             <p className="font-mono text-xs text-white/85">{projectCode}</p>
             {/* White named here: the global heading colour would win over the card's. */}
-            <h2 className="truncate text-base font-semibold leading-snug" style={{ color: '#fff' }}>
-              {contractName || (loading ? 'Loading…' : <Flag>No contract name in EPM</Flag>)}
-            </h2>
+            <h2 className="truncate text-base font-semibold leading-snug" style={{ color: '#fff' }}>{title}</h2>
           </div>
         </div>
         <div className="text-right">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-white/85">
-            Project value{several ? ` · ${subProjects.length} sub-projects` : ''}
-          </p>
-          <p className="mt-0.5 text-lg font-semibold">
-            {loading ? 'Loading…' : hasProjectValue(subProjects)
-              ? formatCurrency(projectValueTotal(subProjects), currency)
-              : <Flag>Not set in EPM</Flag>}
-          </p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-white/85">Project value</p>
+          <p className="mt-0.5 text-lg font-semibold">{value}</p>
         </div>
       </div>
 
       <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-white/20 pt-3 sm:grid-cols-3 lg:grid-cols-5">
-        <Fact label="Contract start" value={formatDate(dates.start)} loading={loading} />
-        <Fact label="Contract end" value={formatDate(dates.end)} loading={loading} />
-        <Fact label="BDM" value={team.bdm} loading={team.status === 'loading'} failed={team.status === 'error'} />
-        <Fact label="BU head" value={team.buHead} loading={team.status === 'loading'} failed={team.status === 'error'} />
-        <Fact label="CRP" value={team.crp} loading={team.status === 'loading'} failed={team.status === 'error'} />
+        <Fact label="Contract start" value={formatDate(header?.contractStartDate)} {...fact} />
+        <Fact label="Contract end" value={formatDate(header?.contractFinishDate)} {...fact} />
+        <Fact label="BDM" value={header?.bdm} {...fact} />
+        <Fact label="BU head" value={header?.buHead} {...fact} />
+        <Fact label="CRP" value={header?.crp} {...fact} />
       </dl>
     </section>
   );

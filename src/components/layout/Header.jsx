@@ -28,7 +28,7 @@ export default function Header() {
 
   return (
     <header
-      className="fixed top-0 right-0 left-0 h-16 bg-white border-b border-gray-100 z-20 flex items-center px-4 gap-4"
+      className="fixed top-0 right-0 left-0 h-16 bg-white border-b border-gray-100 z-40 flex items-center px-4 gap-4"
       style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
     >
       <button

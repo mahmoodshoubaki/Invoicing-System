@@ -42,6 +42,9 @@ const LOOKUP_FIELDS = {
     statusId: 'boqItemStatuses',
     billingFrequencyId: 'billingFrequencies',
   },
+  [TARGET_TYPE.BOQ_CHANGE_REQUEST]: {
+    projectEffectKey: 'changeRequestProjectEffects',
+  },
 };
 
 /**
@@ -52,7 +55,7 @@ const LOOKUP_FIELDS = {
  * dropdown nobody can choose from.
  *
  * @param {Object} fieldsByTargetType GetFields results, keyed by target type
- * @param {Object} lists `{ boqItemStatuses, billingFrequencies }`, each `[{ id, label }]`
+ * @param {Object} lists `{ boqItemStatuses, billingFrequencies, changeRequestProjectEffects }`, each `[{ id, label }]`
  */
 export function withLookupOptions(fieldsByTargetType, lists) {
   let changed = false;

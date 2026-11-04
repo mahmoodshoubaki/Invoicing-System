@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AlertTriangle, MessageSquare } from 'lucide-react';
 
@@ -10,6 +10,7 @@ import { CHROME, STATUS } from '@/theme/vizPalette';
 import { readableTextOn, withAlpha } from '@/utils/color';
 import { selectBillingFrequencies } from '@/store/slices/lookupsSlice';
 import ChangeRequestTaskFields from '@/components/changeRequests/task/ChangeRequestTaskFields';
+import TaskAnswerDialog from '@/components/workflow/tasks/TaskAnswerDialog';
 import TaskFormField from './TaskFormField';
 import { useTaskForm } from './useTaskForm';
 
@@ -44,6 +45,8 @@ export default function TaskForm({ task, onCompleted, context = null }) {
   }), [billingFrequencies]);
   const buttons = task.buttons ?? [];
   const busy = form.pressing !== null;
+  // The button whose reason is being picked, before it is pressed.
+  const [asking, setAsking] = useState(null);
   const needsComment = buttons.filter((b) => b.requiresComment).map((b) => b.label);
   const ignoresFields = form.fields.length > 0 ? buttons.filter((b) => !b.requiresFields).map((b) => b.label) : [];
 
@@ -108,7 +111,7 @@ export default function TaskForm({ task, onCompleted, context = null }) {
               variant="primary"
               loading={form.pressing === button.key}
               disabled={busy && form.pressing !== button.key}
-              onClick={() => form.press(button)}
+              onClick={() => (button.reasons ? setAsking(button) : form.press(button))}
               style={{
                 // The author's colour; only the text colour is ours, for contrast.
                 backgroundColor: button.colorHex ?? '#f1f0ee',
@@ -116,7 +119,7 @@ export default function TaskForm({ task, onCompleted, context = null }) {
               }}
               title={button.requiresFields ? `${button.label} — saves the fields above` : button.label}
             >
-              {button.requiresComment && <MessageSquare size={12} aria-hidden="true" />}
+              {(button.requiresComment || button.reasons) && <MessageSquare size={12} aria-hidden="true" />}
               {button.label}
             </Button>
           ))}
@@ -127,6 +130,23 @@ export default function TaskForm({ task, onCompleted, context = null }) {
           </p>
         )}
       </div>
+
+      {asking && (
+        <TaskAnswerDialog
+          key={asking.key}
+          task={task}
+          outcome={asking}
+          open
+          busy={busy}
+          withComment={false}
+          onClose={() => setAsking(null)}
+          onConfirm={({ reasonKey, otherReason }) => {
+            const button = asking;
+            setAsking(null);
+            form.press(button, { reasonKey, otherReason });
+          }}
+        />
+      )}
     </div>
   );
 }

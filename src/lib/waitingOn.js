@@ -5,11 +5,11 @@
  * it is said as one rather than dropped.
  */
 
-const ROLE = 2;
+const DELETED = { 1: 'a deleted account', 2: 'a deleted role', 3: 'a deleted group' };
 
 /** One holder's name, or what they were. */
 export const assigneeName = (assignee) =>
-  assignee?.name || (assignee?.assigneeTypeKey === ROLE ? 'a deleted role' : 'a deleted account');
+  assignee?.name || DELETED[assignee?.assigneeTypeKey] || DELETED[1];
 
 /** "Sara Khalil", "Sara and Mona", "Sara, Mona and Karim" — or "nobody yet". */
 export function assigneeNames(assignees) {

@@ -154,7 +154,7 @@ export default function ViewBOQItemPage() {
             <Button variant="outline" size="sm" icon={History} onClick={() => setShowHistory(true)}>
               History
             </Button>
-            {can('Boqs', 'Update') && (
+            {can('System', 'Administrator') && (
               <Link href={ROUTES.PROJECT_BOQ_EDIT(encodeURIComponent(projectCode), item.id)}>
                 <Button size="sm" icon={PencilLine}>Edit</Button>
               </Link>

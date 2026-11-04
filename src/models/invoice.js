@@ -76,12 +76,10 @@ export function createInvoiceLine(raw) {
  */
 export function createInvoiceFormData(data) {
   const request = {
-    // No invoice number or baseline collection date (2026-10-11): those are
-    // filled in at stage 2, by whoever holds the workflow's task for them.
+    // No invoice number, baseline collection date, financial claim reference or
+    // receipt issue date: workflow tasks fill those in.
     projectCode:            data.projectCode,
-    // A 12-digit number, or null for none (2026-10-13).
-    financialClaimReference: data.financialClaimReference ?? null,
-    wip:                    Number(data.wip) || 0,
+    wip:                   Number(data.wip) || 0,
     revenue:                Number(data.revenue) || 0,
     // No `submittedBy`: the backend sets it from the signed-in user.
     lines: (data.lines ?? []).map((line) => ({
@@ -122,8 +120,8 @@ export function createUpdateInvoiceFormData(data) {
     InvoiceId:              data.invoiceId,
     ReasonsForUpdate:       data.reasonsForUpdate,
     ExpectedCollectionDate:  data.expectedCollectionDate,
-    // Sent as it should be AFTER the edit (2026-10-13): null or missing CLEARS
-    // it, so an unchanged one is sent as it was.
+    // Not edited here (a workflow task fills it), but UpdateInvoice CLEARS it
+    // when null or missing, so the current one is sent back unchanged.
     FinancialClaimReference: data.financialClaimReference ?? null,
     AttachmentIdsToDelete:  data.attachmentIdsToDelete ?? [],
   };
@@ -204,9 +202,9 @@ export function createInvoice(raw) {
     baselineCollectionDate:  raw.baselineCollectionDate  ?? null,
     expectedCollectionDate:  raw.expectedCollectionDate  ?? null,
     reasonsForUpdate:        raw.reasonsForUpdate  ?? null,
-    // A 12-digit number or null (2026-10-13). Typed on the forms, or filled in
-    // by a workflow task.
+    // Both filled in by workflow tasks, never on the invoice forms. Null until then.
     financialClaimReference: raw.financialClaimReference ?? null,
+    receiptIssueDate:        raw.receiptIssueDate ?? null,
     workflowInstanceId:      raw.workflowInstanceId ?? null,
     // The to-dos its workflow is waiting on, and who holds each — shown to
     // anyone who can see the invoice. Only GetInvoiceById carries it.

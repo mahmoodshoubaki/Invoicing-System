@@ -1,6 +1,7 @@
 import { createApiClient } from '@/lib/apiClient';
 import {
-  mapChangeRequest, mapChangeRequestReason, mapChangeRequestRow, mapChangeRequestStatus,
+  createChangeRequestFormData, mapChangeRequest, mapChangeRequestProjectEffect, mapChangeRequestReason, mapChangeRequestRow,
+  mapChangeRequestStatus, mapChangeRequestType, mapChangeRequestVersion, updateChangeRequestFormData,
 } from '@/models/changeRequest';
 
 const api = createApiClient('/api/BoqChangeRequests');
@@ -17,19 +18,34 @@ const api = createApiClient('/api/BoqChangeRequests');
  */
 export const changeRequestRepository = {
   /** @returns {Promise<{ changeRequestId: number, number: string }>} */
-  async createChangeRequest(body) {
-    const data = await api.post('/CreateChangeRequest', body);
+  /** @param {Object} body  the request JSON  @param {Array} files  the uploader's entries */
+  async createChangeRequest(body, files) {
+    const data = await api.post('/CreateChangeRequest', createChangeRequestFormData(body, files));
     return { changeRequestId: data?.changeRequestId ?? null, number: data?.number ?? '' };
   },
 
   /** A returned request, sent again whole — what is left out is dropped. Only its requester may. */
-  async updateChangeRequest(body) {
-    const data = await api.post('/UpdateChangeRequest', body);
+  /** @param {Object} body  with changeRequestId and attachmentIdsToDelete  @param {Array} files  new files */
+  async updateChangeRequest(body, files) {
+    const data = await api.post('/UpdateChangeRequest', updateChangeRequestFormData(body, files));
     return { changeRequestId: data?.changeRequestId ?? null, number: data?.number ?? '' };
+  },
+
+  async downloadAttachment(changeRequestId, contentId, fallbackFileName) {
+    return await api.download('/DownloadChangeRequestAttachment', { changeRequestId, contentId }, fallbackFileName);
   },
 
   async getChangeRequestById(id) {
     return mapChangeRequest(await api.get('/GetChangeRequestById', { ID: id }));
+  },
+
+  /**
+   * One page of a change request's earlier versions, oldest first. The current version is getChangeRequestById.
+   * @returns {Promise<{ history: Object[], total: number }>}  mapChangeRequestVersion's
+   */
+  async getChangeRequestHistory(changeRequestId, { skip, take }) {
+    const page = await api.get('/GetChangeRequestHistory', { changeRequestId, skip, take });
+    return { history: (page?.history ?? []).map(mapChangeRequestVersion), total: page?.total ?? 0 };
   },
 
   async getChangeRequestsByBoqId(boqId) {
@@ -40,6 +56,16 @@ export const changeRequestRepository = {
   async getReasons() {
     const data = await api.get('/GetChangeRequestReasons');
     return (Array.isArray(data) ? data : []).map(mapChangeRequestReason);
+  },
+
+  async getTypes() {
+    const data = await api.get('/GetChangeRequestTypes');
+    return (Array.isArray(data) ? data : []).map(mapChangeRequestType);
+  },
+
+  async getProjectEffects() {
+    const data = await api.get('/GetChangeRequestProjectEffects');
+    return (Array.isArray(data) ? data : []).map(mapChangeRequestProjectEffect);
   },
 
   async getStatuses() {

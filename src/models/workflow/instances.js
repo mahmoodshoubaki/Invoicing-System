@@ -57,9 +57,15 @@ function mapAssignees(raw) {
     .filter((a) => a?.assigneeTypeKey === typeKey && a.name)
     .map((a) => ({ id: a.assigneeId ?? null, name: a.name }));
 
+  // A deleted group has no name; it is listed as one.
+  const groups = (raw?.assignees ?? [])
+    .filter((a) => a?.assigneeTypeKey === ASSIGNEE_TYPE.GROUP)
+    .map((a) => ({ id: a.assigneeId ?? null, name: a.name || 'Deleted group' }));
+
   return {
     assignedUsers: named(ASSIGNEE_TYPE.USER),
     assignedRoles: named(ASSIGNEE_TYPE.ROLE),
+    assignedGroups: groups,
     reassignedToName: raw?.reassignedToName ?? null,
   };
 }
@@ -122,6 +128,9 @@ export function mapInstanceTaskRow(raw) {
     outcome:     raw.outcome ?? raw.outcomeKey ?? null,
     outcomes:    raw.outcomes ?? [],
     comment:     raw.comment ?? null,
+    // The reason given with the answer: the label as picked, or the typed text.
+    reasonKey:   raw.reasonKey ?? null,
+    reason:      raw.reason ?? null,
 
     // `completedBy` is the id; `completedByName` is the person. Render the
     // name — a guid on screen is noise, and showing it "because we have
@@ -264,20 +273,8 @@ export function mapMyTask(raw) {
     currentStageTitle: raw.currentStageTitle ?? null,
     canAct:            raw.canAct === true,
 
-    /*
-     * The status of the RUN this to-do belongs to — not the to-do's own.
-     *
-     * A **paused** run keeps its to-dos in people's lists, but `CompleteTask`
-     * refuses them with WF-001. Without this the row looks answerable, the
-     * click fails, and the only way to learn why is to read an error.
-     *
-     * ⚠ **Not documented on `MyTaskRow` today**, so this reads as null and the
-     * UI falls back to handling the refusal. It is here so the day the field
-     * arrives the rows explain themselves with no further change — and so the
-     * name to add is written down. Two spellings accepted because the obvious
-     * one is ambiguous on a row that also has a task status.
-     */
-    runStatusKey:      raw.runStatusKey ?? raw.instanceStatusKey ?? null,
+    // The status of the run the to-do belongs to (INSTANCE_STATUS), not the to-do's own.
+    runStatusKey:      raw.runStatusKey ?? null,
 
     /*
      * The to-do's OWN status. `GetMyTasks` is documented as returning pending
@@ -316,6 +313,10 @@ export function mapTaskButton(raw) {
     // Pressing it saves the task's fields, so its required ones must be filled.
     requiresFields:  raw.requiresFields === true,
     colorHex:        raw.colorHex ?? null,
+    // { required, options: [{ key, label }] }, or null for no drop-down. "Other" is added on screen.
+    reasons:         raw.reasons
+      ? { required: raw.reasons.required === true, options: (raw.reasons.options ?? []).map((o) => ({ key: o.key, label: o.label ?? o.key })) }
+      : null,
   };
 }
 

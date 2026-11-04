@@ -61,109 +61,220 @@ function ItemChangeCard({
 
   return (
     <div className="rounded-xl border border-[#eceae4] bg-white p-4">
-      <div className={`flex items-start justify-between gap-3 ${open ? 'mb-3' : ''}`}>
+      <div
+        className={`flex items-start justify-between gap-3 ${open ? "mb-3" : ""}`}
+      >
+        <ChevronDown
+          size={16}
+          className={`mt-0.5 shrink-0 transition-transform ${open ? "" : "-rotate-90"}`}
+          style={{ color: CHROME.textMuted, cursor: "pointer" }}
+          aria-hidden="true"
+          onClick={() => setOpen((v) => !v)}
+        />
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           className="flex min-w-0 flex-1 items-start gap-2 text-left"
         >
-          <ChevronDown
-            size={16}
-            className={`mt-0.5 shrink-0 transition-transform ${open ? '' : '-rotate-90'}`}
-            style={{ color: CHROME.textMuted }}
-            aria-hidden="true"
-          />
           <span className="min-w-0">
-            <span className="block truncate text-sm font-semibold" style={{ color: CHROME.textPrimary }}>{draft.name}</span>
-            <span className="block text-[11px]" style={{ color: count ? STATUS.info : CHROME.textMuted }}>
-              {count ? `${count} change${count === 1 ? '' : 's'}` : 'Nothing changed yet'}
+            <span
+              className="block truncate text-sm font-semibold"
+              style={{ color: CHROME.textPrimary }}
+            >
+              {draft.name}
+            </span>
+            <span
+              className="block text-[11px]"
+              style={{ color: count ? STATUS.info : CHROME.textMuted }}
+            >
+              {count
+                ? `${count} change${count === 1 ? "" : "s"}`
+                : "Nothing changed yet"}
               {problemCount > 0 && (
-                <span style={{ color: STATUS.critical }}> · {problemCount} to fix</span>
+                <span style={{ color: STATUS.critical }}>
+                  {" "}
+                  · {problemCount} to fix
+                </span>
               )}
             </span>
           </span>
         </button>
-        {canRemove && <Button size="sm" variant="ghost" icon={X} onClick={() => onRemove(draft.itemId)}>Take out</Button>}
+        {canRemove && (
+          <Button
+            size="sm"
+            variant="ghost"
+            icon={X}
+            onClick={() => onRemove(draft.itemId)}
+          >
+            Take out
+          </Button>
+        )}
       </div>
 
       {open && (
-      <>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Input label="English Description" required value={v.englishName} onChange={set('englishName')} disabled={lockFields} hint={was('englishName', o.englishName)} error={errors.englishName} />
-        <Input label="Arabic Description" required dir="rtl" value={v.arabicName} onChange={set('arabicName')} disabled={lockFields} hint={was('arabicName', o.arabicName)} error={errors.arabicName} />
-        <Input label="Quantity" required type="number" min="0" step=".01" value={v.quantity} onChange={set('quantity')} disabled={lockFields} hint={was('quantity', o.quantity)} error={errors.quantity} />
-        <NumberInput label={`Unit Cost (${currency})`} required value={v.unitCost} onChange={set('unitCost')} disabled={lockFields} hint={was('unitCost', formatCurrency(Number(o.unitCost) || 0, currency))} error={errors.unitCost} />
-        <Input
-          label="Total Cost"
-          readOnly
-          value={formatCurrency(itemTotal(v), currency)}
-          hint={itemTotal(v) !== itemTotal(o) ? `was ${formatCurrency(itemTotal(o), currency)}` : 'Quantity × unit cost'}
-          className="cursor-not-allowed bg-gray-50"
-        />
-        <Select
-          label="Billing Frequency"
-          required
-          value={v.billingFrequencyId}
-          onChange={set('billingFrequencyId')}
-          disabled={lockFields}
-          placeholder="Select frequency"
-          options={frequencies.map((f) => ({ value: String(f.id), label: f.label }))}
-          hint={was('billingFrequencyId', frequencyName(o.billingFrequencyId))}
-          error={errors.billingFrequencyId}
-        />
-        <Input
-          label="Baseline Expected Invoicing Date"
-          type="text"
-          readOnly
-          value={formatDate(draft.baselineInvoicingDate) || '—'}
-          hint="Set when the item was created — a request never changes it"
-          className="cursor-not-allowed bg-gray-50"
-        />
-        <DatePicker
-          label="Updated Expected Invoicing Date"
-          required
-          value={v.expectedInvoicingDate}
-          onChange={set('expectedInvoicingDate')}
-          disabled={lockFields}
-          hint={was('expectedInvoicingDate', formatDate(o.expectedInvoicingDate))}
-          error={errors.expectedInvoicingDate}
-        />
-        <div className="md:col-span-2">
-          <Textarea label="Notes" rows={2} value={v.notes} onChange={set('notes')} disabled={lockFields} hint={was('notes', o.notes)} />
-        </div>
-      </div>
+        <>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Input
+              label="English Description"
+              required
+              value={v.englishName}
+              onChange={set("englishName")}
+              disabled={lockFields}
+              hint={was("englishName", o.englishName)}
+              error={errors.englishName}
+            />
+            <Input
+              label="Arabic Description"
+              required
+              dir="rtl"
+              value={v.arabicName}
+              onChange={set("arabicName")}
+              disabled={lockFields}
+              hint={was("arabicName", o.arabicName)}
+              error={errors.arabicName}
+            />
+            <Input
+              label="Quantity"
+              required
+              type="number"
+              min="0"
+              step=".01"
+              value={v.quantity}
+              onChange={set("quantity")}
+              disabled={lockFields}
+              hint={was("quantity", o.quantity)}
+              error={errors.quantity}
+            />
+            <NumberInput
+              label={`Unit Cost (${currency})`}
+              required
+              value={v.unitCost}
+              onChange={set("unitCost")}
+              disabled={lockFields}
+              hint={was(
+                "unitCost",
+                formatCurrency(Number(o.unitCost) || 0, currency),
+              )}
+              error={errors.unitCost}
+            />
+            <Input
+              label="Total Cost"
+              readOnly
+              value={formatCurrency(itemTotal(v), currency)}
+              hint={
+                itemTotal(v) !== itemTotal(o)
+                  ? `was ${formatCurrency(itemTotal(o), currency)}`
+                  : "Quantity × unit cost"
+              }
+              className="cursor-not-allowed bg-gray-50"
+            />
+            <Select
+              label="Billing Frequency"
+              required
+              value={v.billingFrequencyId}
+              onChange={set("billingFrequencyId")}
+              disabled={lockFields}
+              placeholder="Select frequency"
+              options={frequencies.map((f) => ({
+                value: String(f.id),
+                label: f.label,
+              }))}
+              hint={was(
+                "billingFrequencyId",
+                frequencyName(o.billingFrequencyId),
+              )}
+              error={errors.billingFrequencyId}
+            />
+            <Input
+              label="Baseline Expected Invoicing Date"
+              type="text"
+              readOnly
+              value={formatDate(draft.baselineInvoicingDate) || "—"}
+              hint="Set when the item was created — a request never changes it"
+              className="cursor-not-allowed bg-gray-50"
+            />
+            <DatePicker
+              label="Updated Expected Invoicing Date"
+              required
+              value={v.expectedInvoicingDate}
+              onChange={set("expectedInvoicingDate")}
+              disabled={lockFields}
+              hint={was(
+                "expectedInvoicingDate",
+                formatDate(o.expectedInvoicingDate),
+              )}
+              error={errors.expectedInvoicingDate}
+            />
+            <div className="md:col-span-2">
+              <Textarea
+                label="Notes"
+                rows={2}
+                value={v.notes}
+                onChange={set("notes")}
+                disabled={lockFields}
+                hint={was("notes", o.notes)}
+              />
+            </div>
+          </div>
 
-      <div className="mt-4 border-t border-[#f1f0ee] pt-3">
-        <p className="mb-2 text-xs font-semibold" style={{ color: CHROME.textSecondary }}>
-          Invoicing plan
-          {planChanged(draft) && (
-            <span className="ml-2 rounded-full px-1.5 py-px text-[10px] font-medium" style={{ backgroundColor: withAlpha(STATUS.info, 0.12), color: STATUS.info }}>
-              changed
-            </span>
-          )}
-        </p>
-        {(!window.start || !window.end) && (
-          <p className="mb-2 text-[11px]" style={{ color: STATUS.critical }}>
-            {window.start
-              ? 'The project has no contract end date, so this plan can’t be generated. Set a contract duration under Project changes — the end date follows from it.'
-              : 'The project has no contract start date, so this plan can’t be generated. Set one under Project changes.'}
-          </p>
-        )}
-        <InvoicingPlanTracker
-          cycles={draft.cycles}
-          onChange={(cycles) => onCycles(draft.itemId, cycles)}
-          minDate={window.start || undefined}
-          maxDate={window.end || undefined}
-          loading={Boolean(plan?.busy)}
-          error={plan?.error ?? null}
-          ready={Boolean(v.expectedInvoicingDate && v.billingFrequencyId && window.start && window.end) || draft.cycles.length > 0}
-          disabled={lockPlan}
-          anchorDateLabel="Updated Expected Invoicing Date"
-        />
-        {errors.cycles && <p data-problem className="mt-2 text-xs" style={{ color: STATUS.critical }}>{errors.cycles}</p>}
-      </div>
-      </>
+          <div className="mt-4 border-t border-[#f1f0ee] pt-3">
+            <p
+              className="mb-2 text-xs font-semibold"
+              style={{ color: CHROME.textSecondary }}
+            >
+              Invoicing plan
+              {planChanged(draft) && (
+                <span
+                  className="ml-2 rounded-full px-1.5 py-px text-[10px] font-medium"
+                  style={{
+                    backgroundColor: withAlpha(STATUS.info, 0.12),
+                    color: STATUS.info,
+                  }}
+                >
+                  changed
+                </span>
+              )}
+            </p>
+            {(!window.start || !window.end) && (
+              <p
+                className="mb-2 text-[11px]"
+                style={{ color: STATUS.critical }}
+              >
+                {window.start
+                  ? "The project has no contract end date, so this plan can’t be generated. Set a contract duration under Project changes — the end date follows from it."
+                  : "The project has no contract start date, so this plan can’t be generated. Set one under Project changes."}
+              </p>
+            )}
+            <InvoicingPlanTracker
+              cycles={draft.cycles}
+              onChange={(cycles) => onCycles(draft.itemId, cycles)}
+              minDate={window.start || undefined}
+              maxDate={window.end || undefined}
+              loading={Boolean(plan?.busy)}
+              error={plan?.error ?? null}
+              ready={
+                Boolean(
+                  v.expectedInvoicingDate &&
+                  v.billingFrequencyId &&
+                  window.start &&
+                  window.end,
+                ) || draft.cycles.length > 0
+              }
+              disabled={lockPlan}
+              anchorDateLabel="Updated Expected Invoicing Date"
+            />
+            {errors.cycles && (
+              <p
+                data-problem
+                className="mt-2 text-xs"
+                style={{ color: STATUS.critical }}
+              >
+                {errors.cycles}
+              </p>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

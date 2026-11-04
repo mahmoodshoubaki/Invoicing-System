@@ -3,6 +3,7 @@
 import { mockInvoices } from '@/mock/invoices';
 import { INVOICE_STATUS } from '@/constants/statuses';
 import { createApiClient } from '@/lib/apiClient';
+import { fetchAllPages } from '@/lib/fetchAllPages';
 import { createInvoiceableBOQItem } from '@/models/boq';
 import {
   createAddAttachmentsFormData, createInvoice as mapInvoice, createInvoiceFormData, createUpdateInvoiceFormData,
@@ -240,12 +241,27 @@ export const invoiceRepository = {
    */
   async getInvoicesByProjectCode(projectCode) {
     try {
-      const data = await api.get(`/GetInvoicesByProjectCode?ProjectCode=${encodeURIComponent(projectCode)}`);
-      return (data ?? []).map(mapInvoice);
+      const data = await fetchAllPages(async (skip, take) => {
+        const page = await api.get('/GetInvoicesByProjectCode', { ProjectCode: projectCode, skip, take });
+        return { rows: page?.invoices ?? [], total: page?.total ?? 0 };
+      });
+      return data.map(mapInvoice);
     } catch (err) {
       if (isNotFound(err)) return [];
       throw err;
     }
+  },
+
+  /**
+   * One page of every invoice the user can see, newest first.
+   *
+   * @param {{ statusId?: number|null, skip: number, take: number }} query
+   * @returns {Promise<{ invoices: object[], total: number }>}
+   */
+  async getInvoicesPage({ statusId = null, skip, take }) {
+    const params = { skip, take, ...(statusId != null ? { statusId } : {}) };
+    const page = await api.get('/GetInvoices', params);
+    return { invoices: (page?.invoices ?? []).map(mapInvoice), total: page?.total ?? 0 };
   },
 
   // REAL API
@@ -271,8 +287,11 @@ export const invoiceRepository = {
    * @returns {Promise<object[]>}
    */
   async getInvoiceHistory(invoiceId) {
-    const data = await api.get(`/GetInvoiceHistory?InvoiceId=${encodeURIComponent(invoiceId)}`);
-    return (data ?? []).map(mapInvoice);
+    const data = await fetchAllPages(async (skip, take) => {
+      const page = await api.get('/GetInvoiceHistory', { InvoiceId: invoiceId, skip, take });
+      return { rows: page?.history ?? [], total: page?.total ?? 0 };
+    });
+    return data.map(mapInvoice);
   },
 
   /**

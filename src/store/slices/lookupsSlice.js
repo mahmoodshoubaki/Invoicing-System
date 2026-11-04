@@ -62,6 +62,28 @@ export const fetchChangeRequestReasons = createAsyncThunk(
   }
 );
 
+export const fetchChangeRequestTypes = createAsyncThunk(
+  'lookups/fetchChangeRequestTypes',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await changeRequestRepository.getTypes();
+    } catch (err) {
+      return rejectWithValue(err.message || 'Failed to fetch change request types.');
+    }
+  }
+);
+
+export const fetchChangeRequestProjectEffects = createAsyncThunk(
+  'lookups/fetchChangeRequestProjectEffects',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await changeRequestRepository.getProjectEffects();
+    } catch (err) {
+      return rejectWithValue(err.message || 'Failed to fetch change request project effects.');
+    }
+  }
+);
+
 export const fetchChangeRequestStatuses = createAsyncThunk(
   'lookups/fetchChangeRequestStatuses',
   async (_, { rejectWithValue }) => {
@@ -83,6 +105,9 @@ const initialState = {
   invoiceStatuses: [],
   trackerCycleStatuses: [],
   changeRequestReasons: [],
+  changeRequestTypes: [],
+  changeRequestProjectEffects: [],
+  changeRequestTypesFailed: false,
   changeRequestStatuses: [],
   isLoading: false,
   error: null,
@@ -155,6 +180,18 @@ const lookupsSlice = createSlice({
       .addCase(fetchChangeRequestReasons.fulfilled, (state, action) => {
         state.changeRequestReasons = action.payload;
       })
+      .addCase(fetchChangeRequestTypes.fulfilled, (state, action) => {
+        state.changeRequestTypes = action.payload;
+      })
+      .addCase(fetchChangeRequestTypes.rejected, (state) => {
+        state.changeRequestTypesFailed = true;
+      })
+      .addCase(fetchChangeRequestProjectEffects.fulfilled, (state, action) => {
+        state.changeRequestProjectEffects = action.payload;
+      })
+      .addCase(fetchChangeRequestProjectEffects.rejected, (state) => {
+        state.changeRequestTypesFailed = true;
+      })
       .addCase(fetchChangeRequestStatuses.fulfilled, (state, action) => {
         state.changeRequestStatuses = action.payload;
       })
@@ -173,6 +210,22 @@ export const selectInvoiceStatuses = (state) => state.lookups.invoiceStatuses;
 export const selectTrackerCycleStatuses = (state) => state.lookups.trackerCycleStatuses;
 export const selectChangeRequestReasons = (state) => state.lookups.changeRequestReasons;
 export const selectChangeRequestStatuses = (state) => state.lookups.changeRequestStatuses;
+export const selectChangeRequestTypes = (state) => state.lookups.changeRequestTypes;
+export const selectChangeRequestProjectEffects = (state) => state.lookups.changeRequestProjectEffects;
+/** Whether the type or project-effect list could not be read. */
+export const selectChangeRequestTypesFailed = (state) => state.lookups.changeRequestTypesFailed;
+
+/** Change request types by key → { label, requiresText }. */
+export const selectChangeRequestTypesMap = createSelector(
+  [selectChangeRequestTypes],
+  (types) => Object.fromEntries(types.map((t) => [t.key, t]))
+);
+
+/** Change request project effects by key → { label }. */
+export const selectChangeRequestProjectEffectsMap = createSelector(
+  [selectChangeRequestProjectEffects],
+  (effects) => Object.fromEntries(effects.map((e) => [e.key, e]))
+);
 
 /** Change request statuses by key → { label, colorHex }. */
 export const selectChangeRequestStatusesMap = createSelector(

@@ -16,6 +16,7 @@ import { StatusBadge } from '@/components/common/Badge';
 import Table from '@/components/common/Table';
 import { ConfirmModal } from '@/components/common/Modal';
 import BOQItemHistoryModal from '@/components/boq/BOQItemHistoryModal';
+import BoqFilesPanel from '@/components/boq/BoqFilesPanel';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { CHROME, SERIES_ROLE, STATUS } from '@/theme/vizPalette';
 import { formatCurrency, formatDate } from '@/utils/formatters';
@@ -26,7 +27,10 @@ import {
   bulkRemoveBOQItems, fetchBOQByProjectCode, removeBOQItem,
   selectBOQItems, selectBOQLoading, selectCurrentBOQ,
 } from '@/store/slices/boqSlice';
-import { fetchMainProjectDetails, selectMainProjectDetails, selectMainDetailsLoading } from '@/store/slices/projectsSlice';
+import {
+  fetchMainProjectDetails, fetchSubProjectsSummary, selectMainProjectDetails, selectMainDetailsLoading, selectSubProjects,
+} from '@/store/slices/projectsSlice';
+import { hasMainProject } from '@/lib/changeRequest/projectDraft';
 import {
   selectBillingFrequenciesMap, selectBoqItemStatusesMap, selectBoqItemStatusColorsMap,
 } from '@/store/slices/lookupsSlice';
@@ -45,6 +49,7 @@ export default function ProjectBOQPage() {
 
   const dispatch = useDispatch();
   const project = useSelector(selectMainProjectDetails);
+  const subProjects = useSelector(selectSubProjects);
   const projectLoading = useSelector(selectMainDetailsLoading);
   const currentBOQ = useSelector(selectCurrentBOQ);
   const boqItems = useSelector(selectBOQItems);
@@ -62,12 +67,15 @@ export default function ProjectBOQPage() {
   const [historyItemId, setHistoryItemId] = useState(null);
 
   const canCreate = can('Boqs', 'Create');
+  // Boqs.Update still covers the BOQ's files; editing an item is administrator only.
   const canUpdate = can('Boqs', 'Update');
+  const canEditItem = can('System', 'Administrator');
   const canDelete = can('Boqs', 'Delete');
   const money = (v) => formatCurrency(v, currency);
 
   useEffect(() => {
     dispatch(fetchMainProjectDetails(projectCode));
+    dispatch(fetchSubProjectsSummary(projectCode));
     dispatch(fetchBOQByProjectCode(projectCode));
   }, [dispatch, projectCode]);
 
@@ -244,7 +252,7 @@ export default function ProjectBOQPage() {
             <Button variant="ghost" size="xs" icon={Eye} title="View" />
           </Link>
           <Button variant="ghost" size="xs" icon={History} onClick={() => setHistoryItemId(row.id)} title="History" />
-          {canUpdate && (
+          {canEditItem && (
             <Link href={`/projects/${encoded}/boq/${row.id}/edit`}>
               <Button variant="ghost" size="xs" icon={Edit2} title="Edit" />
             </Link>
@@ -264,7 +272,7 @@ export default function ProjectBOQPage() {
       ),
     },
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [selected, boqItems.length, currency, boqStatusesMap, boqStatusColorsMap, billingFrequenciesMap, canUpdate, canDelete, encoded]);
+  ], [selected, boqItems.length, currency, boqStatusesMap, boqStatusColorsMap, billingFrequenciesMap, canEditItem, canDelete, encoded]);
 
   if (projectLoading || boqLoading) {
     return (
@@ -326,7 +334,7 @@ export default function ProjectBOQPage() {
                 <Button variant="ghost" icon={ChevronLeft} size="sm">Back</Button>
               </Link>
               {/* A formal change to the approved BOQ, decided by an approver (2026-10-18). */}
-              {can('ChangeRequests', 'Create') && (
+              {can('ChangeRequests', 'Create') && hasMainProject(subProjects) && (
                 <Link href={ROUTES.PROJECT_CHANGE_REQUEST_NEW(encoded)}>
                   <Button variant="outline" icon={FileDiff} size="sm">New change request</Button>
                 </Link>
@@ -379,6 +387,14 @@ export default function ProjectBOQPage() {
           emptyMessage="No BOQ items yet — use “Add item” to get started."
           sortable
         />
+
+        {currentBOQ?.id && (
+          <BoqFilesPanel
+            boq={currentBOQ}
+            canUpdate={canUpdate}
+            onChanged={() => dispatch(fetchBOQByProjectCode(projectCode))}
+          />
+        )}
       </div>
     </MotionConfig>
   );

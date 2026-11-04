@@ -1,6 +1,7 @@
 import { createApiClient } from '@/lib/apiClient';
 import { createPermission } from '@/models/permission';
 import { mapRole, createRolePayload, updateRolePayload } from '@/models/role';
+import { mapGroup, createGroupPayload, updateGroupPayload } from '@/models/group';
 import { mapUser, updateUserPayload, createUserPayload, mapUnregisteredADUser, mapMe } from '@/models/user';
 
 const api = createApiClient('/api/Identity');
@@ -59,7 +60,28 @@ export const identityRepository = {
    */
   async createRole(data) {
     const response = await api.post('/CreateRole', createRolePayload(data));
-    return response?.RoleId ?? null;
+    return response?.roleId ?? null;
+  },
+
+  async getAllGroups() {
+    const data = await api.get('/GetAllGroups');
+    return (data ?? []).map(mapGroup);
+  },
+
+  /** @returns {Promise<string|null>} the new group's id */
+  async createGroup(data) {
+    const response = await api.post('/CreateGroup', createGroupPayload(data));
+    return response?.groupId ?? response?.GroupId ?? null;
+  },
+
+  async updateGroup(data) {
+    const response = await api.post('/UpdateGroup', updateGroupPayload(data));
+    return response?.success === true || response?.Success === true;
+  },
+
+  async deleteGroup(groupId) {
+    const response = await api.post(`/DeleteGroup?groupId=${encodeURIComponent(groupId)}`);
+    return response?.success === true || response?.Success === true;
   },
 
   /**
@@ -135,12 +157,15 @@ export const identityRepository = {
   },
 
   /**
-   * Return AD users not yet registered in the system — candidates to
-   * pick from when adding a new user.
-   * @returns {Promise<object[]>}
+   * AD users not yet registered, matching `search` (part of a username,
+   * display name or email); `total` counts every match.
+   *
+   * @param {{ search?: string, skip?: number, take: number }} query
+   * @returns {Promise<{ users: object[], total: number }>}
    */
-  async getUnregisteredADUsers() {
-    const data = await api.get('/GetUnregisteredADUsers');
-    return (data ?? []).map(mapUnregisteredADUser);
+  async searchUnregisteredADUsers({ search = '', skip = 0, take }) {
+    const params = { skip, take, ...(search ? { search } : {}) };
+    const page = await api.get('/GetUnregisteredADUsers', params);
+    return { users: (page?.users ?? []).map(mapUnregisteredADUser), total: page?.total ?? 0 };
   },
 };

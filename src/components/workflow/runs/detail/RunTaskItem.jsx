@@ -54,7 +54,7 @@ export default function RunTaskItem({ task, canReassign, onReassign }) {
         For a Reassigned row it is the people it was with before it was handed on.
       */}
       <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
-        <AssigneeList users={task.assignedUsers} roles={task.assignedRoles} compact />
+        <AssigneeList users={task.assignedUsers} roles={task.assignedRoles} groups={task.assignedGroups} compact />
         {pending && canReassign && (
           <button
             type="button"
@@ -84,6 +84,12 @@ export default function RunTaskItem({ task, canReassign, onReassign }) {
         <p className="mt-1 text-[11px]" style={{ color: CHROME.textSecondary }}>
           <strong style={{ color: tone }}>{task.outcome}</strong>
           {task.completedByName && <> by {task.completedByName}</>}
+        </p>
+      )}
+
+      {task.reason && (
+        <p className="mt-1 text-[11px]" style={{ color: CHROME.textSecondary }}>
+          Reason: <strong style={{ color: CHROME.textPrimary }}>{task.reason}</strong>
         </p>
       )}
 

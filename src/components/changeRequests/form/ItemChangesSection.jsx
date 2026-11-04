@@ -1,20 +1,20 @@
 'use client';
 
 import { useMemo } from 'react';
-import { LayoutList } from 'lucide-react';
+import { LayoutList, Plus } from 'lucide-react';
 
 import FormSection from '@/components/common/FormSection';
-import { BOQ_STATUS } from '@/constants/statuses';
+import Button from '@/components/common/Button';
 import { canTakeOut } from '@/lib/changeRequest/taskFields';
+import { itemBlocker } from '@/lib/changeRequest/eligibility';
 import { CHROME } from '@/theme/vizPalette';
 import AddItemPicker from './AddItemPicker';
 import ItemChangeCard from './ItemChangeCard';
+import NewItemCard from './NewItemCard';
 
 /**
- * The items a change request changes — picked from the approved ones, each in
- * its own card. New items are never part of a request: they are added the
- * usual way once it is approved. From the moment a request is created its
- * items are frozen until it is decided.
+ * The BOQ changes of a request: approved items it changes, picked from the
+ * BOQ, and new items it adds. Each in its own card.
  *
  * @param {{
  *   form: ReturnType<import('./useChangeRequestForm').useChangeRequestForm>,
@@ -23,25 +23,35 @@ import ItemChangeCard from './ItemChangeCard';
  */
 export default function ItemChangesSection({ form, boqItems, statusNameOf }) {
   const inRequest = useMemo(() => new Set(form.items.map((d) => String(d.itemId))), [form.items]);
-  const approved = boqItems.filter((item) => statusNameOf(item.statusId) === BOQ_STATUS.APPROVED);
-  const choices = approved
+  const choices = useMemo(() => boqItems
     .filter((item) => !inRequest.has(String(item.id)))
-    .sort((a, b) => String(a.englishName ?? '').localeCompare(String(b.englishName ?? '')));
+    .sort((a, b) => String(a.englishName ?? '').localeCompare(String(b.englishName ?? '')))
+    .map((item) => ({ item, blocker: itemBlocker(item, statusNameOf(item.statusId)) })),
+  [boqItems, inRequest, statusNameOf]);
+  const canPickItems = form.asks.fieldChanges || form.asks.cycleChanges;
+  const canAddNew = form.asks.newItems;
+  const empty = form.items.length === 0 && form.newItems.length === 0;
 
   return (
     <FormSection
-      title="Item changes"
-      subtitle="Approved items without an invoice. New items are added the usual way once the request is approved"
+      title="BOQ Changes"
+      subtitle="Change approved items without an invoice, or add new items"
       icon={LayoutList}
     >
-      <AddItemPicker form={form} choices={choices} notApprovedCount={boqItems.length - approved.length} />
+      <div className="flex flex-wrap items-start gap-2">
+        {canPickItems && <div className="min-w-0 flex-1"><AddItemPicker form={form} choices={choices} /></div>}
+        {canAddNew && (
+          <Button size="sm" variant="outline" icon={Plus} onClick={form.addNewItem}>Add new BOQ item</Button>
+        )}
+      </div>
 
       <div className="mt-4 flex flex-col gap-4">
-        {form.items.length === 0 ? (
+        {empty && (
           <p className="rounded-xl border border-dashed border-[#e1e0d9] px-4 py-6 text-center text-xs" style={{ color: CHROME.textMuted }}>
-            No items in this request. A request can change only the project, too.
+            No BOQ changes in this request. A request can change only the contract dates, too.
           </p>
-        ) : form.items.map((draft) => (
+        )}
+        {form.items.map((draft) => (
           <ItemChangeCard
             key={draft.itemId}
             draft={draft}
@@ -55,6 +65,20 @@ export default function ItemChangesSection({ form, boqItems, statusNameOf }) {
             lockFields={!form.asks.fieldChanges}
             lockPlan={!form.asks.cycleChanges}
             canRemove={canTakeOut(draft, form.asks)}
+          />
+        ))}
+        {form.newItems.map((draft) => (
+          <NewItemCard
+            key={draft.key}
+            draft={draft}
+            problems={form.shownProblems.newItems[draft.key] ?? null}
+            plan={form.newItemPlans[draft.key]}
+            window={form.window}
+            locked={!canAddNew}
+            onField={form.setNewItemField}
+            onCycles={form.setNewItemCycles}
+            onRemove={form.removeNewItem}
+            revealToken={form.refusedCount}
           />
         ))}
       </div>

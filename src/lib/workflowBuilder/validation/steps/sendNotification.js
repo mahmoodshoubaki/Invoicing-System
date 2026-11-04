@@ -3,8 +3,8 @@ import { readPlaceholder } from '@/utils/workflowPlaceholder';
 
 /** A Send notification step's rules: its type, its recipients, its CC, and the task it is about. */
 
-const TO_LISTS = ['toUserIds', 'toRoleIds', 'toExpressions', 'toEmails'];
-const CC_LISTS = ['ccUserIds', 'ccRoleIds', 'ccExpressions', 'ccEmails'];
+const TO_LISTS = ['toUserIds', 'toRoleIds', 'toGroupIds', 'toExpressions', 'toEmails'];
+const CC_LISTS = ['ccUserIds', 'ccRoleIds', 'ccGroupIds', 'ccExpressions', 'ccEmails'];
 
 /** Whether the step copies anybody in — people, roles, person fields or addresses. */
 export function copiesAnyone(step) {
@@ -58,7 +58,7 @@ export function checkSendNotification(step, { where, fields, humanTaskIds, notif
 
   const toLists = TO_LISTS.map((k) => step[k] ?? []);
   if (toLists.every((l) => l.length === 0)) {
-    errors.push(`${where} sends a notification to nobody. Pick people, roles, a person field or an address.`);
+    errors.push(`${where} sends a notification to nobody. Pick people, roles, groups, a person field or an address.`);
   }
 
   const everyEntry = [...toLists.flat(), ...CC_LISTS.flatMap((k) => step[k] ?? [])];

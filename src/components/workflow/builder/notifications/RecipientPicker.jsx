@@ -5,6 +5,7 @@ import { memo } from 'react';
 import { Label } from '@/components/workflow/builder/containers/shared';
 import UserPicker from '@/components/workflow/builder/UserPicker';
 import RoleChips from '@/components/workflow/builder/RoleChips';
+import GroupChips from '@/components/workflow/builder/GroupChips';
 import EmailListInput from '@/components/workflow/builder/EmailListInput';
 import { ExpressionAssignees } from '@/components/workflow/builder/HumanTaskEditor';
 
@@ -30,6 +31,16 @@ function RecipientPicker({ line, step, ctx, onChange }) {
           loading={ctx.rolesLoading}
           selectedIds={step[key('RoleIds')] ?? []}
           onChange={set('RoleIds')}
+        />
+      </div>
+
+      <div>
+        <Label hint="— every member when the step runs">Groups</Label>
+        <GroupChips
+          groups={ctx.groups ?? []}
+          loading={ctx.groupsLoading}
+          selectedIds={step[key('GroupIds')] ?? []}
+          onChange={set('GroupIds')}
         />
       </div>
 

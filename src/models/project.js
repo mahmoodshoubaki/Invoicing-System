@@ -91,6 +91,7 @@ export function mapProjectListItem(raw) {
     contractSignatureDate: info.contractSignatureDate ?? null,
     siteReceiptDate:       info.siteReceiptDate       ?? null,
     contractDuration:      info.contractDuration      ?? null,
+    isMainProject:         info.isMainProject === true,
   };
 }
 
@@ -263,4 +264,36 @@ export function aggregateSubProjectFinancials(subProjects) {
     nonCollectedValue:     totals.nonCollectedValue     + sp.nonCollectedValue,
     totalInvoicesValue:    totals.totalInvoicesValue    + sp.totalInvoicesValue,
   }), { ...ZERO_SUB_PROJECT_TOTALS });
+}
+
+const dayOf = (value) => (value ? String(value).slice(0, 10) : null);
+
+/**
+ * Maps `GetProjectHeader`.
+ *
+ * @param {Object} raw
+ * @returns {{
+ *   projectCode: string, projectName: string|null, contractName: string|null,
+ *   contractStartDate: string|null, contractFinishDate: string|null, contractDuration: number|null,
+ *   projectValue: number|null, bdm: string|null, bdmUsername: string|null, buHead: string|null,
+ *   buHeadUsername: string|null, crp: string|null, crpUsername: string|null, hasMainProject: boolean,
+ * }}
+ */
+export function mapProjectHeader(raw) {
+  return {
+    projectCode:        raw.projectCode ?? '',
+    projectName:        raw.projectName ?? null,
+    contractName:       raw.contractName ?? null,
+    contractStartDate:  dayOf(raw.contractStartDate),
+    contractFinishDate: dayOf(raw.contractFinishDate),
+    contractDuration:   raw.contractDuration ?? null,
+    projectValue:       raw.projectValue ?? null,
+    bdm:                raw.bdm ?? null,
+    bdmUsername:        raw.bdmUsername ?? null,
+    buHead:             raw.buHead ?? null,
+    buHeadUsername:     raw.buHeadUsername ?? null,
+    crp:                raw.crp ?? null,
+    crpUsername:        raw.crpUsername ?? null,
+    hasMainProject:     raw.hasMainProject === true,
+  };
 }

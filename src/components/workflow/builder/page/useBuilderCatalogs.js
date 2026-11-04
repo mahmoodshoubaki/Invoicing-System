@@ -8,7 +8,9 @@ import { conditionFields } from '@/lib/workflowBuilderState';
 import {
   personNames, withLookupOptions, withPersonNames, withPersonNamesByType,
 } from '@/lib/workflowFieldOptions';
-import { selectBillingFrequencies, selectBoqItemStatuses } from '@/store/slices/lookupsSlice';
+import {
+  selectBillingFrequencies, selectBoqItemStatuses, selectChangeRequestProjectEffects,
+} from '@/store/slices/lookupsSlice';
 import { fetchFields, selectFieldsByTargetType } from '@/store/slices/workflowSlice';
 
 /** Stable identity so an unloaded catalog does not re-run every memo below. */
@@ -70,13 +72,18 @@ export function useBuilderCatalogs({ state, resolvedById }) {
   const rawFieldsByTargetType = useSelector(selectFieldsByTargetType);
   const boqItemStatuses = useSelector(selectBoqItemStatuses);
   const billingFrequencies = useSelector(selectBillingFrequencies);
+  const projectEffects = useSelector(selectChangeRequestProjectEffects);
+  const changeRequestProjectEffects = useMemo(
+    () => projectEffects.map((e) => ({ id: e.key, label: e.label })),
+    [projectEffects]
+  );
   const peopleNames = useMemo(() => personNames(resolvedById), [resolvedById]);
   const fieldsByTargetType = useMemo(
     () => withPersonNamesByType(
-      withLookupOptions(rawFieldsByTargetType, { boqItemStatuses, billingFrequencies }),
+      withLookupOptions(rawFieldsByTargetType, { boqItemStatuses, billingFrequencies, changeRequestProjectEffects }),
       peopleNames
     ),
-    [rawFieldsByTargetType, boqItemStatuses, billingFrequencies, peopleNames]
+    [rawFieldsByTargetType, boqItemStatuses, billingFrequencies, changeRequestProjectEffects, peopleNames]
   );
   const catalogFields = fieldsByTargetType[state.targetTypeKey] ?? EMPTY_FIELDS;
 

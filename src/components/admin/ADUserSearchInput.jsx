@@ -1,19 +1,21 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Search, X, UserRound, Loader2 } from 'lucide-react';
 import Avatar from '@/components/common/Avatar';
+import { useADUserSearch } from './useADUserSearch';
 
 const MAX_VISIBLE = 8;
 
 /**
- * Searchable picker over GetUnregisteredADUsers — search by username, email,
- * or display name, pick one candidate to seed the new-user form.
+ * Searchable picker over GetUnregisteredADUsers — the server searches username,
+ * email and display name; pick one candidate to seed the new-user form.
  */
-export default function ADUserSearchInput({ candidates, loading, selected, onSelect, onClear }) {
+export default function ADUserSearchInput({ selected, onSelect, onClear }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);
+  const { users: filtered, total, loading, error } = useADUserSearch(query, open && !selected, MAX_VISIBLE);
 
   useEffect(() => {
     function handleClick(e) {
@@ -22,18 +24,6 @@ export default function ADUserSearchInput({ candidates, loading, selected, onSel
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const pool = q
-      ? candidates.filter((c) =>
-          c.username?.toLowerCase().includes(q) ||
-          c.displayName?.toLowerCase().includes(q) ||
-          c.email?.toLowerCase().includes(q)
-        )
-      : candidates;
-    return pool.slice(0, MAX_VISIBLE);
-  }, [candidates, query]);
 
   if (selected) {
     return (
@@ -89,6 +79,8 @@ export default function ADUserSearchInput({ candidates, loading, selected, onSel
               <Loader2 size={15} className="animate-spin" />
               Loading available users...
             </div>
+          ) : error ? (
+            <p className="px-4 py-6 text-center text-sm text-gray-500">Couldn’t load AD users. {error.message}</p>
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-1.5 py-6 text-center px-4">
               <UserRound size={20} className="text-gray-300" />
@@ -117,9 +109,9 @@ export default function ADUserSearchInput({ candidates, loading, selected, onSel
               ))}
             </ul>
           )}
-          {!loading && candidates.length > MAX_VISIBLE && filtered.length === MAX_VISIBLE && (
+          {!loading && !error && total > filtered.length && (
             <p className="text-[11px] text-gray-400 text-center py-1.5 border-t border-gray-50">
-              Showing first {MAX_VISIBLE} — keep typing to narrow results
+              Showing {filtered.length} of {total} — keep typing to narrow results
             </p>
           )}
         </div>

@@ -1,5 +1,8 @@
 import { createApiClient } from '@/lib/apiClient';
-import { createProject, mapProjectListItem, mapMainProjectDetails, mapSubProjectSummary } from '@/models/project';
+import { fetchAllPages } from '@/lib/fetchAllPages';
+import {
+  createProject, mapProjectListItem, mapMainProjectDetails, mapSubProjectSummary, mapProjectHeader,
+} from '@/models/project';
 
 const api = createApiClient('/api/Projects');
 
@@ -25,6 +28,24 @@ export const projectRepository = {
     return raw ? createProject(raw) : null;
   },
 
+  /**
+   * The project's header: names, contract dates, value, its three people and
+   * whether it has a main project. Null when the user may not see it.
+   *
+   * @param {string} projectCode
+   * @returns {Promise<Object|null>}  mapProjectHeader's
+   */
+  async getProjectHeader(projectCode) {
+    const raw = await api.get('/GetProjectHeader', { projectCode });
+    return raw ? mapProjectHeader(raw) : null;
+  },
+
+  /** Every EPM project status, like "In Progress" — what a status filter offers. */
+  async getProjectStatuses() {
+    const data = await api.get('/GetProjectStatuses');
+    return Array.isArray(data) ? data.filter(Boolean) : [];
+  },
+
   // REAL API
   async getMainProjectDetails(projectCode) {
     const raw = await api.get(`/GetMainProjectDetails?${new URLSearchParams({ projectCode }).toString()}`);
@@ -37,22 +58,29 @@ export const projectRepository = {
     return data.map(mapSubProjectSummary);
   },
 
+  /**
+   * One page of the user's projects, searched and filtered by the server.
+   * `statuses` is every status the user's projects have, whatever the filter.
+   *
+   * @param {{ search?: string, status?: string, skip: number, take: number }} query
+   * @returns {Promise<{ projects: Object[], total: number, statuses: string[] }>}
+   */
+  async getProjectsPage({ search = '', status = '', skip, take }) {
+    const params = { skip, take, ...(search ? { search } : {}), ...(status ? { status } : {}) };
+    const page = await api.get('/GetProjectsList', params);
+    return {
+      projects: (page?.projects ?? []).map(mapProjectListItem),
+      total: page?.total ?? 0,
+      statuses: page?.statuses ?? [],
+    };
+  },
+
   // REAL API
-  async getProjects(filters = {}) {
-    const data = await api.get('/GetProjectsList');
-    let result = data.map(mapProjectListItem);
-    if (filters.search) {
-      const q = filters.search.toLowerCase();
-      result = result.filter(
-        (p) =>
-          p.projectName?.toLowerCase().includes(q) ||
-          p.clientName?.toLowerCase().includes(q) ||
-          p.projectCode?.toLowerCase().includes(q) ||
-          String(p.contractNumber ?? '').toLowerCase().includes(q)
-      );
-    }
-    if (filters.status) result = result.filter((p) => p.status === filters.status);
-    return result;
+  async getProjects({ search = '', status = '' } = {}) {
+    return fetchAllPages(async (skip, take) => {
+      const page = await projectRepository.getProjectsPage({ search, status, skip, take });
+      return { rows: page.projects, total: page.total };
+    });
   },
 
   // TODO: wire up real endpoint

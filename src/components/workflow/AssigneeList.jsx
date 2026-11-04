@@ -1,6 +1,6 @@
 'use client';
 
-import { User, Users } from 'lucide-react';
+import { Boxes, User, Users } from 'lucide-react';
 
 import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
@@ -19,8 +19,8 @@ import { withAlpha } from '@/utils/color';
  * `emptyText` is what to say when nobody is listed. Omit it to render nothing,
  * which is right where an empty list only means the API has not sent the field.
  */
-export default function AssigneeList({ users = [], roles = [], emptyText = null, compact = false }) {
-  if (users.length === 0 && roles.length === 0) {
+export default function AssigneeList({ users = [], roles = [], groups = [], emptyText = null, compact = false }) {
+  if (users.length === 0 && roles.length === 0 && groups.length === 0) {
     return emptyText ? (
       <span className="text-[11px]" style={{ color: CHROME.textMuted }}>{emptyText}</span>
     ) : null;
@@ -49,6 +49,17 @@ export default function AssigneeList({ users = [], roles = [], emptyText = null,
         >
           <Users size={compact ? 9 : 10} aria-hidden="true" />
           {role.name}
+        </span>
+      ))}
+      {groups.map((group) => (
+        <span
+          key={`g-${group.id ?? group.name}`}
+          className={`inline-flex items-center gap-1 rounded-full font-medium ${chip}`}
+          style={{ backgroundColor: withAlpha(STATUS.good, 0.12), color: STATUS.good }}
+          title="A group — any member can answer"
+        >
+          <Boxes size={compact ? 9 : 10} aria-hidden="true" />
+          {group.name}
         </span>
       ))}
     </span>

@@ -213,6 +213,13 @@
     transform: translateY(0) scale(0.97);
     transition-duration: var(--dur-1);
   }
+  /* Wide toggles stay put: the lift and the press shrink would move their
+     edges out from under the pointer, and the click would be lost. */
+  button.press-flat:not(:disabled):hover,
+  button.press-flat:not(:disabled):active {
+    transform: none;
+    filter: none;
+  }
   button:disabled {
     cursor: not-allowed;
     opacity: 0.55;

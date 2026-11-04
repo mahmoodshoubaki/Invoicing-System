@@ -8,7 +8,11 @@ import FormSection from '@/components/common/FormSection';
 import { boqTotals, movesMoney } from '@/lib/changeRequest/checks';
 import { changedItemFields, cycleChangesOf } from '@/lib/changeRequest/itemDraft';
 import { changedProjectFields } from '@/lib/changeRequest/projectDraft';
-import { selectBillingFrequencies } from '@/store/slices/lookupsSlice';
+import { newItemTotal } from '@/lib/changeRequest/newItemDraft';
+import { typesText } from '@/lib/changeRequest/typesDraft';
+import {
+  selectBillingFrequencies, selectChangeRequestProjectEffectsMap, selectChangeRequestTypesMap,
+} from '@/store/slices/lookupsSlice';
 import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 import { formatCurrency, formatDate } from '@/utils';
@@ -47,7 +51,7 @@ export default function ChangeSummary({ form, subProjects, boqItems }) {
   const frequencies = useSelector(selectBillingFrequencies);
   const totals = boqTotals(form.draft, { subProjects, allItems: boqItems });
   const projectChanges = changedProjectFields(subProjects, form.projectEdits);
-  const counts = movesMoney(form.draft, projectChanges);
+  const counts = movesMoney(form.draft);
   const over = totals.projectValue > 0 && totals.itemsTotal > totals.projectValue;
 
   const show = (key, value) => {
@@ -56,11 +60,24 @@ export default function ChangeSummary({ form, subProjects, boqItems }) {
     if (key === 'billingFrequencyId') return frequencies.find((f) => String(f.id) === String(value))?.label ?? value;
     return value;
   };
+  const typesMap = useSelector(selectChangeRequestTypesMap);
+  const effectsMap = useSelector(selectChangeRequestProjectEffectsMap);
+  const typeLine = typesText(form.typeKeys, form.otherTypeText, typesMap);
+  const effectLine = form.projectEffectKey != null ? effectsMap[form.projectEffectKey]?.label ?? '' : '';
   const general = form.shownProblems.general;
-  const itemNames = useMemo(() => form.items.map((i) => i.name), [form.items]);
+  const itemNames = useMemo(
+    () => [...form.items.map((i) => i.name), ...form.newItems.map((i) => `${i.values.englishName.trim()} (new item)`)],
+    [form.items, form.newItems]
+  );
 
   return (
     <FormSection title="Summary" subtitle="What the approver will be asked to accept" icon={Scale}>
+      <p className="mb-3 text-xs" style={{ color: CHROME.textSecondary }}>
+        <span style={{ color: CHROME.textMuted }}>Type </span>
+        <strong style={{ color: CHROME.textPrimary }}>{typeLine || '—'}</strong>
+        <span className="ml-4" style={{ color: CHROME.textMuted }}>Project effect </span>
+        <strong style={{ color: CHROME.textPrimary }}>{effectLine || '—'}</strong>
+      </p>
       <div
         className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-1 rounded-xl px-4 py-3 text-xs"
         style={{ backgroundColor: over && counts ? withAlpha(STATUS.critical, 0.07) : '#f6f5f3' }}
@@ -85,7 +102,7 @@ export default function ChangeSummary({ form, subProjects, boqItems }) {
         )}
       </div>
 
-      {projectChanges.length === 0 && form.items.length === 0 ? (
+      {projectChanges.length === 0 && form.items.length === 0 && form.newItems.length === 0 ? (
         <p className="text-xs" style={{ color: CHROME.textMuted }}>No changes yet.</p>
       ) : (
         <div className="flex flex-col gap-3">
@@ -120,6 +137,20 @@ export default function ChangeSummary({ form, subProjects, boqItems }) {
               </div>
             );
           })}
+          {form.newItems.length > 0 && (
+            <div>
+              <p className="mb-1 text-xs font-semibold" style={{ color: CHROME.textPrimary }}>New items</p>
+              <ul className="flex flex-col gap-0.5">
+                {form.newItems.map((item) => (
+                  <li key={item.key} className="text-xs" style={{ color: CHROME.textSecondary }}>
+                    <span className="font-medium" style={{ color: CHROME.textPrimary }}>{item.values.englishName.trim() || 'New item'}</span>
+                    {' · '}{formatCurrency(newItemTotal(item.values), currency)}
+                    {' · '}{item.cycles.length} plan cycle{item.cycles.length === 1 ? '' : 's'}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
 

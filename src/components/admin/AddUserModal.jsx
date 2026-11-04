@@ -1,16 +1,10 @@
 'use client';
 
-import { memo, useEffect, useState } from 'react';
+import { memo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { UserPlus } from 'lucide-react';
 import { addToast } from '@/store/slices/uiSlice';
-import {
-  createUser,
-  fetchUnregisteredADUsers,
-  clearAdCandidates,
-  selectAdCandidates,
-  selectAdCandidatesLoading,
-} from '@/store/slices/usersSlice';
+import { createUser } from '@/store/slices/usersSlice';
 import { selectRoles } from '@/store/slices/rolesSlice';
 import Modal from '@/components/common/Modal';
 import Button from '@/components/common/Button';
@@ -40,22 +34,19 @@ const EMPTY_FORM = {
 function AddUserModal({ open, onClose, onCreated }) {
   const dispatch = useDispatch();
   const roles = useSelector(selectRoles);
-  const adCandidates = useSelector(selectAdCandidates);
-  const adCandidatesLoading = useSelector(selectAdCandidatesLoading);
 
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (open) {
-      dispatch(fetchUnregisteredADUsers());
-    } else {
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (!open) {
       setFormData(EMPTY_FORM);
       setSelectedCandidate(null);
-      dispatch(clearAdCandidates());
     }
-  }, [open, dispatch]);
+  }
 
   function selectCandidate(candidate) {
     setSelectedCandidate(candidate);
@@ -109,8 +100,6 @@ function AddUserModal({ open, onClose, onCreated }) {
     >
       <div className="space-y-4">
         <ADUserSearchInput
-          candidates={adCandidates}
-          loading={adCandidatesLoading}
           selected={selectedCandidate}
           onSelect={selectCandidate}
           onClear={clearCandidate}

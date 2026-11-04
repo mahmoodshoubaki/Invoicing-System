@@ -44,6 +44,15 @@ const nextConfig = {
     ];
   },
 
+  // The API's Hangfire dashboard, through the same proxy as every API call: the
+  // accessToken cookie goes with it, and BACKEND_API_URL decides where it lands.
+  // Its own links, scripts and polling all start with /hangfire.
+  async rewrites() {
+    return [
+      { source: '/hangfire/:path*', destination: '/api/backend/hangfire/:path*' },
+    ];
+  },
+
   // Headers for security
   async headers() {
     return [
@@ -54,6 +63,11 @@ const nextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
         ],
+      },
+      // Framed by /admin/jobs/dashboard. Last, so it replaces DENY on these paths.
+      {
+        source: '/hangfire/:path*',
+        headers: [{ key: 'X-Frame-Options', value: 'SAMEORIGIN' }],
       },
     ];
   },

@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import {
   fetchBillingFrequencies, fetchBoqItemStatuses, fetchChangeRequestReasons, fetchChangeRequestStatuses,
+  fetchChangeRequestTypes, fetchChangeRequestProjectEffects,
   fetchInvoiceStatuses, fetchTrackerCycleStatuses,
 } from '@/store/slices/lookupsSlice';
 
@@ -29,6 +30,8 @@ export default function LookupsSync() {
   }, [dispatch]);
   useEffect(() => {
     dispatch(fetchChangeRequestReasons());
+    dispatch(fetchChangeRequestTypes());
+    dispatch(fetchChangeRequestProjectEffects());
     dispatch(fetchChangeRequestStatuses());
   }, [dispatch]);
 

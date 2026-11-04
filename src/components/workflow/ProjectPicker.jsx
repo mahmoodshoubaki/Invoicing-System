@@ -5,7 +5,7 @@ import { FolderKanban, Search, X } from 'lucide-react';
 
 import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
-import { projectRepository } from '@/repositories/projectRepository';
+import { useProjectSearch } from './useProjectSearch';
 
 /** Enough to scan without scrolling; typing narrows the rest. */
 const SHOWN = 20;
@@ -18,10 +18,9 @@ const SHOWN = 20;
  * exists: a misspelled one still starts a run, just with no project behind it.
  * So the codes are chosen from the real project list rather than typed.
  *
- * The list is the same `GetProjectsList` the Projects page reads, loaded once
- * when this mounts and filtered here. If it cannot be read — no permission,
- * say — `onUnavailable` hands the job back to the caller's plain text box,
- * rather than leaving somebody unable to start the run at all.
+ * Typing searches `GetProjectsList` on the server. If it cannot be read — no
+ * permission, say — `onUnavailable` hands the job back to the caller's plain
+ * text box, rather than leaving somebody unable to start the run at all.
  *
  * @param {{
  *   selectedCodes: string[],
@@ -30,25 +29,16 @@ const SHOWN = 20;
  * }} props
  */
 function ProjectPicker({ selectedCodes, onChange, onUnavailable }) {
-  const [projects, setProjects] = useState(null);
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+  const { projects, known: byCode, error } = useProjectSearch(query, SHOWN + selectedCodes.length);
 
   useEffect(() => {
-    let cancelled = false;
-    projectRepository
-      .getProjects()
-      .then((rows) => {
-        if (!cancelled) setProjects(rows.filter((p) => p.projectCode));
-      })
-      .catch(() => {
-        if (!cancelled) onUnavailable?.();
-      });
-    return () => { cancelled = true; };
-    // Loaded once; the caller's callback identity is irrelevant to that.
+    if (error) onUnavailable?.();
+    // Reported once per failure; the caller's callback identity is irrelevant to that.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [error]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -59,21 +49,10 @@ function ProjectPicker({ selectedCodes, onChange, onUnavailable }) {
     return () => document.removeEventListener('mousedown', onDocClick);
   }, [open]);
 
-  const byCode = useMemo(
-    () => Object.fromEntries((projects ?? []).map((p) => [p.projectCode, p])),
-    [projects]
+  const matches = useMemo(
+    () => (projects ?? []).filter((p) => !selectedCodes.includes(p.projectCode)).slice(0, SHOWN),
+    [projects, selectedCodes]
   );
-
-  const matches = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return (projects ?? [])
-      .filter((p) => !selectedCodes.includes(p.projectCode))
-      .filter((p) => !q
-        || p.projectCode.toLowerCase().includes(q)
-        || p.projectName?.toLowerCase().includes(q)
-        || p.clientName?.toLowerCase().includes(q))
-      .slice(0, SHOWN);
-  }, [projects, query, selectedCodes]);
 
   const add = (code) => {
     onChange([...selectedCodes, code]);

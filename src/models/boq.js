@@ -66,6 +66,7 @@ export function createBOQItem(raw) {
     // The to-dos its workflow is waiting on, and who holds each (2026-10-21) —
     // on every item row of GetBoqById and GetBoqByProjectCode.
     waitingOn:             (raw.waitingOn ?? []).map(createWaitingTask),
+    hasInProgressInvoices: raw.hasInProgressInvoices === true,
   };
 }
 
@@ -76,12 +77,34 @@ export function createBOQItem(raw) {
  * @returns {BOQ}
  */
 export function createBOQ(raw) {
-  if (!raw) return { projectCode: null, id: null, boqItems: [] };
+  if (!raw) return { projectCode: null, id: null, boqItems: [], attachments: [] };
   return {
     projectCode: raw.projectCode ?? null,
     id:          raw.id          ?? null,
     boqItems:    (raw.boqItems   ?? []).map(createBOQItem),
+    attachments: (raw.attachments ?? []).map(createBoqAttachment),
   };
+}
+
+/** A file on a BOQ. */
+export function createBoqAttachment(raw) {
+  return {
+    id:         raw?.id ?? raw?.ID ?? null,
+    boqId:      raw?.boqId ?? null,
+    contentId:  raw?.contentId ?? null,
+    fileName:   raw?.fileName ?? '',
+    fileSize:   raw?.fileSize ?? 0,
+    uploadedBy: raw?.uploadedBy ?? null,
+    canRemove:  raw?.canRemove === true,
+  };
+}
+
+/** AddBoqAttachments' multipart body. */
+export function createBoqAttachmentsFormData(boqId, files) {
+  const formData = new FormData();
+  formData.append('BoqId', boqId);
+  (files ?? []).filter((f) => f.status === 'done').forEach((f) => formData.append('Attachments', f.file, f.name));
+  return formData;
 }
 
 /**

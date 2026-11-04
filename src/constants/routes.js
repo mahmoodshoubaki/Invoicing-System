@@ -1,6 +1,9 @@
 export const ROUTES = {
   // Dashboard
   DASHBOARD: '/dashboard',
+  DASHBOARD_DELAYED_CYCLES: '/dashboard/delayed-cycles',
+  DASHBOARD_SLA_VIOLATIONS: '/dashboard/sla-violations',
+  DASHBOARD_PENDING_APPROVALS: '/dashboard/pending-approvals',
 
   // Projects
   PROJECTS: '/projects',
@@ -26,6 +29,7 @@ export const ROUTES = {
   // "new"/"edit" routes; detail stays top-level since it's also reachable
   // from the global invoices list)
   INVOICES: '/invoices',
+  INVOICES_WITH_STATUS: (statusId) => `/invoices?status=${statusId}`,
   PROJECT_INVOICE_NEW: (id) => `/projects/${id}/invoices/new`,
   PROJECT_INVOICE_EDIT: (id, invoiceId) => `/projects/${id}/invoices/${invoiceId}/edit`,
   INVOICE_DETAIL: (id) => `/invoices/${id}`,
@@ -34,7 +38,9 @@ export const ROUTES = {
   ADMIN: '/admin',
   ADMIN_USERS: '/admin/users',
   ADMIN_ROLES: '/admin/roles',
+  ADMIN_GROUPS: '/admin/groups',
   ADMIN_SETTINGS: '/admin/settings',
+  DATA_MIGRATION: '/admin/migration',
 
   // Workflow — the person's own to-do list stays outside Admin
   WORKFLOW_TASKS: '/workflow/tasks',
@@ -69,6 +75,10 @@ export const ROUTES = {
 
   // Background jobs, every module's
   BACKGROUND_JOBS: '/admin/jobs',
+  // The API's Hangfire dashboard, framed (System.Administrator).
+  BACKGROUND_JOBS_DASHBOARD: '/admin/jobs/dashboard',
+  // Not an app page: next.config.mjs sends it through the API proxy.
+  HANGFIRE: '/hangfire',
 
   // Notifications — the person's own inbox
   NOTIFICATIONS: '/notifications',
@@ -92,6 +102,9 @@ export const ROUTES = {
  */
 export const ROUTE_PATTERNS = {
   DASHBOARD: '/dashboard',
+  DASHBOARD_DELAYED_CYCLES: '/dashboard/delayed-cycles',
+  DASHBOARD_SLA_VIOLATIONS: '/dashboard/sla-violations',
+  DASHBOARD_PENDING_APPROVALS: '/dashboard/pending-approvals',
   PROJECTS: '/projects',
   PROJECTS_NEW: '/projects/new',
   PROJECT_DETAIL: '/projects/[id]',
@@ -110,6 +123,7 @@ export const ROUTE_PATTERNS = {
   ADMIN: '/admin',
   ADMIN_USERS: '/admin/users',
   ADMIN_ROLES: '/admin/roles',
+  ADMIN_GROUPS: '/admin/groups',
   ADMIN_SETTINGS: '/admin/settings',
   WORKFLOW_TASKS: '/workflow/tasks',
   WORKFLOW_ADMIN: '/admin/workflow',
@@ -126,6 +140,7 @@ export const ROUTE_PATTERNS = {
   MONITORING_TRACE: '/admin/monitoring/trace',
   MONITORING_AUDIT: '/admin/monitoring/audit',
   BACKGROUND_JOBS: '/admin/jobs',
+  BACKGROUND_JOBS_DASHBOARD: '/admin/jobs/dashboard',
   NOTIFICATIONS: '/notifications',
   NOTIFICATION_TYPES: '/admin/notifications/types',
   NOTIFICATION_TYPE_DETAIL: '/admin/notifications/types/[typeId]',

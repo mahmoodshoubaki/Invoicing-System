@@ -1,26 +1,17 @@
 /**
- * What stops a change request (2026-10-18; the server's rules from 2026-10-19),
- * by the part of the form it is about. The user can change anything — the
- * approver decides whether it makes sense — but impossible results are refused,
- * as the server refuses them:
- *
- * - the BOQ's items cannot add up to more than the project value — checked only
- *   when the request moves money (a quantity, a unit cost or a project value),
- *   so a BOQ already over its value does not block a change of dates;
- * - a cycle the request moves or adds must fall inside the contract dates (the
- *   new ones, if the request changes them), and when it changes them, the
- *   items' other cycles cannot end up after the new finish;
- * - no item can be left without a plan cycle.
- *
- * The server also checks the items this request does not touch against new
- * contract dates; the form cannot see their plans, so that one comes back from
- * the server under the request as a whole.
+ * What stops a change request, by the part of the form it is about. Mirrors the
+ * server's ChangeRequestContentBuilder and ChangeRequestRuleValidator; the
+ * server also checks the plans of items the request does not touch against new
+ * contract dates, which the form cannot see.
  */
 
 import { CR_DETAILS_MAX } from '@/constants/changeRequests';
+import { filesAfterSave, isStillAdding } from '@/lib/taskFileValue';
 import { changedItemFields, cycleChangesOf, itemChanges, itemTotal } from './itemDraft';
+import { newItemProblems, newItemTotal } from './newItemDraft';
+import { typeProblems } from './typesDraft';
 import {
-  changedProjectFields, contractWindow, hasProjectValue, projectValueTotal, proposedSubProjects,
+  changedProjectFields, contractWindow, hasProjectValue, mainProjectOf, projectValueTotal, proposedFinish, proposedSubProjects,
 } from './projectDraft';
 
 const isNumber = (text) => String(text ?? '').trim() !== '' && Number.isFinite(Number(text));
@@ -31,8 +22,8 @@ function itemProblems(draft, window, windowChanged) {
   const problems = {};
   if (!v.englishName.trim()) problems.englishName = 'English description is required.';
   if (!v.arabicName.trim()) problems.arabicName = 'Arabic description is required.';
-  if (!isNumber(v.quantity) || Number(v.quantity) <= 0) problems.quantity = 'A quantity above 0 is required.';
-  if (!isNumber(v.unitCost) || Number(v.unitCost) < 0) problems.unitCost = 'A unit cost of 0 or more is required.';
+  if (!isNumber(v.quantity) || Number(v.quantity) < 0) problems.quantity = 'A quantity of 0 or more is required.';
+  if (!isNumber(v.unitCost) || Number(v.unitCost) <= 0) problems.unitCost = 'A unit cost above 0 is required.';
   if (!v.billingFrequencyId) problems.billingFrequencyId = 'Billing frequency is required.';
   if (!v.expectedInvoicingDate) problems.expectedInvoicingDate = 'Updated expected invoicing date is required.';
 
@@ -52,50 +43,69 @@ function itemProblems(draft, window, windowChanged) {
   return problems;
 }
 
+/** The main project's contract dates as the request would leave them. */
 function projectProblems(originals, edits) {
-  const problems = {};
-  for (const o of originals) {
-    const mine = edits[o.uid];
-    if (!mine) continue;
-    const found = {};
-    if ('projectValue' in mine && (!isNumber(mine.projectValue) || Number(mine.projectValue) <= 0)) {
-      found.projectValue = 'A project value above 0 is required.';
-    }
-    if ('contractStartDate' in mine && !mine.contractStartDate) found.contractStartDate = 'A contract start date is required.';
-    if ('contractDuration' in mine && (!isNumber(mine.contractDuration) || Number(mine.contractDuration) < 1)) {
-      found.contractDuration = 'A duration of at least 1 month is required.';
-    }
-    if (Object.keys(found).length) problems[o.uid] = found;
+  const main = mainProjectOf(originals);
+  if (!main) return {};
+  const mine = edits[main.uid];
+  const values = { ...main.values, ...(mine ?? {}) };
+  const end = proposedFinish(main, mine);
+  const found = {};
+  if (!values.contractStartDate) found.contractStartDate = 'A contract start date is required.';
+  if (!end) found.contractFinishDate = 'A contract end date is required.';
+  else if (values.contractStartDate && end < values.contractStartDate) {
+    found.contractFinishDate = 'The contract can’t end before it starts.';
   }
-  return problems;
+  if (mine && 'contractDuration' in mine && (!isNumber(values.contractDuration) || Number(values.contractDuration) < 1)) {
+    found.contractDuration = 'A duration of at least 1 month is required.';
+  }
+  return Object.keys(found).length ? { [main.uid]: found } : {};
+}
+
+/** Files are required when raising a request, and at least one must stay when editing one. */
+function filesProblem(files) {
+  if (!files) return null;
+  if (isStillAdding(files)) return 'A file is still being added — a moment.';
+  return filesAfterSave(files) === 0 ? 'Attach at least one file.' : null;
 }
 
 /**
  * Everything wrong with a request, or nothing.
  *
- * @param {{ reasons: number[], details: string, projectEdits: Object, items: Array }} draft
- * @param {{ subProjects: Array, allItems: Array }} context  the sub-projects as loaded, and every item of the BOQ
+ * @param {{ reasons: number[], details: string, projectEdits: Object, items: Array, newItems?: Array, files?: Object|null }} draft
+ * @param {{ subProjects: Array, allItems: Array, types?: Array }} context  the sub-projects as loaded, every item of the BOQ, and the type lookup
  */
-export function changeRequestProblems(draft, { subProjects, allItems }) {
+export function changeRequestProblems(draft, { subProjects, allItems, types = [] }) {
+  const newDrafts = draft.newItems ?? [];
   const proposed = proposedSubProjects(subProjects, draft.projectEdits);
   const window = contractWindow(proposed);
   const before = contractWindow(subProjects);
   const windowChanged = window.start !== before.start || window.end !== before.end;
 
   const reasons = draft.reasons.length === 0 ? 'Pick at least one reason.' : null;
+  const typed = typeProblems(draft, types);
   const details = draft.details.length > CR_DETAILS_MAX ? `At most ${CR_DETAILS_MAX} characters.` : null;
   const project = projectProblems(subProjects, draft.projectEdits);
+  const files = filesProblem(draft.files);
 
   const items = {};
   for (const item of draft.items) {
     const found = itemProblems(item, window, windowChanged);
     if (Object.keys(found).length) items[item.itemId] = found;
   }
+  const newItems = {};
+  for (const item of newDrafts) {
+    const found = newItemProblems(item, window);
+    if (Object.keys(found).length) newItems[item.key] = found;
+  }
 
   const general = [];
+  if (!mainProjectOf(subProjects)) {
+    general.push('EPM has no main project for this project (a code like 23/116), so no change request can be raised.');
+  }
   const projectChanges = changedProjectFields(subProjects, draft.projectEdits);
-  if (projectChanges.length + draft.items.filter(itemChanges).length === 0) {
-    general.push('Change at least one thing — the project or an item.');
+  if (projectChanges.length + draft.items.filter(itemChanges).length + newDrafts.length === 0) {
+    general.push('Change at least one thing — the contract dates, an item, or add a new item.');
   }
   const unchanged = draft.items.filter((item) => !itemChanges(item));
   if (unchanged.length) {
@@ -103,69 +113,74 @@ export function changeRequestProblems(draft, { subProjects, allItems }) {
     general.push(`${unchanged.map((i) => i.name).join(', ')} ${one ? 'is' : 'are'} in the request but not changed — change ${one ? 'it' : 'them'} or take ${one ? 'it' : 'them'} out.`);
   }
   const datedCycleChanges = draft.items.some((item) => cycleChangesOf(item).some((c) => c.newPlannedDate));
-  if ((datedCycleChanges || windowChanged) && (!window.start || !window.end)) {
+  if ((datedCycleChanges || windowChanged || newDrafts.length > 0) && (!window.start || !window.end)) {
     general.push('The project has no contract dates, so the invoicing plan cannot be checked against them.');
   }
-  if (movesMoney(draft, projectChanges) && hasProjectValue(proposed)) {
+  if (movesMoney(draft) && hasProjectValue(proposed)) {
     const totals = boqTotals(draft, { subProjects, allItems });
     if (totals.itemsTotal > totals.projectValue) general.push('The BOQ items would add up to more than the project value.');
   }
 
-  return withCount({ reasons, details, project, items, general });
+  return withCount({ reasons, ...typed, details, project, items, newItems, files, general });
 }
+
+const fieldCount = (byKey) => Object.values(byKey ?? {}).reduce((n, p) => n + Object.keys(p).length, 0);
 
 /** The problems, with how many there are. */
 function withCount(problems) {
-  const count = (problems.reasons ? 1 : 0) + (problems.details ? 1 : 0)
-    + Object.values(problems.project).reduce((n, p) => n + Object.keys(p).length, 0)
-    + Object.values(problems.items).reduce((n, p) => n + Object.keys(p).length, 0) + problems.general.length;
-  return { ...problems, count };
+  const count = (problems.reasons ? 1 : 0) + (problems.details ? 1 : 0) + (problems.files ? 1 : 0)
+    + (problems.typeKeys ? 1 : 0) + (problems.otherTypeText ? 1 : 0) + (problems.projectEffectKey ? 1 : 0)
+    + fieldCount(problems.project) + fieldCount(problems.items) + fieldCount(problems.newItems) + problems.general.length;
+  return { ...problems, newItems: problems.newItems ?? {}, files: problems.files ?? null, count };
 }
 
 /** Every part of a request — what the create and edit pages ask for. */
 export const ALL_PARTS = Object.freeze({
-  reasons: true, details: true, detailsRequired: false, fieldChanges: true, cycleChanges: true,
+  reasons: true, types: true, typeText: true, effect: true, details: true, detailsRequired: false,
+  fieldChanges: true, cycleChanges: true, newItems: true, files: true,
 });
 
 /**
- * Only the problems a workflow task can fix (2026-10-20). A task asks for some
- * of the request's parts — its reasons, its details, its item and project
- * changes, its plan changes — and the rest keep what the request has, so a
- * problem there is not the task's to show. A task may also make the details
- * required.
+ * Only the problems a workflow task can fix: the parts it asks for. A task may
+ * also make the details required.
  *
  * @param {Object} problems  changeRequestProblems'
  * @param {typeof ALL_PARTS} asks
  * @param {{ details: string }} draft
  */
 export function problemsAskedFor(problems, asks, draft) {
-  const changes = asks.fieldChanges || asks.cycleChanges;
+  const changes = asks.fieldChanges || asks.cycleChanges || asks.newItems;
   const detailsMissing = asks.detailsRequired && !draft.details.trim() ? 'Additional details are required.' : null;
   return withCount({
     reasons: asks.reasons ? problems.reasons : null,
+    typeKeys: asks.types ? problems.typeKeys : null,
+    otherTypeText: asks.types || asks.typeText ? problems.otherTypeText : null,
+    projectEffectKey: asks.effect ? problems.projectEffectKey : null,
     details: asks.details ? problems.details ?? detailsMissing : null,
     project: asks.fieldChanges ? problems.project : {},
-    items: changes ? problems.items : {},
+    items: asks.fieldChanges || asks.cycleChanges ? problems.items : {},
+    newItems: asks.newItems ? problems.newItems : {},
+    files: asks.files ? problems.files : null,
     general: changes ? problems.general : [],
   });
 }
 
-/** Whether the request changes a quantity, a unit cost or a project value. */
-export function movesMoney(draft, projectChanges) {
-  return projectChanges.some((c) => c.key === 'projectValue')
+/** Whether the request changes a quantity or a unit cost, or adds an item. */
+export function movesMoney(draft) {
+  return (draft.newItems ?? []).length > 0
     || draft.items.some((item) => changedItemFields(item).some((c) => c.key === 'quantity' || c.key === 'unitCost'));
 }
 
 /**
  * The BOQ's items added up as the request would leave them — each item in the
- * request at its new total, the rest as they are — beside the project value
- * (the sub-projects' values added up).
+ * request at its new total, the rest as they are, plus the new items — beside
+ * the project value.
  */
 export function boqTotals(draft, { subProjects, allItems }) {
   const edited = new Map(draft.items.map((d) => [String(d.itemId), d]));
   const itemsTotal = (allItems ?? []).reduce((sum, item) => {
     const d = edited.get(String(item.id));
     return sum + (d ? itemTotal(d.values) : Number(item.totalCost) || 0);
-  }, 0);
+  }, 0) + (draft.newItems ?? []).reduce((sum, d) => sum + newItemTotal(d.values), 0);
   return { itemsTotal, projectValue: projectValueTotal(proposedSubProjects(subProjects, draft.projectEdits)) };
 }

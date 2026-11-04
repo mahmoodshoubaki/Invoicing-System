@@ -15,8 +15,7 @@ export const MAX_ATTACHMENT_SIZE_MB = 15;
 export const MAX_ATTACHMENTS_TOTAL_SIZE_MB = 75;
 export const MAX_ATTACHMENTS_COUNT = 10;
 
-const MAX_ATTACHMENT_SIZE = MAX_ATTACHMENT_SIZE_MB * 1024 * 1024;
-const MAX_TOTAL_SIZE = MAX_ATTACHMENTS_TOTAL_SIZE_MB * 1024 * 1024;
+const NO_EXISTING = { count: 0, size: 0 };
 
 const ACCEPTED_TYPES = {
   'application/pdf': FileText,
@@ -30,6 +29,18 @@ const ACCEPTED_TYPES = {
 };
 
 const ACCEPT_ATTR = '.pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg';
+
+/** The invoice limits; other records pass their own (see constants/files). */
+export const INVOICE_FILE_LIMITS = {
+  perFileMb: MAX_ATTACHMENT_SIZE_MB,
+  totalMb: MAX_ATTACHMENTS_TOTAL_SIZE_MB,
+  maxCount: MAX_ATTACHMENTS_COUNT,
+  accept: ACCEPT_ATTR,
+  extensions: null,
+  label: 'PDF, Word, Excel, or images',
+};
+
+const extensionOf = (name) => String(name ?? '').split('.').pop().toLowerCase();
 
 function iconFor(type) {
   return ACCEPTED_TYPES[type] || FileIcon;
@@ -55,8 +66,12 @@ function genId() {
  * @param {(updater: (prev: Array) => Array) => void} props.onChange
  * @param {(rejected: {file: File, reason: string}[]) => void} [props.onRejected]
  * @param {boolean} [props.disabled]
+ * @param {typeof INVOICE_FILE_LIMITS} [props.limits]
+ * @param {{ count: number, size: number }} [props.existing]  files already on the record, counted against the limits
  */
-export default function AttachmentUploader({ files, onChange, onRejected, disabled = false }) {
+export default function AttachmentUploader({ files, onChange, onRejected, disabled = false, limits = INVOICE_FILE_LIMITS, existing = NO_EXISTING }) {
+  const perFile = limits.perFileMb * 1024 * 1024;
+  const total = limits.totalMb * 1024 * 1024;
   const [dragActive, setDragActive] = useState(false);
   const inputRef = useRef(null);
   const timers = useRef({});
@@ -92,8 +107,8 @@ export default function AttachmentUploader({ files, onChange, onRejected, disabl
     const incoming = Array.from(fileList);
     const accepted = [];
     const rejected = [];
-    let runningTotal = files.reduce((sum, f) => sum + f.size, 0);
-    let runningCount = files.length;
+    let runningTotal = existing.size + files.reduce((sum, f) => sum + f.size, 0);
+    let runningCount = existing.count + files.length;
 
     for (const file of incoming) {
       const isDuplicate = files.some((f) => f.name === file.name && f.size === file.size)
@@ -101,12 +116,14 @@ export default function AttachmentUploader({ files, onChange, onRejected, disabl
 
       if (isDuplicate) {
         rejected.push({ file, reason: 'This file was already added' });
-      } else if (runningCount >= MAX_ATTACHMENTS_COUNT) {
-        rejected.push({ file, reason: `Maximum of ${MAX_ATTACHMENTS_COUNT} attachments reached` });
-      } else if (file.size > MAX_ATTACHMENT_SIZE) {
-        rejected.push({ file, reason: `Exceeds the ${MAX_ATTACHMENT_SIZE_MB} MB per-file limit` });
-      } else if (runningTotal + file.size > MAX_TOTAL_SIZE) {
-        rejected.push({ file, reason: `Would exceed the ${MAX_ATTACHMENTS_TOTAL_SIZE_MB} MB total limit` });
+      } else if (limits.extensions && !limits.extensions.includes(extensionOf(file.name))) {
+        rejected.push({ file, reason: `Only ${limits.label} files are allowed` });
+      } else if (runningCount >= limits.maxCount) {
+        rejected.push({ file, reason: `Maximum of ${limits.maxCount} attachments reached` });
+      } else if (file.size > perFile) {
+        rejected.push({ file, reason: `Exceeds the ${limits.perFileMb} MB per-file limit` });
+      } else if (runningTotal + file.size > total) {
+        rejected.push({ file, reason: `Would exceed the ${limits.totalMb} MB total limit` });
       } else {
         accepted.push(file);
         runningTotal += file.size;
@@ -131,7 +148,7 @@ export default function AttachmentUploader({ files, onChange, onRejected, disabl
     if (rejected.length > 0) {
       onRejected?.(rejected);
     }
-  }, [files, onChange, onRejected, animateProgress]);
+  }, [files, onChange, onRejected, animateProgress, existing, limits, perFile, total]);
 
   const removeFile = (id) => {
     stopProgress(id);
@@ -159,7 +176,7 @@ export default function AttachmentUploader({ files, onChange, onRejected, disabl
         ref={inputRef}
         type="file"
         multiple
-        accept={ACCEPT_ATTR}
+        accept={limits.accept}
         onChange={handleInputChange}
         className="hidden"
         disabled={disabled}
@@ -183,7 +200,7 @@ export default function AttachmentUploader({ files, onChange, onRejected, disabl
           <span className="font-medium text-primary">Click to upload</span> or drag and drop
         </p>
         <p className="text-xs text-gray-400">
-          PDF, Word, Excel, or images · up to {MAX_ATTACHMENT_SIZE_MB} MB per file · {MAX_ATTACHMENTS_COUNT} files max
+          {limits.label} · up to {limits.perFileMb} MB per file · {limits.maxCount} files max
         </p>
       </div>
 
@@ -192,7 +209,7 @@ export default function AttachmentUploader({ files, onChange, onRejected, disabl
           <div className="flex items-center justify-between text-xs text-gray-400 px-0.5">
             <span className="flex items-center gap-1">
               <Paperclip size={12} />
-              {files.length} file{files.length !== 1 ? 's' : ''} · {formatFileSize(totalSize)} of {MAX_ATTACHMENTS_TOTAL_SIZE_MB} MB
+              {files.length} file{files.length !== 1 ? 's' : ''} · {formatFileSize(totalSize)} of {limits.totalMb} MB
             </span>
             {anyUploading && <span className="text-primary">Uploading…</span>}
           </div>

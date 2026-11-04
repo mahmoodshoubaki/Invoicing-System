@@ -5,6 +5,7 @@
  */
 export function mapMe(raw) {
   return {
+    userId: raw.userId ?? null,
     username: raw.username,
     displayName: raw.displayName,
     email: raw.email || null,

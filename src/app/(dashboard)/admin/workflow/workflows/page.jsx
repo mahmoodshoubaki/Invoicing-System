@@ -14,6 +14,8 @@ import Reveal from '@/components/motion/Reveal';
 import WorkflowCard from '@/components/workflow/WorkflowCard';
 import VersionHistoryModal from '@/components/workflow/VersionHistoryModal';
 import StartRunModal from '@/components/workflow/startRun/StartRunModal';
+import DuplicateWorkflowDialog from '@/components/workflow/duplicate/DuplicateWorkflowDialog';
+import { useDuplicateWorkflow } from '@/components/workflow/duplicate/useDuplicateWorkflow';
 import { usePermission } from '@/hooks/usePermission';
 import { allow, WORKFLOW_PERMISSIONS } from '@/constants/workflowPermissions';
 import { TARGET_TYPE_LABELS } from '@/constants/workflow';
@@ -44,6 +46,7 @@ export default function WorkflowsPage() {
   const [versionsFor, setVersionsFor] = useState(null);
   const [startFor, setStartFor] = useState(null);
 
+  const duplicate = useDuplicateWorkflow();
   const canManage = allow(can, WORKFLOW_PERMISSIONS.MANAGE);
   const canRun = allow(can, WORKFLOW_PERMISSIONS.RUN);
 
@@ -69,6 +72,12 @@ export default function WorkflowsPage() {
   const handleOpenVersions = useCallback((workflow) => setVersionsFor(workflow), []);
   const handleStart = useCallback((workflow) => setStartFor(workflow), []);
   const handleCloseVersions = useCallback(() => setVersionsFor(null), []);
+  const openDuplicate = duplicate.open;
+  const handleDuplicateVersion = useCallback((version) => {
+    const workflow = versionsFor;
+    setVersionsFor(null);
+    openDuplicate(workflow, version);
+  }, [openDuplicate, versionsFor]);
 
   return (
     <div>
@@ -76,7 +85,20 @@ export default function WorkflowsPage() {
         workflow={versionsFor}
         open={Boolean(versionsFor)}
         onClose={handleCloseVersions}
+        onDuplicateVersion={handleDuplicateVersion}
       />
+
+      {duplicate.target && (
+        <DuplicateWorkflowDialog
+          key={`${duplicate.target.workflow.code}:${duplicate.target.version ?? 'latest'}`}
+          workflow={duplicate.target.workflow}
+          version={duplicate.target.version}
+          busy={duplicate.busy}
+          error={duplicate.error}
+          onClose={duplicate.close}
+          onConfirm={duplicate.confirm}
+        />
+      )}
 
       {/* Mounted per workflow rather than kept alive and reset: a fresh mount
           is what guarantees the previous run's answers are gone. */}
@@ -209,6 +231,7 @@ export default function WorkflowsPage() {
               canRun={canRun}
               onOpenVersions={handleOpenVersions}
               onStart={handleStart}
+              onDuplicate={openDuplicate}
             />
           ))}
         </Reveal>

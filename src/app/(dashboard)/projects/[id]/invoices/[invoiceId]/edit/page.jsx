@@ -18,8 +18,6 @@ import { StatusBadge } from '@/components/common/Badge';
 import VarianceBadge from '@/components/common/VarianceBadge';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { DatePicker, Textarea } from '@/components/forms/FormField';
-import ClaimReferenceInput from '@/components/invoices/ClaimReferenceInput';
-import { claimReferenceProblem, claimReferenceText, toClaimReference } from '@/lib/claimReference';
 import AttachmentUploader from '@/components/invoices/AttachmentUploader';
 import InvoiceHistoryModal from '@/components/invoices/InvoiceHistoryModal';
 import { formatCurrency, formatDate, formatDateTime, formatPercentage, formatFileSize } from '@/utils/formatters';
@@ -66,10 +64,6 @@ export default function EditInvoicePage() {
 
   const [reasonsForUpdate, setReasonsForUpdate] = useState('');
   const [expectedCollectionDate, setexpectedCollectionDate] = useState('');
-  // What was typed for the claim reference, or null while untouched — then the
-  // saved one shows, and is what gets sent: UpdateInvoice CLEARS it when it is
-  // left out (2026-10-13).
-  const [claimDraft, setClaimDraft] = useState(null);
   const [attachmentIdsToDelete, setAttachmentIdsToDelete] = useState(new Set());
   const [attachmentsToAdd, setAttachmentsToAdd] = useState([]);
   const [errors, setErrors] = useState({});
@@ -126,8 +120,6 @@ export default function EditInvoicePage() {
     const e = {};
     if (!reasonsForUpdate.trim()) e.reasonsForUpdate = 'A reason for this update is required';
     if (!expectedCollectionDate) e.expectedCollectionDate = 'Expected Collection date is required';
-    const claimProblem = claimDraft === null ? null : claimReferenceProblem(claimDraft);
-    if (claimProblem) e.financialClaimReference = claimProblem;
     return e;
   };
 
@@ -141,7 +133,9 @@ export default function EditInvoicePage() {
         invoiceId,
         reasonsForUpdate,
         expectedCollectionDate,
-        financialClaimReference: claimDraft === null ? invoice.financialClaimReference : toClaimReference(claimDraft),
+        // Not on this form (a workflow task fills it); sent unchanged, since
+        // UpdateInvoice clears it when it is missing.
+        financialClaimReference: invoice.financialClaimReference,
         attachmentIdsToDelete: Array.from(attachmentIdsToDelete),
         attachmentsToAdd,
       })).unwrap();
@@ -288,11 +282,6 @@ export default function EditInvoicePage() {
               value={expectedCollectionDate}
               onChange={(e) => { setexpectedCollectionDate(e.target.value); setErrors((p) => ({ ...p, expectedCollectionDate: undefined })); }}
               error={errors.expectedCollectionDate}
-            />
-            <ClaimReferenceInput
-              value={claimDraft ?? claimReferenceText(invoice.financialClaimReference)}
-              onChange={(text) => { setClaimDraft(text); setErrors((p) => ({ ...p, financialClaimReference: undefined })); }}
-              error={errors.financialClaimReference}
             />
             <div className="md:col-span-2">
               <Textarea
