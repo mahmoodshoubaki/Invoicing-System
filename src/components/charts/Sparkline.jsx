@@ -3,11 +3,6 @@
 import { useId } from 'react';
 import { motion } from 'motion/react';
 
-/**
- * Tiny trend line for a KPI tile. Deliberately axis-less and label-less — it
- * carries shape only, and the tile's own value/delta text carries the numbers.
- * The line draws itself in on mount via pathLength.
- */
 export default function Sparkline({ values = [], color = '#f8485e', width = 96, height = 30 }) {
   const gradientId = useId();
   if (values.length < 2) return null;

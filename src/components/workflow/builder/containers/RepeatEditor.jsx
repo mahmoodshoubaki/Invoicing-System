@@ -1,7 +1,5 @@
 'use client';
 
-/** A repeat's count or stop condition — edited in the side panel. The steps it repeats stay on the canvas (RepeatBody). */
-
 import { memo } from 'react';
 
 import ConditionBuilder from '@/components/workflow/builder/conditions/ConditionBuilder';
@@ -10,7 +8,6 @@ import { CHROME } from '@/theme/vizPalette';
 
 import { controlClass, Label } from './shared';
 
-/** Counted, or until a condition holds. */
 export const RepeatEditor = memo(function RepeatEditor({ step, fields, onChange }) {
   const counted = step.times != null;
 
@@ -25,8 +22,6 @@ export const RepeatEditor = memo(function RepeatEditor({ step, fields, onChange 
             key={String(option.counted)}
             type="button"
             onClick={() =>
-              // Only one arm is ever sent: switching drops the other's fields
-              // rather than leaving a stale `until` beside a `times`.
               onChange(
                 option.counted
                   ? { times: 3, until: undefined, maxIterations: undefined }

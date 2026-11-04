@@ -4,12 +4,6 @@ import { motion } from 'motion/react';
 import { revealItem } from '@/components/motion/Reveal';
 import { CHROME } from '@/theme/vizPalette';
 
-/**
- * A titled panel for one group of form fields or read-only detail.
- *
- * Uses the shared `revealItem` variant, so wrapping a set of these in
- * `<Reveal>` staggers them in without any per-section wiring.
- */
 export default function FormSection({
   title, subtitle, icon: Icon, actions, children, className = '', tone = 'default',
 }) {

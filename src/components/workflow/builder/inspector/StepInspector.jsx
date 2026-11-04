@@ -15,18 +15,11 @@ import StepProblems from './StepProblems';
 import StepEditor from './StepEditor';
 
 /**
- * One step, open in the side panel: its name, its problems, and its settings.
- *
- * @param {{
- *   resolved: Object,  what resolveTarget found — the step and where it is
- *   ctx: Object,       the workflow-level step context
- *   tab: string|null, onTab: (key: string) => void, onClose: () => void,
- * }} props
+ * @param {{ resolved: Object, what resolveTarget found — the step and where it is ctx: Object, the workflow-level step context tab: string|null, onTab: (key: string) => void, onClose: () => void, }} props
  */
 function StepInspector({ resolved, ctx, tab, onTab, onClose }) {
   const { step, stageId, container, index, insideParallelBranch, ancestors } = resolved;
 
-  // What the step can read where it sits: a loop it is inside adds its item.
   const here = useMemo(() => contextWithin(ctx, ancestors), [ctx, ancestors]);
 
   const { onUpdateStep, onCommitStepTitle } = ctx;

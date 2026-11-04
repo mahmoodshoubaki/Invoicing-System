@@ -8,27 +8,12 @@ import StageInspector from './StageInspector';
 import WorkflowInspector from './WorkflowInspector';
 
 /**
- * The side panel beside the canvas (2026-10-08): whatever is open — a step or
- * a stage — or, with nothing open, the workflow's own settings.
- *
- * It scrolls on its own, next to the canvas, so it is in view whichever card
- * was clicked. Below the large breakpoint it sits under the canvas instead,
- * and opening something scrolls down to it.
- *
- * @param {{
- *   inspector: ReturnType<import('./useInspector').useInspector>,
- *   ctx: Object, state: Object, dispatch: Function,
- *   editing: ReturnType<import('../page/useBuilderEditing').useBuilderEditing>,
- *   workflow: { events, targetTypes, catalogsLoaded, notificationTypes, resolvedById, fields },
- *   className?: string,
- * }} props
+ * @param {{ inspector: ReturnType<import('./useInspector').useInspector>, ctx: Object, state: Object, dispatch: Function, editing: ReturnType<import('../page/useBuilderEditing').useBuilderEditing>, workflow: { events, targetTypes, catalogsLoaded, notificationTypes, resolvedById, fields }, className?: string, }} props
  */
 export default function Inspector({ inspector, ctx, state, dispatch, editing, workflow, className = '' }) {
   const ref = useRef(null);
   const { resolved, reveal } = inspector;
 
-  // On every open: back to the top of the panel, into view on a small screen,
-  // and focus when it was opened from the keyboard.
   useEffect(() => {
     const el = ref.current;
     if (!el || reveal.seq === 0) return;
@@ -49,8 +34,6 @@ export default function Inspector({ inspector, ctx, state, dispatch, editing, wo
       }}
       className={`rounded-2xl border border-[#e6e4dd] bg-white outline-none ${className}`}
     >
-      {/* Keyed per opening, not per id: a rename changes the id, and remounting
-          then would swallow the click that ended the rename. */}
       {resolved?.kind === 'step' ? (
         <StepInspector
           key={`step-${reveal.seq}`}

@@ -7,16 +7,7 @@ import { CHROME, STATUS } from '@/theme/vizPalette';
 import ValueInsertButton from './ValueInsertButton';
 
 /**
- * A subject, or a plain-text body: its length against the server's limit when
- * there is one, and the same Value menu the visual editor has — so an in-app
- * body, which is plain text, can take `{{ Name }}` without it being typed by
- * hand (2026-10-11).
- *
- * @param {{
- *   label: string, value: string, onChange: (value: string) => void,
- *   max?: number|null, rows?: number, dir?: 'ltr'|'rtl', placeholder?: string,
- *   readOnly?: boolean, valueNames?: string[],
- * }} props
+ * @param {{ label: string, value: string, onChange: (value: string) => void, max?: number|null, rows?: number, dir?: 'ltr'|'rtl', placeholder?: string, readOnly?: boolean, valueNames?: string[], }} props
  */
 export default function PlainTextField({
   label, value, onChange, max = null, rows = 0, dir = 'ltr', placeholder, readOnly, valueNames = [],

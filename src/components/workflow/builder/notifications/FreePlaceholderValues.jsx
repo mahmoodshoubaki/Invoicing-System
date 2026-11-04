@@ -8,14 +8,9 @@ import { controlClass } from '@/components/workflow/builder/containers/shared';
 import { CHROME } from '@/theme/vizPalette';
 import { setPlaceholderValue } from '@/lib/notificationPlaceholders';
 
-/** A placeholder name as the words write it: letters, digits and underscores. */
 const cleanName = (text) => text.replace(/[^A-Za-z0-9_]/g, '');
 
 /**
- * Placeholder values when the type's placeholders cannot be read — the list of
- * types needs Notifications.View. Names are typed by hand; a wrong one is
- * simply ignored by the engine, never refused.
- *
  * @param {{ values: Object|undefined, onChange: (values: Object) => void, tokens: Array }} props
  */
 function FreePlaceholderValues({ values, onChange, tokens }) {

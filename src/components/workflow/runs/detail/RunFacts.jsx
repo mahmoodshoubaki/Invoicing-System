@@ -20,9 +20,6 @@ function Fact({ label, children }) {
 }
 
 /**
- * The run at a glance: its status, where it stands, what it is about, and any
- * clock running on it.
- *
  * @param {{ run: Object, targetTypeKey: number|null }} props
  */
 export default function RunFacts({ run, targetTypeKey }) {
@@ -50,8 +47,6 @@ export default function RunFacts({ run, targetTypeKey }) {
         </Fact>
 
         <Fact label="About">
-          {/* The records the run is about, then the project they belong to —
-              what it is working on, and where that sits. */}
           <div className="mt-1 flex flex-col gap-1">
             <TargetLinks
               targetTypeKey={targetTypeKey}

@@ -18,44 +18,15 @@ import {
 import { createStep } from '@/models/workflow';
 import { defaultTaskNotifications } from '@/lib/workflowNotifications';
 
-/**
- * What the palette offers, and how each one is built.
- *
- * Every entry constructs its step through `createStep`, the only place allowed
- * to build one — it writes `type` as the first property, and System.Text.Json
- * fails a polymorphic payload whose discriminator arrives later with a 500
- * rather than a validation error.
- *
- * `callApi` is deliberately absent and always will be: the executor refuses it,
- * and an HTTP call is an `automated` step with the `http.call` action.
- *
- * No entry names its step. The reducer numbers it — "Step 1", "Step 2" — across
- * the whole workflow; the kind is already on the card under the title.
- */
 const PALETTE = [
   {
     type: STEP_TYPE.HUMAN_TASK,
     icon: UserCheck,
-    // The four standard notifications written out ticked, the reminder left
-    // off — it needs a due date and a period first.
     build: () => createStep.humanTask({ id: '', title: '', outcomes: [], notifications: defaultTaskNotifications() }),
   },
   {
     type: STEP_TYPE.AUTOMATED,
     icon: Bot,
-    /*
-     * One entry, always `type: "automated"`. WHICH action it calls is chosen in
-     * the editor from the catalog — a second action arriving later is another
-     * row in that dropdown, not another palette entry, because the step, its
-     * save format and its failure modes are identical either way.
-     *
-     * The mode is the one thing worth defaulting, and inside a parallel branch
-     * it has to be defaulted DIFFERENTLY. `queueAndRetry` parks on a retry slot
-     * the instance only has one of, so it cannot go in a branch — and now that
-     * it is the engine's default, a step dropped into a branch saying nothing
-     * would be refused with WF-008. `manualRetry` is the right fallback there:
-     * it still stops on the failed step rather than walking past it.
-     */
     build: ({ insideParallelBranch } = {}) =>
       createStep.automated({
         id: '',
@@ -105,8 +76,6 @@ const PALETTE = [
       createStep.parallel({
         id: '',
         title: '',
-        // Two branches from the start: one branch is not parallel work, and the
-        // backend refuses fewer than two anyway.
         branches: [
           { id: 'branch-1', title: 'Branch 1', steps: [] },
           { id: 'branch-2', title: 'Branch 2', steps: [] },
@@ -115,7 +84,6 @@ const PALETTE = [
   },
 ];
 
-/** Adds a step to a list. */
 function StepPalette({ onAdd, insideParallelBranch = false }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -129,8 +97,6 @@ function StepPalette({ onAdd, insideParallelBranch = false }) {
     const onKey = (e) => {
       if (e.key !== 'Escape') return;
       setOpen(false);
-      // This Esc closed the menu; the canvas must not also take it as "clear the
-      // selection" or "cancel the move".
       e.stopPropagation();
     };
 
@@ -164,8 +130,6 @@ function StepPalette({ onAdd, insideParallelBranch = false }) {
           {PALETTE.map((entry) => {
             const info = STEP_TYPE_INFO[entry.type];
             const Icon = entry.icon;
-            // Inside a parallel branch, three things cannot run — each parks the
-            // run using something it keeps exactly one of.
             const blocked = insideParallelBranch && TYPES_FORBIDDEN_IN_BRANCH.includes(entry.type);
 
             return (

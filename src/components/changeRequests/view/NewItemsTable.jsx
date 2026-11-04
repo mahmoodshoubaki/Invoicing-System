@@ -10,8 +10,6 @@ import { CHROME } from '@/theme/vizPalette';
 import { formatCurrency, formatDate } from '@/utils';
 
 /**
- * The BOQ items a request adds; once approved, each links to the item it became.
- *
  * @param {{ items: Array, projectCode: string }} props
  */
 export default function NewItemsTable({ items, projectCode }) {

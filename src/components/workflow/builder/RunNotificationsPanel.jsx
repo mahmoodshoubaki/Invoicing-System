@@ -15,14 +15,6 @@ import NotificationChoice from './notifications/NotificationChoice';
 import { runNotificationTokens } from './notifications/notificationTokens';
 
 /**
- * Who hears about a run going wrong (2026-10-07) — the workflow's Notifications tab.
- *
- * All three go to the workflow ADMINS — everybody holding Workflows.Manage —
- * never to the people doing the tasks, and whoever pressed Pause or Resume is
- * left out. No block at all (every workflow saved before this) means all three
- * on; the first change writes the block out. Each picked type takes values for
- * its words (2026-10-08).
- *
  * @param {{ graph: Object, types: Array|null, fields: Array, onChange: (notifications: Object) => void }} props
  */
 function RunNotificationsPanel({ graph, types, fields, onChange }) {
@@ -55,7 +47,6 @@ function RunNotificationsPanel({ graph, types, fields, onChange }) {
         );
       })}
 
-      {/* The one that matters most: nothing else tells anybody a run has stopped. */}
       {!block.failed && (
         <p
           className="flex items-start gap-1.5 rounded-md px-2 py-1.5 text-[11px] leading-snug"

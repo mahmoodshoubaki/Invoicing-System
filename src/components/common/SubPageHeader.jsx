@@ -6,16 +6,6 @@ import { motion } from 'motion/react';
 import { ChevronRight } from 'lucide-react';
 import { CHROME } from '@/theme/vizPalette';
 
-/**
- * Header for pages nested under a project (BOQ, invoice forms, edit screens).
- *
- * Deliberately lighter than the dark hero on the project/dashboard landing
- * pages — a full aurora panel on top of every form would fight the form for
- * attention. Same family, a third of the weight.
- *
- * `breadcrumbs` and `actions` should be stable references (useMemo / module
- * constant) since this is memoised.
- */
 function SubPageHeader({ title, subtitle, icon: Icon, breadcrumbs = [], actions, eyebrow }) {
   return (
     <motion.header

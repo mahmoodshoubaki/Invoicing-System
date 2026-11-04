@@ -1,19 +1,11 @@
 'use client';
 
-/** A text box that takes {{values}} and {{secrets}} from a picker. */
-
 import { memo, useRef } from 'react';
 
 import TokenPicker from '@/components/workflow/builder/TokenPicker';
 
 import { controlClass } from './shared';
 
-/**
- * A text field that accepts `{{…}}`, with the menu that says what may go in it.
- *
- * The ref is what lets the token land at the caret rather than at the end — an
- * address is usually built around a placeholder, not finished with one.
- */
 export const TokenField = memo(function TokenField({
   value, onChange, fields, allowSecrets = false, multiline = false, ...rest
 }) {

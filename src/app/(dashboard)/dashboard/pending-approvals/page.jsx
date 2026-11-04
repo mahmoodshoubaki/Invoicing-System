@@ -20,7 +20,6 @@ import { pageInfo } from '@/lib/pageInfo';
 
 const BREADCRUMBS = [{ label: 'Dashboard', href: ROUTES.DASHBOARD }, { label: 'Pending approvals' }];
 
-/** Every invoice, change request and BOQ item still waiting for a decision, newest first. */
 export default function PendingApprovalsPage() {
   const router = useRouter();
   const currency = useSelector((s) => s.ui.currency);

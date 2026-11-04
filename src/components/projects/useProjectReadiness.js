@@ -6,14 +6,8 @@ import { missingProjectInfo } from '@/lib/projectReadiness';
 import { useProjectHeader } from './useProjectHeader';
 
 /**
- * Whether a project has the details a request needs, with its header for
- * ProjectSummaryCard.
- *
  * @param {string} projectCode
- * @returns {{
- *   header: Object|null, status: 'loading'|'ready'|'error',
- *   missing: string[], checking: boolean, failed: boolean, ready: boolean,
- * }}
+ * @returns {{ header: Object|null, status: 'loading'|'ready'|'error', missing: string[], checking: boolean, failed: boolean, ready: boolean, }}
  */
 export function useProjectReadiness(projectCode) {
   const { status, header } = useProjectHeader(projectCode);

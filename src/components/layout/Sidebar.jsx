@@ -2,12 +2,13 @@
 
 import {
   LayoutDashboard, FolderKanban, Receipt,
-  GitBranch, Bell, BarChart3, Users, Shield, Settings, ListChecks, Boxes,
+  GitBranch, Bell, Users, Shield, ListChecks, Boxes,
   Activity, X, Menu, BellRing, Timer, HardDriveUpload,
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleSidebar } from '@/store/slices/uiSlice';
 import NavItem from './NavItem';
+import { APP_SHORT_NAME, APP_VERSION } from '@/constants/appConfig';
 
 const NAV_ITEMS = [
   {
@@ -40,20 +41,12 @@ const NAV_ITEMS = [
     badge: 'workflowTasks',
   },
   {
-    // The person's own inbox — every signed-in user has one.
     label: 'Notifications',
     labelAr: 'الإشعارات',
     href: '/notifications',
     icon: Bell,
     permission: null,
     badge: 'unseen',
-  },
-  {
-    label: 'Reports',
-    labelAr: 'التقارير',
-    href: '/reports',
-    icon: BarChart3,
-    permission: null,
   },
   {
     label: 'Admin',
@@ -65,15 +58,12 @@ const NAV_ITEMS = [
       { module: 'Role', action: 'View' },
       { module: 'Group', action: 'View' },
       { module: 'Group', action: 'Manage' },
-      // Admin › Workflow — somebody who only reads workflows finds them here.
       { module: 'Workflow', action: 'View' },
       { module: 'Workflow', action: 'Manage' },
       { module: 'Notifications', action: 'View' },
       { module: 'Notifications', action: 'Manage' },
       { module: 'Notifications', action: 'Manage Settings' },
       { module: 'System', action: 'Manage Jobs' },
-      // Monitoring's workflow runs and trace — somebody who only watches runs
-      // reaches them here, with nothing else under Admin.
       { module: 'WorkflowInstances', action: 'View' },
     ],
     children: [
@@ -89,8 +79,6 @@ const NAV_ITEMS = [
           { module: 'Group', action: 'Manage' },
         ],
       },
-      // One entry for the workflows, the fields the builder shows and the engine
-      // (2026-10-13); its own tab bar shows each page to whoever may read it.
       {
         label: 'Workflow',
         labelAr: 'سير العمل',
@@ -101,23 +89,16 @@ const NAV_ITEMS = [
           { module: 'Workflow', action: 'Manage' },
         ],
       },
-      // One entry for the whole notifications admin area; its own tab bar
-      // shows each page to whoever may read it.
       {
         label: 'Notifications',
         labelAr: 'إدارة الإشعارات',
         href: '/admin/notifications',
         icon: BellRing,
-        // Manage Settings alone no longer opens anything here: its pages (the
-        // delivery monitor and the audit) moved to Monitoring.
         permission: [
           { module: 'Notifications', action: 'View' },
           { module: 'Notifications', action: 'Manage' },
         ],
       },
-      // Watching what the system does: workflow runs, notification deliveries,
-      // the trace of one action, and who changed what. Its tab bar shows each
-      // page to whoever may read it.
       {
         label: 'Monitoring',
         labelAr: 'المراقبة',
@@ -131,7 +112,6 @@ const NAV_ITEMS = [
       },
       { label: 'Background Jobs', labelAr: 'المهام الخلفية', href: '/admin/jobs', icon: Timer, permission: { module: 'System', action: 'Manage Jobs' } },
       { label: 'Data Migration', labelAr: 'ترحيل البيانات', href: '/admin/migration', icon: HardDriveUpload, permission: { module: 'System', action: 'Administrator' } },
-      { label: 'System Settings', labelAr: 'إعدادات النظام', href: '/admin/settings', icon: Settings, permission: { module: 'System', action: 'Administrator' } },
     ],
   },
 ];
@@ -149,9 +129,6 @@ export default function Sidebar() {
         />
       )}
 
-      {/* Sticky in AppShell's row: stays under the header while scrolling, at
-          most one window tall, and stops above the footer at the end of the page
-          (sliding under the header, z-40, as the footer comes into view). */}
       <aside
         className={`sticky top-16 max-h-[calc(100vh-4rem)] shrink-0 bg-white z-30 flex flex-col
           transition-all duration-300 ease-in-out border-r border-gray-100
@@ -180,7 +157,7 @@ export default function Sidebar() {
         {sidebarOpen && (
           <div className="px-4 py-3 border-t border-gray-100 shrink-0">
             <p className="text-[10px] text-gray-400 text-center">
-              Enterprise Invoicing v1.0.0
+              {APP_SHORT_NAME} v{APP_VERSION}
             </p>
           </div>
         )}

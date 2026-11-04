@@ -7,10 +7,6 @@ import {
 } from 'lucide-react';
 import { formatFileSize } from '@/utils/formatters';
 
-// Client-side guardrails only — the backend independently re-checks file
-// size, extension, total size, and file name length, so these exist purely
-// to fail fast before the browser bothers holding onto files that could
-// never be submitted anyway.
 export const MAX_ATTACHMENT_SIZE_MB = 15;
 export const MAX_ATTACHMENTS_TOTAL_SIZE_MB = 75;
 export const MAX_ATTACHMENTS_COUNT = 10;
@@ -30,7 +26,6 @@ const ACCEPTED_TYPES = {
 
 const ACCEPT_ATTR = '.pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg';
 
-/** The invoice limits; other records pass their own (see constants/files). */
 export const INVOICE_FILE_LIMITS = {
   perFileMb: MAX_ATTACHMENT_SIZE_MB,
   totalMb: MAX_ATTACHMENTS_TOTAL_SIZE_MB,
@@ -51,23 +46,13 @@ function genId() {
 }
 
 /**
- * Multi-file attachment picker. Files are submitted as real multipart file
- * parts (see models/invoice.js's createInvoiceFormData) — nothing is read
- * or encoded client-side, so the per-file progress bar here is purely a
- * cosmetic pace-out rather than tracking real work, similar to how a lot of
- * upload UIs give a moment of visible progress before confirming. The
- * parent owns the file list as state and passes it in via `files`/
- * `onChange`, the same pattern as a controlled input. Each entry is shaped
- * as `{ id, file, name, size, type, progress, status }`, where `file` is
- * the raw File object and `status` is 'uploading' | 'done'.
- *
  * @param {object} props
  * @param {Array} props.files
  * @param {(updater: (prev: Array) => Array) => void} props.onChange
  * @param {(rejected: {file: File, reason: string}[]) => void} [props.onRejected]
  * @param {boolean} [props.disabled]
  * @param {typeof INVOICE_FILE_LIMITS} [props.limits]
- * @param {{ count: number, size: number }} [props.existing]  files already on the record, counted against the limits
+ * @param {{ count: number, size: number }} [props.existing]
  */
 export default function AttachmentUploader({ files, onChange, onRejected, disabled = false, limits = INVOICE_FILE_LIMITS, existing = NO_EXISTING }) {
   const perFile = limits.perFileMb * 1024 * 1024;
@@ -80,8 +65,6 @@ export default function AttachmentUploader({ files, onChange, onRejected, disabl
     Object.values(timers.current).forEach(clearInterval);
   }, []);
 
-  // Bigger files "take longer" here too, purely cosmetic but reads as
-  // realistic feedback rather than an instant fake 100%.
   const animateProgress = useCallback((id, size) => {
     const durationMs = Math.min(2500, Math.max(400, size / 50_000));
     const start = Date.now();

@@ -6,8 +6,6 @@ import ViewLink from './ViewLink';
 import { pendingHref, pendingTitle, pendingType } from './pendingTypes';
 
 /**
- * The columns of the pending approvals table.
- *
  * @param {{ currency: string }} options
  */
 export function pendingApprovalColumns({ currency }) {

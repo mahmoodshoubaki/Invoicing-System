@@ -12,24 +12,6 @@ import { INSTANCE_STATUS } from '@/constants/workflow';
 const controlClass =
   'w-full rounded-md border border-gray-200 bg-white px-2 py-1.5 text-xs outline-none focus:border-primary';
 
-/**
- * Stopping a run — for now, or for good.
- *
- * One component for both because the *mechanics* are identical (a required
- * reason, written into the run's history) while the *consequences* are
- * opposite, and putting them side by side is what keeps that difference
- * visible rather than letting two dialogs drift into sounding alike.
- *
- * **The reason is required by the server** on both — an empty one comes back
- * 400 — and it is worth more than that: it is the only explanation the run will
- * carry, since `failureReason` stays null when nothing failed.
- *
- * The asymmetry the copy has to land:
- *
- * - **Pause** is reversible. Resume picks it up exactly where it stopped.
- * - **Cancel** is not. The run can only be started again from the beginning,
- *   and every to-do it was asking is withdrawn from other people's lists.
- */
 const MODES = {
   pause: {
     title: 'Pause this run?',
@@ -40,8 +22,6 @@ const MODES = {
     tone: '#F59E0B',
     icon: Info,
     placeholder: 'Waiting on the client to confirm scope',
-    // Deliberately reassuring, because the risk here is the opposite one:
-    // somebody avoiding Pause when it is the right tool, and cancelling instead.
     headline: <>This can be undone. <strong>Resume</strong> picks the run up exactly where it stopped.</>,
   },
   cancel: {
@@ -70,8 +50,6 @@ export default function StopRunDialog({
   const trimmed = reason.trim();
 
   const m = MODES[mode] ?? MODES.cancel;
-  // A faulted run is not running, so it is "left as it is"; stopping it lets
-  // go of the records it still holds (2026-10-21).
   const faulted = instance?.statusKey === INSTANCE_STATUS.FAULTED;
   const keepLabel = faulted ? 'Leave it as it is' : m.cancelLabel;
   const Icon = m.icon;
@@ -112,12 +90,6 @@ export default function StopRunDialog({
           <div className="text-[11px] leading-relaxed" style={{ color: CHROME.textSecondary }}>
             <p>{m.headline}</p>
 
-            {/*
-              The to-dos are named only on cancel, because only cancel withdraws
-              them. A paused run keeps its to-dos — they simply cannot be
-              answered until it resumes, which is a different thing and must not
-              be described with the same words.
-            */}
             {mode === 'cancel' && openTaskCount > 0 && (
               <p className="mt-1.5">
                 <strong>
@@ -162,12 +134,6 @@ export default function StopRunDialog({
             aria-label="Reason"
             className={controlClass}
           />
-          {/*
-            Required by the server — an empty one is a 400 — and checked here so
-            that is never how somebody finds out. It is written into the run's
-            history and is the only thing a stopped run says for itself:
-            `failureReason` stays null, because nothing failed.
-          */}
           <p className="mt-1 text-[11px]" style={{ color: CHROME.textMuted }}>
             Kept in the run&rsquo;s history. It is the only explanation the run carries, so it is
             worth a sentence somebody else can act on.

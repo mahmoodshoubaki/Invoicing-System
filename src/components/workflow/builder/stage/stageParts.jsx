@@ -1,10 +1,7 @@
 'use client';
 
-/** Small pieces the stage's panel sections share. */
-
 import { CHROME, STATUS } from '@/theme/vizPalette';
 
-/** Ends the run — the option every stage needs and no stage list contains. */
 export const END_RUN = '__end__';
 
 export function IconButton({ icon: Icon, label, onClick, disabled, danger }) {

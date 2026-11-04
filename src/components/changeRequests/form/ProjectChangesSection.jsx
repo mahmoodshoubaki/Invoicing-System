@@ -12,7 +12,6 @@ import { mainProjectOf, projectValueTotal } from '@/lib/changeRequest/projectDra
 const NOT_IN_EPM = 'Not set in EPM — required';
 const blank = (value) => String(value ?? '').trim() === '';
 
-/** Every sub-project as EPM has it, read-only. */
 function SubProjectsTable({ subProjects, currency }) {
   return (
     <div className="mt-4 overflow-x-auto rounded-xl border border-gray-100">
@@ -46,9 +45,6 @@ function SubProjectsTable({ subProjects, currency }) {
 }
 
 /**
- * The main project's contract start, end and duration, kept in step by
- * editContractDate. The value and the other sub-projects are read-only.
- *
  * @param {{ form: ReturnType<import('./useChangeRequestForm').useChangeRequestForm>, subProjects: Array }} props
  */
 export default function ProjectChangesSection({ form, subProjects }) {

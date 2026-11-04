@@ -9,13 +9,7 @@ import { formatFileSize } from '@/utils/formatters';
 import { saveBlob } from '@/utils/saveBlob';
 
 /**
- * A record's files, each downloadable and, with `onDelete`, removable unless its `canRemove` is false.
- *
- * @param {{
- *   files: Array<{ id: string, contentId: string, fileName: string, fileSize: number, uploadedBy?: string|null }>,
- *   download: (file) => Promise<{ blob: Blob, fileName: string }>,
- *   onDelete?: ((file) => void)|null, emptyText?: string,
- * }} props
+ * @param {{ files: Array<{ id: string, contentId: string, fileName: string, fileSize: number, uploadedBy?: string|null }>, download: (file) => Promise<{ blob: Blob, fileName: string }>, onDelete?: ((file) => void)|null, emptyText?: string, }} props
  */
 export default function AttachmentList({ files, download, onDelete = null, emptyText = 'No files.' }) {
   const toast = useToast();

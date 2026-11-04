@@ -9,10 +9,6 @@ import { fetchBOQByProjectCode, selectBOQItems, selectBOQLoading, selectCurrentB
 import { fetchSubProjectsSummary, selectSubProjects, selectSubProjectsLoading } from '@/store/slices/projectsSlice';
 
 /**
- * What writing a change request needs (2026-10-19): the project, its BOQ and
- * items, its EPM sub-projects (their values and contract dates, named by
- * projectUID), and the reasons — read as the BOQ pages read them.
- *
  * @param {string} projectCode
  */
 export function useChangeRequestPageData(projectCode) {

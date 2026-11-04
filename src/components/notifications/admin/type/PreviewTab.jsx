@@ -8,7 +8,6 @@ import { controlClass, labelClass } from '@/components/ui/kit';
 import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 
-/** The preview: problems instead of a result when there are any (not an error response). */
 function PreviewResult({ preview }) {
   if (preview.problems.length > 0) {
     return (
@@ -31,7 +30,6 @@ function PreviewResult({ preview }) {
         <span className="mt-0.5 block text-sm font-semibold" style={{ color: CHROME.textPrimary }}>{preview.subject}</span>
       </p>
       {preview.isHtml ? (
-        // Sandboxed with nothing allowed: it renders, and can run nothing.
         <iframe title="Email preview" sandbox="" srcDoc={preview.body} className="h-96 w-full rounded-lg border border-[#eceae4] bg-white" />
       ) : (
         <p className="whitespace-pre-line rounded-lg px-3 py-2.5 text-xs leading-relaxed" style={{ backgroundColor: '#f6f5f3', color: CHROME.textPrimary }}>
@@ -48,14 +46,7 @@ function PreviewResult({ preview }) {
 }
 
 /**
- * The editor's text filled in with sample values — and, for email, sent to
- * yourself as a test.
- *
- * @param {{
- *   previewer: ReturnType<import('./useTemplatePreview').useTemplatePreview>,
- *   hasPlaceholders: boolean,  "Fill samples from defaults" needs a list to fill from
- *   test: null | { blocked: string|null, version: number|null },  null = no test on this channel
- * }} props
+ * @param {{ previewer: ReturnType<import('./useTemplatePreview').useTemplatePreview>, hasPlaceholders: boolean, "Fill samples from defaults" needs a list to fill from test: null | { blocked: string|null, version: number|null }, null = no test on this channel }} props
  */
 export default function PreviewTab({ previewer, hasPlaceholders, test }) {
   const { samples, setSamples, preview, error, running } = previewer;

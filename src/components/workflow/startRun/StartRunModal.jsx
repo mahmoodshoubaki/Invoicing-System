@@ -14,28 +14,7 @@ import StartRunForm from './StartRunForm';
 import { useStartRun } from './useStartRun';
 
 /**
- * Start a run of one workflow, and nudge it once it exists.
- *
- * Two halves, because starting and steering are different jobs and the second
- * only makes sense after the first: the little form a manual trigger declares,
- * and then the run itself with the one button its status allows.
- *
- * Opened from two places. From a workflow's own card the records are typed in.
- * From a record's "Workflow runs" list (an invoice, say) the record is already
- * known: it arrives as `presetTargetIds`, shown but not editable, so a re-run
- * cannot quietly land on a different invoice from the one being looked at.
- *
- * Any published workflow can be started by hand, event- and schedule-triggered
- * ones included; they simply have no inputs to ask for.
- *
- * @param {{
- *   workflow: { code: string, name?: string }, open: boolean, onClose: () => void,
- *   presetTargetIds?: string[]|null,
- *   presetTargetTypeKey?: number|null,
- *   presetTargetLabel?: string,
- *   onStarted?: (instance: Object) => void,
- *   onOpenRun?: () => void,  when leaving for the run page; defaults to onClose
- * }} props
+ * @param {{ workflow: { code: string, name?: string }, open: boolean, onClose: () => void, presetTargetIds?: string[]|null, presetTargetTypeKey?: number|null, presetTargetLabel?: string, onStarted?: (instance: Object) => void, onOpenRun?: () => void, when leaving for the run page; defaults to onClose }} props
  */
 export default function StartRunModal({
   workflow, open, onClose,
@@ -90,12 +69,6 @@ export default function StartRunModal({
 
           <RunState instance={instance} />
 
-          {/*
-            The loop guard is the one fault a plain resume does not fix: the
-            step count is untouched, so the run stands up, walks one step and
-            faults again. Resetting it is a separate decision, and raising the
-            ceiling comes first if the workflow really is that long.
-          */}
           {start.loopStopped && (
             <p
               className="flex items-start gap-1.5 rounded-md px-2 py-1.5 text-[11px] leading-snug"

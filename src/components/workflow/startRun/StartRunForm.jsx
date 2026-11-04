@@ -9,7 +9,6 @@ import { selectEvents } from '@/store/slices/workflowSlice';
 import InputField from './InputField';
 import { controlClass } from './startRunShared';
 
-/** An event's name as words: `InvoiceSubmitted` → "Invoice submitted". */
 function eventNameLabel(name) {
   if (!name) return 'its event';
   const words = String(name).replace(/([a-z0-9])([A-Z])/g, '$1 $2').toLowerCase();
@@ -17,18 +16,11 @@ function eventNameLabel(name) {
 }
 
 /**
- * Before the run exists: the records it will be about, and the answers its
- * trigger asks for.
- *
- * @param {{
- *   start: ReturnType<import('./useStartRun').useStartRun>,
- *   presetTargetLabel: string|null,
- * }} props
+ * @param {{ start: ReturnType<import('./useStartRun').useStartRun>, presetTargetLabel: string|null, }} props
  */
 export default function StartRunForm({ start, presetTargetLabel }) {
   const { definition, declaredInputs, needsTarget, isEvent, preset, presetMismatch, picksProjects, targetIds, problems } = start;
   const events = useSelector(selectEvents);
-  // The event catalog's own name when the builder has loaded it; else the key, as words.
   const eventLabel = events.find((e) => e.name === definition.trigger?.eventName)?.displayName
     ?? eventNameLabel(definition.trigger?.eventName);
 
@@ -41,8 +33,6 @@ export default function StartRunForm({ start, presetTargetLabel }) {
         </p>
       )}
 
-      {/* Already chosen: the record this was opened from. Shown so it is
-          clear what the run will be about, not offered for editing. */}
       {needsTarget && preset && !presetMismatch && (
         <p
           className="rounded-md border border-[#f1f0ee] bg-[#fbfaf9] px-2.5 py-2 text-xs"
@@ -80,11 +70,6 @@ export default function StartRunForm({ start, presetTargetLabel }) {
               className={`${controlClass} resize-y font-mono`}
             />
           )}
-          {/*
-            Said plainly because it is the part people get wrong: several ids
-            are ONE run, not one run each. Cancelling it later cancels the lot,
-            and deleting any one of these records cancels it for all of them.
-          */}
           {isEvent ? (
             <p className="mt-1 text-[11px]" style={{ color: targetIds.length > 1 ? STATUS.critical : CHROME.textMuted }}>
               {targetIds.length > 1

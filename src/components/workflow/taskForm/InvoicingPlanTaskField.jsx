@@ -9,19 +9,7 @@ import { CHROME, STATUS } from '@/theme/vizPalette';
 import { parsePlanValue, planValueOf } from '@/lib/invoicingPlanValue';
 
 /**
- * A BOQ item's invoicing plan, asked for by a task (2026-10-13) — the same
- * editor as the BOQ item's edit form. Cycles already invoiced are locked;
- * the rest can be moved, added or removed.
- *
- * Changing the billing frequency or the expected invoicing date in the same
- * form rebuilds the plan (useTaskForm asks GetTrackerCyclesPreview) — but only
- * where the BOQ item is known: on its own page. Elsewhere the plan is edited by
- * hand, and this says so.
- *
- * @param {{
- *   field: Object, value: string, onChange: (text: string) => void, error?: string|null,
- *   disabled?: boolean, context: Object|null, rebuilding?: boolean, rebuildError?: string|null,
- * }} props
+ * @param {{ field: Object, value: string, onChange: (text: string) => void, error?: string|null, disabled?: boolean, context: Object|null, rebuilding?: boolean, rebuildError?: string|null, }} props
  */
 function InvoicingPlanTaskField({ field, value, onChange, error = null, disabled = false, context, rebuilding = false, rebuildError = null }) {
   const cycles = useMemo(() => parsePlanValue(value), [value]);

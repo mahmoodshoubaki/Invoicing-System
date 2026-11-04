@@ -1,7 +1,5 @@
 'use client';
 
-/** Pieces every part of the Call API editor uses: the field look, its labels, and how inputs are split. */
-
 import { CHROME } from '@/theme/vizPalette';
 
 export const controlClass =
@@ -16,13 +14,6 @@ export function Label({ children, hint }) {
   );
 }
 
-/**
- * `header.<Name>` inputs are headers; everything else is an ordinary input.
- *
- * Headers never appear in an action's declared `inputs` because the author
- * invents their names, so they are the one part of an `http.call` that stays a
- * free-text editor however well the catalog describes the rest.
- */
 export const HEADER_PREFIX = 'header.';
 
 export function splitInputs(inputs = {}) {

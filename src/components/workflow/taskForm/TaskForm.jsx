@@ -15,23 +15,6 @@ import TaskFormField from './TaskFormField';
 import { useTaskForm } from './useTaskForm';
 
 /**
- * A task's form (2026-10-11): the boxes it asks its holder to fill, a comment,
- * and its buttons — drawn exactly as the workflow's author made them.
- *
- * A button that saves the fields checks the required ones and sends them with
- * the press; the server may still refuse (a number already used by another
- * invoice), and then the task stays open with the reason under the box. A
- * button that does not save them sends nothing — said beside it, so nobody
- * types an invoice number and presses "Return to BDM" expecting it kept.
- *
- * `context` names the record the task is about, where the page knows it — the
- * BOQ item's own page passes its id and contract window, so changing its
- * frequency or expected date rebuilds its invoicing plan; the invoice's page
- * passes its id, so its attachments can be downloaded (2026-10-13).
- *
- * A task on a change request (2026-10-20) draws the request's reasons,
- * details and changes with the create form's parts, below the other boxes.
- *
  * @param {{ task: Object, onCompleted: (result: { task, button, instance }) => void, context?: Object|null }} props
  */
 export default function TaskForm({ task, onCompleted, context = null }) {
@@ -107,13 +90,11 @@ export default function TaskForm({ task, onCompleted, context = null }) {
             <Button
               key={button.key}
               size="sm"
-              // Primary's shape; the colours below are the author's.
               variant="primary"
               loading={form.pressing === button.key}
               disabled={busy && form.pressing !== button.key}
               onClick={() => (button.reasons ? setAsking(button) : form.press(button))}
               style={{
-                // The author's colour; only the text colour is ours, for contrast.
                 backgroundColor: button.colorHex ?? '#f1f0ee',
                 color: readableTextOn(button.colorHex, CHROME.textPrimary),
               }}

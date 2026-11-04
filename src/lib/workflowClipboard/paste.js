@@ -1,8 +1,3 @@
-/**
- * Preparing a paste: new ids at every depth, links between pasted things pointed
- * at the new copies, links to things since deleted cleared the way deleting them would.
- */
-
 import { OUTCOME_FIELD_SUFFIX, PICKED_TARGETS_LIST, STEP_TYPE } from '@/constants/workflow';
 import {
   collectIds,
@@ -20,18 +15,11 @@ import { refusedInBranch } from './branchRule';
 
 const DEFAULT_STAGE_TITLE = /^stage\s+\d+$/i;
 
-/** The title a pasted top-level item gets — marked, so the two can be told apart. */
 function copyTitle(title) {
   const trimmed = String(title ?? '').trim();
   return trimmed ? `${trimmed} (copy)` : '';
 }
 
-/**
- * Renames `<old>.outcome` fields in a condition, at any depth.
- *
- * Only exact `<id>.outcome` names are touched: a field that merely starts with a
- * step's id is some other field.
- */
 function remapGroup(group, stepIds) {
   if (!group || stepIds.size === 0) return group;
   return {
@@ -45,21 +33,11 @@ function remapGroup(group, stepIds) {
   };
 }
 
-/**
- * The shared engine for both kinds of paste.
- *
- * Two passes, on purpose. Every new id is decided first, across the whole paste,
- * and only then are links rewritten — a transition in the first pasted stage can
- * point at the third, and a condition can read an approval further down.
- */
 function createPaster(state) {
   const graph = state.graph ?? { stages: [] };
   const taken = collectIds(graph);
   const existingStages = new Set((graph.stages ?? []).map((s) => s.id));
 
-  // Names a query may not write into: every list already being written, every
-  // declared variable, and the engine's own `targets`. Two queries sharing a
-  // name would share one list.
   const takenLists = new Set(declaredVariableNames(state));
   takenLists.add(PICKED_TARGETS_LIST);
   eachStep(graph, (step) => {
@@ -71,16 +49,8 @@ function createPaster(state) {
   const listNames = new Map();
   let cleared = 0;
 
-  // Where "Step N" numbering stands; it moves on with every step pasted.
   const numbering = stepNumbering(graph);
 
-  /**
-   * A pasted step's title.
-   *
-   * Still a default "Step 3"? The next number, at any depth — the same as Add
-   * step, and the same as a pasted "Stage 2". Otherwise a selected step is
-   * marked " (copy)", and a step inside a copied block keeps its name.
-   */
   const pastedTitle = (step, topLevel) => {
     const raw = String(step.title ?? '').trim();
     let title = step.title;
@@ -95,7 +65,6 @@ function createPaster(state) {
     return title;
   };
 
-  /** Pass one for steps: new ids (and new list names) at every depth. */
   const renameSteps = (steps, topLevel) =>
     (steps ?? []).map((step) => {
       // Spread first so every key keeps its place — `type` stays first.
@@ -117,16 +86,10 @@ function createPaster(state) {
       if (step.whenTrue) next.whenTrue = renameSteps(step.whenTrue, false);
       if (step.whenFalse) next.whenFalse = renameSteps(step.whenFalse, false);
       if (step.body) next.body = renameSteps(step.body, false);
-      // Branch ids only have to be unique within their own parallel step, so a
-      // copy of the whole step keeps them.
       if (step.branches) next.branches = step.branches.map((b) => ({ ...b, steps: renameSteps(b.steps, false) }));
       return next;
     });
 
-  /**
-   * A stage id as the pasted copy should see it: the pasted copy of that stage,
-   * the original if it is still there, or null when it has gone.
-   */
   const stageTarget = (id) => {
     if (id == null) return { id: null, gone: false };
     if (stageIds.has(id)) return { id: stageIds.get(id), gone: false };
@@ -134,7 +97,6 @@ function createPaster(state) {
     return { id: null, gone: true };
   };
 
-  /** Pass two for steps: links. */
   const relinkSteps = (steps) =>
     (steps ?? []).map((step) => {
       const next = { ...step };
@@ -148,8 +110,6 @@ function createPaster(state) {
         next.source = listNames.get(step.source);
       }
 
-      // A Send notification about a task that was copied with it follows the
-      // copy; one about a task left behind keeps pointing at the original.
       if (step.taskStepId && stepIds.has(step.taskStepId)) {
         next.taskStepId = stepIds.get(step.taskStepId);
       }
@@ -157,7 +117,6 @@ function createPaster(state) {
       if (step.overdue?.toStageId != null) {
         const target = stageTarget(step.overdue.toStageId);
         if (target.gone) {
-          // The same as deleting that stage: the escalation is removed.
           delete next.overdue;
           cleared += 1;
         } else {
@@ -185,20 +144,12 @@ function createPaster(state) {
 }
 
 /**
- * Stages from the clipboard, ready to insert.
- *
- * A pasted stage called "Stage 2" becomes the next number rather than
- * "Stage 2 (copy)" — the same numbering Add stage uses. Any other title gets
- * " (copy)", because two stages with one name make every "go to" list ambiguous.
- *
- * @returns {{ stages: Array, cleared: number }} `cleared` counts links that
- *   pointed at a stage deleted since the copy, and were cleared.
+ * @returns {{ stages: Array, cleared: number }}
  */
 export function prepareStagePaste(state, items) {
   const paster = createPaster(state);
   const titled = [...(state.graph?.stages ?? [])];
 
-  // Pass one: ids for the stages and everything in them.
   const renamed = (items ?? []).map((stage) => {
     const raw = String(stage.title ?? '').trim();
     const title = !raw || DEFAULT_STAGE_TITLE.test(raw) ? nextStageTitle(titled) : copyTitle(raw);
@@ -218,7 +169,6 @@ export function prepareStagePaste(state, items) {
     next.transitions = (stage.transitions ?? []).map((t) => {
       const target = paster.stageTarget(t.toStageId);
       if (target.gone) paster.countCleared();
-      // A transition to a stage that has gone ends the run — what deleting it does.
       return { ...t, condition: remapGroup(t.condition, paster.stepIds), toStageId: target.id };
     });
 
@@ -236,13 +186,10 @@ export function prepareStagePaste(state, items) {
 }
 
 /**
- * Steps from the clipboard, ready to insert into one list.
- *
  * @param {Object} state
- * @param {Array} items the copied steps
+ * @param {Array} items
  * @param {{ insideParallelBranch?: boolean }} target
- * @returns {{ steps: Array, cleared: number, refused: string[] }} a non-empty
- *   `refused` means nothing may be pasted there, and `steps` is empty.
+ * @returns {{ steps: Array, cleared: number, refused: string[] }}
  */
 export function prepareStepPaste(state, items, { insideParallelBranch = false } = {}) {
   if (insideParallelBranch) {

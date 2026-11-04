@@ -9,18 +9,7 @@ import { SETTING_TYPE } from '@/constants/workflow';
 import { controlClass } from './kit';
 
 /**
- * A setting's box — drawn from its `type`, never from its key, so a future row
- * of a new type gets the right box — with its Save and Undo.
- *
- * Nothing saves on blur or on change. A setting is the kind of thing that
- * should take a deliberate click, and the Save button is always there,
- * disabled until there is something to save.
- *
- * @param {{
- *   setting: { key: string, value: string, type: string },
- *   draft: ReturnType<import('./useSettingDraft').useSettingDraft>,
- *   saving: boolean, onSave: (key: string, value: string) => void,
- * }} props
+ * @param {{ setting: { key: string, value: string, type: string }, draft: ReturnType<import('./useSettingDraft').useSettingDraft>, saving: boolean, onSave: (key: string, value: string) => void, }} props
  */
 function SettingValueControls({ setting, draft, saving, onSave }) {
   const numeric = setting.type === SETTING_TYPE.POSITIVE_INTEGER || setting.type === SETTING_TYPE.WHOLE_NUMBER;

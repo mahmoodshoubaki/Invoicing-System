@@ -1,14 +1,11 @@
 'use client';
 
-/** The address bar under the toolbar, for a link, an image or a button. */
-
 import { useEffect, useRef } from 'react';
 
 import { controlClass } from '@/components/ui/kit';
 import { IMAGE_SOURCE, LINK_TARGET } from '@/lib/richTextExtensions';
 import { CHROME, STATUS } from '@/theme/vizPalette';
 
-/** The address bar under the toolbar, for a link, an image or a button. */
 export function AddressBar({ bar, setBar, onApply, onRemove }) {
   const inputRef = useRef(null);
   useEffect(() => { inputRef.current?.focus(); }, [bar.kind]);

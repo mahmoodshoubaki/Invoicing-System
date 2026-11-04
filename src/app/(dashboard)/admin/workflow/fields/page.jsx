@@ -12,19 +12,6 @@ import { TARGET_TYPE, TARGET_TYPE_LABELS } from '@/constants/workflow';
 import { CHROME } from '@/theme/vizPalette';
 import { fetchBuilderCatalogs, selectTargetTypes } from '@/store/slices/workflowSlice';
 
-/**
- * Workflow fields (2026-10-13): which fields of each kind of thing the builder
- * offers, what it calls them, whether a task can be assigned to the person one
- * holds, and which a task can fill — changed here, with no deployment.
- *
- * A column added to the invoices or BOQ items table, or returned by the
- * projects procedure, appears here by itself, Off and not fillable until
- * somebody turns it on. Turning a field Off hides it from the builder's lists
- * only: workflows already using it keep working.
- *
- * Reading is Workflows.Manage (the route guard's rule for /admin/workflow);
- * saving is Workflows.ManageSettings, and without it there is no Save.
- */
 export default function WorkflowFieldsPage() {
   const dispatch = useDispatch();
   const { can } = usePermission();

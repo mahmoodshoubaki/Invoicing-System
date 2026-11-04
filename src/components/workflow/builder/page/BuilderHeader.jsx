@@ -7,10 +7,6 @@ import PageHeader from '@/components/common/PageHeader';
 import Button from '@/components/common/Button';
 import { ROUTES } from '@/constants/routes';
 
-/**
- * Why Publish is greyed out, or null when it can be pressed. Said on the
- * button, because a greyed-out button on its own is a dead end.
- */
 function publishBlocker({ state, dirty, problemCount }) {
   if (!state.code) return 'Save it first — publishing makes the saved draft live.';
   if (dirty) return 'Save first — publishing makes the draft live as it was last saved.';
@@ -19,21 +15,7 @@ function publishBlocker({ state, dirty, problemCount }) {
 }
 
 /**
- * The workflow's name and code, and its actions (2026-10-11):
- *
- *   Save         writes the draft, problems and all — any time there is something to save
- *   Publish      the draft becomes the next version, live — only with nothing to fix
- *   Make vN live an older version, opened to look at, goes live again
- *
- * Opening an older version and pressing Save starts the draft again from it,
- * so Save is offered there even with nothing edited.
- *
- * @param {{
- *   state: Object, dirty: boolean, isSaving: boolean, problemCount: number,
- *   save: ReturnType<import('./useBuilderSave').useBuilderSave>,
- *   publish: ReturnType<import('./useBuilderPublish').useBuilderPublish>,
- *   openIsActive: boolean, openVersion: Object|null, nextVersion: number, canPublish: boolean,
- * }} props
+ * @param {{ state: Object, dirty: boolean, isSaving: boolean, problemCount: number, save: ReturnType<import('./useBuilderSave').useBuilderSave>, publish: ReturnType<import('./useBuilderPublish').useBuilderPublish>, openIsActive: boolean, openVersion: Object|null, nextVersion: number, canPublish: boolean, }} props
  */
 export default function BuilderHeader({
   state, dirty, isSaving, problemCount, save, publish, openIsActive, openVersion, nextVersion, canPublish,
@@ -73,7 +55,6 @@ export default function BuilderHeader({
             {viewingVersion && !dirty ? `Edit from v${state.version}` : 'Save draft'}
           </Button>
 
-          {/* Publishing the draft: one above the highest version, live at once. */}
           {canPublish && (state.isDraft || !state.code) && (
             <Button
               size="sm"

@@ -3,10 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 /**
- * One dashboard source, loaded again whenever `key` changes. A 403 is its own
- * status, so a card the user may not see says so instead of failing.
- *
- * @param {() => Promise<any>} fetcher  stable (useCallback), changing with `key`
+ * @param {() => Promise<any>} fetcher
  * @param {string} key
  * @returns {{ status: 'loading'|'ready'|'error'|'forbidden', data: any, error: Error|null, reload: () => void }}
  */

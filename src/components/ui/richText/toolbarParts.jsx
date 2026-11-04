@@ -1,7 +1,5 @@
 'use client';
 
-/** The toolbar's small building blocks: an icon button, a labelled table action, a divider. */
-
 import { CHROME, STATUS } from '@/theme/vizPalette';
 
 export function ToolButton({ icon: Icon, label, active = false, disabled = false, onClick }) {
@@ -23,7 +21,6 @@ export function ToolButton({ icon: Icon, label, active = false, disabled = false
   );
 }
 
-/** A labelled action for the table bar — table operations are easier to read than to guess from icons. */
 export function TableAction({ icon: Icon, label, onClick, disabled = false, danger = false }) {
   return (
     <button

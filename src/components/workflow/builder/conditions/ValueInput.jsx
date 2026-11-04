@@ -1,7 +1,5 @@
 'use client';
 
-/** The value side of one condition — a box that suits the field and the operator. */
-
 import { memo, useMemo } from 'react';
 
 import { DatePicker } from '@/components/forms/FormField';
@@ -18,18 +16,6 @@ import { readPlaceholder, writeBuiltin, writeName } from '@/utils/workflowPlaceh
 import { controlClass, EMPTY } from './conditionStyles';
 import { PersonValue } from './PersonValue';
 
-/**
- * The value input, shaped by the field's type.
- *
- * Whatever the control, the value leaves here as a **string** — the server
- * parses it against the property's real type, and sending a JSON number would
- * work by accident today and break the moment the backend tightens binding.
- *
- * `fields` is what the right-hand side may name ("Another field"). Usually the
- * same list the left-hand field came from; in a search it is the RUN's fields
- * instead, and then a field of the same name is the useful case — BOQ items
- * whose projectCode is this run's projectCode — so `excludeSelf` is off.
- */
 export const ValueInput = memo(function ValueInput({
   field, fields, value, onChange, disabled, builtinsOnly = false, excludeSelf = true,
 }) {
@@ -37,29 +23,15 @@ export const ValueInput = memo(function ValueInput({
   const person = isPersonField(field);
   const parsed = readPlaceholder(value);
 
-  /*
-   * The right-hand side is one of three things, and the control has to say
-   * which — a bare text box would let somebody type `{{reviewDeadline+7d}}`,
-   * which reads as the obvious extension of `{{today+7d}}` and is refused at
-   * save. Offsets belong to the built-ins' grammar, so the offset control only
-   * exists while a built-in is chosen.
-   */
   const mode = parsed.kind === 'builtin' || parsed.kind === 'name' ? parsed.kind : 'literal';
 
   // Only a date can sensibly be compared against a moment in time.
   const offersBuiltins = type === VARIABLE_TYPE.DATE;
 
-  /*
-   * What can appear on the right: anything of the same type. Comparing a date
-   * to a text field is not a thing the engine can do, and offering it would
-   * produce a run-time parse failure rather than a save-time one.
-   */
   const comparable = useMemo(
     () => (fields ?? EMPTY).filter((f) => {
       if (excludeSelf && f.name === field?.name) return false;
       if (f.outcomeValues) return false;
-      // A person compares with a person, whichever way each is stored —
-      // `submittedBy` is text that holds a user id; a person variable is `user`.
       return person ? isPersonField(f) : f.typeKey === type;
     }),
     [fields, field, type, person, excludeSelf]
@@ -75,9 +47,6 @@ export const ValueInput = memo(function ValueInput({
     );
   }
 
-  // A step's answer can only be one of the outcomes that step defines, so the
-  // author picks a button by name instead of typing its key — which is why the
-  // key never has to be shown anywhere in the builder.
   if (field?.outcomeValues) {
     return (
       <select
@@ -90,8 +59,6 @@ export const ValueInput = memo(function ValueInput({
         {field.outcomeValues.map((o) => (
           <option key={o.key} value={o.key}>{o.label}</option>
         ))}
-        {/* A saved condition naming an outcome that has since been renamed or
-            deleted stays visible rather than silently resetting. */}
         {value && !field.outcomeValues.some((o) => o.key === value) && (
           <option value={value}>{value} — no longer an outcome</option>
         )}
@@ -106,7 +73,6 @@ export const ValueInput = memo(function ValueInput({
   };
 
   const hasModes = offersBuiltins || offersNames;
-  // `className` lets the date form below give it a share of the line rather than its full width.
   const modeSelect = (className = 'shrink-0') => hasModes && (
     <select
       value={mode === 'builtin' ? parsed.name : mode}
@@ -125,14 +91,6 @@ export const ValueInput = memo(function ValueInput({
     </select>
   );
 
-  /*
-   * A built-in, with the offset that only built-ins may carry.
-   *
-   * The offset — plus / 0 / days — is one unit that never splits, and the
-   * built-in's own box gives up width before it does (a small flex basis), so
-   * "Today plus 0 days" stays one line in the side panel. Narrower still, the
-   * offset moves to the next line whole.
-   */
   if (mode === 'builtin') {
     return (
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
@@ -170,7 +128,6 @@ export const ValueInput = memo(function ValueInput({
     );
   }
 
-  /* Another field or variable, resolved while the run is going. */
   if (mode === 'name') {
     const known = comparable.some((f) => f.name === parsed.name);
     return (
@@ -196,7 +153,6 @@ export const ValueInput = memo(function ValueInput({
     person ? (
       <PersonValue field={field} value={value} onChange={onChange} />
     ) : field?.valueOptions ? (
-      // A lookup id: the author picks "Submitted", and 3 is what is saved.
       <select
         value={value ?? ''}
         onChange={(e) => onChange(e.target.value)}

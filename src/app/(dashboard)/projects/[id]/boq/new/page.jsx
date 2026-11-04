@@ -26,7 +26,6 @@ import { useInvoicingPlanPreview } from '@/hooks/useInvoicingPlanPreview';
 import { useToast } from '@/hooks/useToast';
 
 export default function NewBOQItemPage() {
-  // See boq/page.jsx for why this is decoded defensively.
   const { id: rawId } = useParams();
   const projectCode = decodeURIComponent(rawId);
   const router    = useRouter();
@@ -47,9 +46,6 @@ export default function NewBOQItemPage() {
     dispatch(fetchBOQByProjectCode(projectCode));
   }, [dispatch, projectCode]);
 
-  // Every sub-project under the same main project shares the same contract
-  // start/finish date — any one of them is a valid source, so the first is
-  // fine. These bound the tracker's editable dates but are never user-entered.
   const contractStartDate  = subProjects[0]?.contractStartDate  ?? null;
   const contractFinishDate = subProjects[0]?.contractFinishDate ?? null;
   const missingContractDates = !subProjectsLoading && subProjects.length > 0
@@ -62,9 +58,6 @@ export default function NewBOQItemPage() {
   const {
     cycles, setCycles, loading: previewLoading, error: previewError, ready: previewReady,
   } = useInvoicingPlanPreview({
-    // Baseline Invoicing Date can only be set at creation, so it's what
-    // drives the preview here (edit mode uses Expected Invoicing Date
-    // instead, since baseline is fixed after creation).
     anchorDate:          form.baselineInvoicingDate,
     billingFrequencyId:  form.billingFrequencyId,
     contractStartDate,
@@ -279,8 +272,6 @@ export default function NewBOQItemPage() {
         </FormSection>
        </Reveal>
 
-        {/* Sticky action bar — the form is long enough that a footer-only
-            save button would sit below the fold for most of the session. */}
         <div className="sticky bottom-0 z-10 mt-5 flex items-center justify-end gap-3 rounded-2xl border border-[#e9e7e5] bg-white/95 px-4 py-3 shadow-[0_-4px_16px_-8px_rgb(60_60_58/0.18)]">
           <Link href={`/projects/${encodeURIComponent(projectCode)}/boq`}>
             <Button variant="ghost">Cancel</Button>

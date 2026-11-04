@@ -1,10 +1,4 @@
 /**
- * "5 min ago", "yesterday", "3 days ago" — for lists where WHEN matters more as
- * a distance than as a date. The exact time always goes in a tooltip beside it.
- *
- * `now` is a parameter, not read inside, so a list can pass one clock for
- * every row and re-render them together rather than each drifting.
- *
  * @param {string|Date|null} value
  * @param {number} [now]
  */

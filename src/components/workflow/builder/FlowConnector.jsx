@@ -7,22 +7,6 @@ import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 import { connectorLine } from './canvasStyles';
 
-/**
- * The edge between one stage node and whatever comes next.
- *
- * A workflow tool's connectors normally carry no information — they are drawn
- * because two boxes are related. These carry the thing that actually decides
- * the run's path: the condition, and where it goes. So each outgoing transition
- * is drawn as its own labelled edge, numbered in the order the engine checks
- * them, because "first match wins" is invisible otherwise.
- *
- * `toStageId: null` is not a missing target — it ends the run — so it gets its
- * own terminal marker rather than an empty edge.
- *
- * Since the stage cards went compact (2026-10-08) this is the canvas's only
- * picture of where a stage goes, so every stage has one — the last too — and
- * clicking it opens that stage's rules in the side panel.
- */
 function FlowConnector({ edges = [], onEdgeClick }) {
   if (edges.length === 0) {
     return (

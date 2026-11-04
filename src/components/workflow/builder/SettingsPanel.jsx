@@ -10,7 +10,6 @@ import {
 import { createTrigger } from '@/models/workflow';
 import CronField from './CronField';
 
-/** Events raised by a delete. Named because the screen says something different about them. */
 const DELETION_EVENTS = ['InvoiceDeleted', 'BOQItemDeleted'];
 
 const TRIGGER_OPTIONS = [
@@ -53,19 +52,9 @@ function Field({ label, hint, children, htmlFor }) {
 const inputClass =
   'w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary';
 
-/**
- * What the workflow is and what starts it.
- *
- * `targetTypeKey` is the consequential one: it decides which fields the
- * condition builder can offer and which events can start a run. A workflow
- * tracking nothing has no record to scan, so it cannot use a scan-and-spawn
- * schedule — though its Find records steps can still search anything.
- */
 function SettingsPanel({ state, dispatch, actions, events, targetTypes, catalogsLoaded }) {
   const { trigger } = state;
 
-  // GetTargetTypes is Workflows.Manage-gated and may not have loaded; the local
-  // labels cover the same keys.
   const targetOptions = catalogsLoaded && targetTypes.length > 0
     ? targetTypes.map((t) => ({ key: t.key, label: t.value }))
     : Object.entries(TARGET_TYPE_LABELS).map(([key, label]) => ({ key: Number(key), label }));
@@ -74,13 +63,6 @@ function SettingsPanel({ state, dispatch, actions, events, targetTypes, catalogs
     (e) => e.targetTypeKey == null || e.targetTypeKey === state.targetTypeKey
   );
 
-  /*
-   * Nothing raises an event about some kinds of record — projects, today — so
-   * an event trigger on one can only fail at save (WF-023). Hidden once the
-   * event list has loaded and is known to be empty for this type; kept while
-   * it is the trigger already chosen, so a saved definition still shows what
-   * it says rather than appearing to have no trigger at all.
-   */
   const noEvents = catalogsLoaded && eventsForTarget.length === 0;
   const triggerOptions = TRIGGER_OPTIONS.filter(
     (option) => option.kind !== TRIGGER_KIND.EVENT || !noEvents || trigger?.kind === TRIGGER_KIND.EVENT
@@ -114,12 +96,6 @@ function SettingsPanel({ state, dispatch, actions, events, targetTypes, catalogs
             dispatch({
               type: actions.SET_TARGET_TYPE,
               targetTypeKey,
-              /*
-               * Which events survive the change. An event belongs to one kind
-               * of record, so most do not — and one left behind would be
-               * invisible here (this dropdown filters by target) while still
-               * showing on the canvas and still being saved.
-               */
               validEventNames: events
                 .filter((ev) => ev.targetTypeKey == null || ev.targetTypeKey === targetTypeKey)
                 .map((ev) => ev.name),
@@ -147,9 +123,6 @@ function SettingsPanel({ state, dispatch, actions, events, targetTypes, catalogs
                 key={option.kind}
                 type="button"
                 onClick={() => {
-                  // Rebuilt through the model builders so each kind carries only
-                  // its own fields — switching away from a schedule must not
-                  // leave a stray `cron` in the saved trigger.
                   const next =
                     option.kind === TRIGGER_KIND.EVENT
                       ? createTrigger.event({ eventName: eventsForTarget[0]?.name ?? '' })
@@ -206,8 +179,6 @@ function SettingsPanel({ state, dispatch, actions, events, targetTypes, catalogs
         </Field>
       )}
 
-      {/* InvoiceDeleted / BOQItemDeleted (2026-10-07). The run is about something
-          that no longer shows anywhere — it can tell people, not change it. */}
       {trigger?.kind === TRIGGER_KIND.EVENT && DELETION_EVENTS.includes(trigger.eventName) && (
         <p className="rounded-lg bg-[#fbfaf9] px-3 py-2.5 text-[11px] leading-snug" style={{ color: CHROME.textMuted }}>
           The record is already deleted when this runs, so it cannot be changed or linked to. Use the run to
@@ -229,8 +200,6 @@ function SettingsPanel({ state, dispatch, actions, events, targetTypes, catalogs
         </p>
       )}
 
-      {/* Where an author decides how conditions read the record, so it is said
-          here rather than to whoever starts the run, who cannot change it. */}
       {trigger?.kind === TRIGGER_KIND.MANUAL && tracksRecords && (
         <p className="rounded-lg bg-[#fbfaf9] px-3 py-2.5 text-[11px] leading-snug" style={{ color: CHROME.textMuted }}>
           Started on one record, conditions read that record&rsquo;s fields. Started on more than one,

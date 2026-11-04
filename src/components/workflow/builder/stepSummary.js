@@ -1,11 +1,3 @@
-/**
- * A one-line description of what a step will do, for its card on the canvas.
- *
- * A stage of steps should read as a sequence, so each line says something
- * specific rather than repeating its own type name. With every setting in the
- * side panel, this line is the canvas's whole account of the step.
- */
-
 import { describeFilterGroup } from '@/lib/filterDescription';
 import { describeDuration } from '@/utils/workflowDuration';
 import { readPlaceholder } from '@/utils/workflowPlaceholder';
@@ -24,7 +16,6 @@ export function summariseStep(step, ctx) {
         ...(step.assignToRoleIds ?? []).map((id) => roles.find((r) => r.id === id)?.name),
         ...(step.assignToGroupIds ?? []).map((id) => groups.find((g) => g.id === id)?.name),
         ...(step.assignToUserIds ?? []).map((id) => resolvedById[id]?.displayName),
-        // `{{approver}}`, `{{submittedBy}}` — named by what holds the person.
         ...(step.assignToExpressions ?? []).map((expression) => {
           const name = readPlaceholder(expression).name;
           return fields.find((f) => f.name === name)?.label ?? name;

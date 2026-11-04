@@ -20,9 +20,6 @@ const choiceClass = (on) => `press-flat flex cursor-pointer items-center gap-2 r
 }`;
 
 /**
- * What kind of change the request is (one or more types; "Other" asks for a
- * description) and what it does to the contract value (one effect).
- *
  * @param {{ form: ReturnType<import('./useChangeRequestForm').useChangeRequestForm> }} props
  */
 export default function TypeAndEffectSection({ form }) {

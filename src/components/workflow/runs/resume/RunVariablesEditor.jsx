@@ -9,23 +9,12 @@ import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 import RunVariableInput from './RunVariableInput';
 
-/** With more values than this, a search box narrows them. */
 const SEARCH_FROM = 8;
 
-/** "was 10", "was empty" — what a changed value held. */
 const was = (text) => (text === '' ? 'was empty' : `was ${text.length > 60 ? `${text.slice(0, 60)}…` : text}`);
 
 /**
- * A run's values, each changeable before it is resumed (2026-10-21) — one row
- * per value, a variable holding fields as a heading with its fields under it.
- * A changed row says what it was and can be put back; one that would be
- * refused says why, and the server's own complaint replaces that once sent.
- *
- * @param {{
- *   vars: ReturnType<import('./useRunVariables').useRunVariables>,
- *   edits: Object<string, string>, onEdit: (name: string, text: string) => void, onUndo: (name: string) => void,
- *   serverErrors: Object<string, string>, disabled?: boolean,
- * }} props
+ * @param {{ vars: ReturnType<import('./useRunVariables').useRunVariables>, edits: Object<string, string>, onEdit: (name: string, text: string) => void, onUndo: (name: string) => void, serverErrors: Object<string, string>, disabled?: boolean, }} props
  */
 export default function RunVariablesEditor({ vars, edits, onEdit, onUndo, serverErrors, disabled = false }) {
   const [query, setQuery] = useState('');

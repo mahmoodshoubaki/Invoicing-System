@@ -1,4 +1,5 @@
 import { BOQ_STATUS } from '@/constants/statuses';
+import { VAT_RATE } from '@/constants/appConfig';
 import { createApiClient } from '@/lib/apiClient';
 import { fetchAllPages } from '@/lib/fetchAllPages';
 import {
@@ -8,7 +9,6 @@ import {
 
 const api = createApiClient('/api/Boqs');
 
-/** In-memory mutable store for write operations without real endpoints yet. */
 let boqItems = [];
 
 const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -17,13 +17,11 @@ function generateId() {
   return `boq-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
-/** A project/BOQ with no items yet is a valid empty state, not a failure. */
 function isNotFound(err) {
   return err.status === 404;
 }
 
 export const boqRepository = {
-  // REAL API
   async getBOQByProjectCode(projectCode) {
     try {
       let first = null;
@@ -50,7 +48,6 @@ export const boqRepository = {
   },
 
   /**
-   * Return a single BOQ item by id.
    * @param {string} id
    * @returns {Promise<object>}
    */
@@ -66,10 +63,7 @@ export const boqRepository = {
     return createBOQItem(response);
   },
 
-  // REAL API
   /**
-   * Update a BOQ item by id. Response is just { isUpdated: boolean } — the
-   * caller refetches the BOQ list to see the change, no item is returned here.
    * @param {number} id
    * @param {object} data
    * @returns {Promise<{ isUpdated: boolean }>}
@@ -78,9 +72,7 @@ export const boqRepository = {
     return await api.post('/UpdateBoqItem', updateBOQItemPayload(id, data, cycles));
   },
 
-  // REAL API
   /**
-   * Delete a BOQ item by id.
    * @param {string} id
    * @param {string} boqId
    * @returns {Promise<void>}
@@ -92,9 +84,7 @@ export const boqRepository = {
     };
     await api.post('/DeleteBoqItem', body);
   },
-  // REAL API
   /**
-   * Bulk delete BOQ items by id.
    * @param {number[]} ids
    * @param {string} boqId
    * @returns {Promise<void>}
@@ -107,9 +97,7 @@ export const boqRepository = {
     await api.post('/BulkDeleteBoqItems', body);
   },
 
-  // REAL API
   /**
-   * Return the revision history for a BOQ item.
    * @param {number} boqItemId
    * @returns {Promise<object[]>}
    */
@@ -126,14 +114,7 @@ export const boqRepository = {
     }
   },
 
-  // REAL API
   /**
-   * Preview the generated invoicing cycle plan for the given schedule
-   * inputs. Pass `boqItemId` in edit mode so the response includes the
-   * item's already-committed cycles alongside freshly generated ones.
-   * `anchorDate` is the Baseline Invoicing Date when adding a new item, or
-   * the Expected Invoicing Date when editing one (baseline can't be changed
-   * after creation, so it can't drive regeneration on update).
    * @param {object} params
    * @param {string} params.anchorDate
    * @param {number|string} params.billingFrequencyId
@@ -142,7 +123,7 @@ export const boqRepository = {
    * @param {string} [params.boqItemId]
    * @returns {Promise<object[]>}
    */
-  /** @returns {Promise<string[]>} the new files' ids */
+  /** @returns {Promise<string[]>} */
   async addBoqAttachments(boqId, files) {
     const data = await api.post('/AddBoqAttachments', createBoqAttachmentsFormData(boqId, files));
     return data?.attachmentIds ?? [];
@@ -169,11 +150,7 @@ export const boqRepository = {
     return (data ?? []).map(createTrackerCycle);
   },
 
-  // REAL API
   /**
-   * Return the already-generated invoicing cycles for a BOQ item, as
-   * persisted by the backend — used to seed the Invoicing Plan Tracker in
-   * edit mode instead of calling the preview endpoint on page load.
    * @param {string} boqItemId
    * @returns {Promise<object[]>}
    */
@@ -183,7 +160,6 @@ export const boqRepository = {
   },
 
   /**
-   * Approve a BOQ item (transition from Pending Verification → Approved).
    * @param {string} id
    * @returns {Promise<object>}
    */
@@ -208,9 +184,8 @@ export const boqRepository = {
   },
 
   /**
-   * Bulk-create BOQ items for a project.
    * @param {string} projectId
-   * @param {object[]} items  Array of BOQ item data objects.
+   * @param {object[]} items
    * @returns {Promise<object[]>}
    */
   async bulkCreateBOQ(projectId, items) {
@@ -221,7 +196,7 @@ export const boqRepository = {
       const quantity = Number(data.quantity) || 0;
       const unitCost = Number(data.unitCost) || 0;
       const totalCost = data.totalCost ?? quantity * unitCost;
-      const vatSAR = data.vatSAR ?? totalCost * 0.15;
+      const vatSAR = data.vatSAR ?? totalCost * VAT_RATE;
 
       const newItem = {
         ...data,
@@ -243,7 +218,6 @@ export const boqRepository = {
   },
 
   /**
-   * Return all BOQ items regardless of project (admin/stats use).
    * @returns {Promise<object[]>}
    */
   async getAllBOQ() {

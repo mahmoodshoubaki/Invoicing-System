@@ -12,14 +12,7 @@ import {
 } from '@/store/slices/lookupsSlice';
 
 /**
- * One invoiceable BOQ item: a row that ticks it, and — once ticked — its
- * figures and the quantity to invoice. An item with nothing left to commit
- * cannot be ticked.
- *
- * @param {{
- *   boq: Object, line: { quantity: string } | undefined, qtyError: string|undefined,
- *   currency: string, onToggle: (id) => void, onQuantity: (id, qty) => void,
- * }} props
+ * @param {{ boq: Object, line: { quantity: string } | undefined, qtyError: string|undefined, currency: string, onToggle: (id) => void, onQuantity: (id, qty) => void, }} props
  */
 export default function BoqItemRow({ boq, line, qtyError, currency, onToggle, onQuantity }) {
   const billingFrequenciesMap = useSelector(selectBillingFrequenciesMap);

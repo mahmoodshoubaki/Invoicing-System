@@ -8,10 +8,6 @@ import { TARGET_TYPE } from '@/constants/workflow';
 import { invoiceSteps } from '@/lib/invoiceProgress';
 
 /**
- * Where an invoice is, and what comes next (2026-10-21) — submitted, the
- * stages of its workflow, collected (or rejected or cancelled) — and who it
- * waits on. It holds what the "Waiting on" banner used to say.
- *
  * @param {{ invoice: Object }} props
  */
 export default function InvoiceStepper({ invoice }) {
@@ -21,7 +17,6 @@ export default function InvoiceStepper({ invoice }) {
     [invoice, progress.run, progress.history, progress.graph]
   );
 
-  // No run, and nobody holding a to-do on it: nothing to step through (2026-10-21).
   const noRun = progress.ready && !progress.run && !invoice.waitingOn?.length;
 
   return (

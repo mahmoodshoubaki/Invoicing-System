@@ -7,18 +7,7 @@ import { PAGE_SIZE_OPTIONS } from '@/lib/pageInfo';
 import { formatNumber } from '@/utils/formatters';
 
 /**
- * The paged tables' footer: "Showing 11–20 of 34 records", the arrows, and the
- * page numbers around the current one. Table draws it from its `pagination`
- * prop; a page that lays its rows out itself draws the same one under them.
- *
- * A list paged by the server can also let the reader choose how many rows a
- * page holds (2026-10-21) — given `onPageSizeChange`, the sizes are offered
- * beside the count. `busy` holds the controls while a page loads.
- *
- * @param {{
- *   page: number, totalPages: number, total: number, from: number, to: number, onChange: (page: number) => void,
- *   pageSize?: number, onPageSizeChange?: ((size: number) => void)|null, busy?: boolean,
- * }} props
+ * @param {{ page: number, totalPages: number, total: number, from: number, to: number, onChange: (page: number) => void, pageSize?: number, onPageSizeChange?: ((size: number) => void)|null, busy?: boolean, }} props
  */
 function TablePagination({ page, totalPages, total, from, to, onChange, pageSize, onPageSizeChange = null, busy = false }) {
   return (
@@ -36,7 +25,6 @@ function TablePagination({ page, totalPages, total, from, to, onChange, pageSize
               disabled={busy}
               className="rounded-md border border-gray-200 bg-white px-1.5 py-1 text-xs text-gray-700 outline-none focus:border-primary disabled:opacity-50"
             >
-              {/* A list that starts at another size (notifications: 20) keeps it among the choices. */}
               {[...new Set([...PAGE_SIZE_OPTIONS, pageSize])].sort((a, b) => a - b).map((size) => (
                 <option key={size} value={size}>{size}</option>
               ))}

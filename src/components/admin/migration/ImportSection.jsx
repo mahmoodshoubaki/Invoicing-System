@@ -28,12 +28,7 @@ function Progress({ progress }) {
 }
 
 /**
- * Step 3: upload every file and save it all in one go, after a clean check.
- *
- * @param {{
- *   run: ReturnType<import('./useMigrationRun').useMigrationRun>,
- *   folder: ReturnType<import('./useMigrationFolder').useMigrationFolder>,
- * }} props
+ * @param {{ run: ReturnType<import('./useMigrationRun').useMigrationRun>, folder: ReturnType<import('./useMigrationFolder').useMigrationFolder>, }} props
  */
 export default function ImportSection({ run, folder }) {
   const [confirming, setConfirming] = useState(false);

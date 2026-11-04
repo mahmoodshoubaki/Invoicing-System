@@ -11,16 +11,7 @@ import TitleInput from './TitleInput';
 import StepProblems from './StepProblems';
 
 /**
- * One stage, open in the side panel: its name, whether runs begin here, its
- * deadline, and where it goes once its steps are done. Its steps stay on the
- * canvas, where their order is.
- *
- * @param {{
- *   resolved: Object, stages: Array, startStageId: string|null, fields: Array,
- *   problems: string[],  the server's, for this stage and its transitions
- *   editing: ReturnType<import('../page/useBuilderEditing').useBuilderEditing>,
- *   onClose: () => void,
- * }} props
+ * @param {{ resolved: Object, stages: Array, startStageId: string|null, fields: Array, problems: string[], the server's, for this stage and its transitions editing: ReturnType<import('../page/useBuilderEditing').useBuilderEditing>, onClose: () => void, }} props
  */
 function StageInspector({ resolved, stages, startStageId, fields, editing, problems = [], onClose }) {
   const { stage } = resolved;
@@ -49,7 +40,6 @@ function StageInspector({ resolved, stages, startStageId, fields, editing, probl
         <p className="text-[11px]" style={{ color: CHROME.textMuted }}>
           {count === 0 ? 'No steps yet' : `${count} step${count === 1 ? '' : 's'}`} — add and order them on the canvas.
         </p>
-        {/* There is no "unset": a workflow always has exactly one start. */}
         {!isStart && (
           <button
             type="button"

@@ -13,15 +13,8 @@ import { CHROME, STATUS } from '@/theme/vizPalette';
 import { describeFilterGroup, isEmptyGroup } from '@/lib/filterDescription';
 import { CLIP_KIND } from '@/lib/workflowClipboard';
 
-/**
- * How a stage's transitions read on the connector below it. Edges carry the
- * condition and the target, because "first match wins" is invisible without them.
- */
 function connectorEdges(stage, stages, fields) {
   return (stage.transitions ?? []).map((t, _i, all) => ({
-    // The catch-all edge is not a condition, so it must not be labelled as
-    // though it were one. With conditions above it it reads "otherwise"; as the
-    // only edge, it is simply where the stage goes.
     label: isEmptyGroup(t.condition)
       ? (all.length > 1 ? 'otherwise' : 'go to')
       : describeFilterGroup(t.condition, fields, 2),
@@ -33,21 +26,7 @@ function connectorEdges(stage, stages, fields) {
 }
 
 /**
- * The canvas. A recessed, dot-gridded surface so the flow reads as a diagram
- * rather than a form — the shape every workflow tool converges on. Not a
- * free-positioning graph: StageDefinition has no x/y, so any layout an author
- * dragged would be lost on save.
- *
- * Cards here say what things are; what they are set to is in the side panel
- * beside it (2026-10-08). Click a card to open it there, or right-click it —
- * or press its ⋯ — for everything else.
- *
- * @param {{
- *   state: Object, fields: Array, ctx: Object,
- *   editing: ReturnType<import('./useBuilderEditing').useBuilderEditing>,
- *   clip: ReturnType<import('./useBuilderClipboard').useBuilderClipboard>,
- *   className?: string,
- * }} props
+ * @param {{ state: Object, fields: Array, ctx: Object, editing: ReturnType<import('./useBuilderEditing').useBuilderEditing>, clip: ReturnType<import('./useBuilderClipboard').useBuilderClipboard>, className?: string, }} props
  */
 export default function FlowCanvas({ state, fields, ctx, editing, clip, className = '' }) {
   const { stages, startStageId } = state.graph;
@@ -70,8 +49,6 @@ export default function FlowCanvas({ state, fields, ctx, editing, clip, classNam
           </span>
         </div>
         <div className="flex items-center gap-1.5">
-          {/* The flow's own Paste, like every step list's: always the end,
-              whatever is selected. Ctrl+V is the one that follows the selection. */}
           {pastingStages && (
             <Button
               variant="outline"
@@ -99,8 +76,6 @@ export default function FlowCanvas({ state, fields, ctx, editing, clip, classNam
       <SortableList
         ids={stages.map((s) => s.id)}
         onReorder={editing.onMoveStage}
-        // Having a preview is what makes every stage collapse to its header
-        // while one is dragged — see SortableList.
         renderOverlay={(id) => {
           const stage = stages.find((s) => s.id === id);
           if (!stage) return null;
@@ -116,7 +91,6 @@ export default function FlowCanvas({ state, fields, ctx, editing, clip, classNam
       >
         {stages.map((stage, index) => (
           <SortableItem key={stage.id} id={stage.id}>
-            {/* "Paste here" before this stage — and after the last one. */}
             {pastingStages && (
               <>
                 <PasteSlot verb={clipVerb} label={`${clipVerb} ${clipLabel} here`} onPaste={() => pasteStages(index)} />
@@ -141,7 +115,6 @@ export default function FlowCanvas({ state, fields, ctx, editing, clip, classNam
               ctx={ctx}
             />
 
-            {/* Where it goes next — for every stage, the last too. */}
             <FlowConnector
               edges={connectorEdges(stage, stages, fields)}
               onEdgeClick={() => canvas.inspect('stage', stage.id)}

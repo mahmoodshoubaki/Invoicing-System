@@ -1,9 +1,7 @@
 const blank = (value) => String(value ?? '').trim() === '';
 
 /**
- * The project details a request needs that the header lacks, by label.
- *
- * @param {Object} header  mapProjectHeader's
+ * @param {Object} header
  * @returns {string[]}
  */
 export function missingProjectInfo(header) {
@@ -19,7 +17,6 @@ export function missingProjectInfo(header) {
   return required.filter(([, value]) => blank(value)).map(([label]) => label);
 }
 
-/** "A", "A and B", "A, B and C". */
 export function listOf(labels) {
   if (labels.length <= 1) return labels.join('');
   return `${labels.slice(0, -1).join(', ')} and ${labels.at(-1)}`;

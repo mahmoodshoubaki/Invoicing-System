@@ -12,7 +12,6 @@ import { valueProblem, variableChangeErrors, variableChanges } from '@/lib/runVa
 import RunVariablesEditor from './resume/RunVariablesEditor';
 import { useRunVariables } from './resume/useRunVariables';
 
-/** The object without one key — the same object when it has none. */
 function withoutKey(object, key) {
   if (!(key in object)) return object;
   const next = { ...object };
@@ -23,36 +22,12 @@ function withoutKey(object, key) {
 const controlClass =
   'w-full rounded-md border border-gray-200 bg-white px-2 py-1.5 text-xs outline-none focus:border-primary';
 
-/**
- * Whether the loop guard is what stopped this run.
- *
- * It matters because a plain resume does not fix it: the lifetime step count is
- * untouched, so the run stands up, walks one step and faults again. The reason
- * text is the only signal — there is no separate flag for it.
- */
 export function stoppedByLoopGuard(instance) {
   return /loop|step count|steps in one run|life of this run|too many steps/i.test(
     instance?.failureReason ?? ''
   );
 }
 
-/**
- * Putting a faulted run back on its feet.
- *
- * `resetStepCount` is deliberately a SECOND decision inside this dialog rather
- * than a second button beside Resume: it only means anything for a loop-guard
- * fault, and the count is what stops a genuinely runaway workflow — so it is
- * off unless somebody says otherwise, and the run's history records the number
- * it was at when they did.
- *
- * Its values can be corrected first (2026-10-21) — "Edit and resume": the
- * person who has left, the date that was never set. Only what changed is sent,
- * and the run's history records each change. `onConfirm` resolves to
- * `{ errors }` when the server refused a value (WF-058) — nothing was saved and
- * the run did not move — so each is shown under its value.
- *
- * Mounted per opening, so its values are read fresh each time.
- */
 export default function ResumeDialog({ instance, detail, loadingDetail, open, busy, onClose, onConfirm }) {
   const [notes, setNotes] = useState('');
   const [resetStepCount, setResetStepCount] = useState(false);
@@ -66,7 +41,6 @@ export default function ResumeDialog({ instance, detail, loadingDetail, open, bu
   const changeCount = Object.keys(changes).length;
   const badValues = vars.rows.some((r) => r.name in changes && valueProblem(r, edits[r.name]));
 
-  // An edit answers the server's complaint about that value.
   const edit = (name, text) => {
     setEdits((prev) => ({ ...prev, [name]: text }));
     setServerErrors((prev) => withoutKey(prev, name));
@@ -88,14 +62,6 @@ export default function ResumeDialog({ instance, detail, loadingDetail, open, bu
     }
   };
 
-  /*
-   * The reason comes from the FULL run, not the list row.
-   *
-   * `GetInstances` is not documented as carrying `failureReason`, and that
-   * string is the only thing that says whether the loop guard stopped this run
-   * — so deciding off a list row would mean offering the reset blind, or never
-   * offering it at all. The caller loads the run before this opens.
-   */
   const reason = detail?.failureReason ?? instance?.failureReason ?? null;
   const looping = stoppedByLoopGuard({ failureReason: reason });
 
@@ -127,20 +93,10 @@ export default function ResumeDialog({ instance, detail, loadingDetail, open, bu
             className="rounded-md px-2 py-1.5 text-[11px] leading-snug"
             style={{ backgroundColor: withAlpha(STATUS.critical, 0.1), color: CHROME.textSecondary }}
           >
-            {/* Written to be read by a person — shown exactly as it arrived. */}
             {reason}
           </p>
         ) : null}
 
-        {/*
-          Two different runs arrive here since 2026-09-13 and the sentence has
-          to fit both: one that GAVE UP, and one somebody stopped on purpose.
-          Telling a person who paused a run to "fix whatever it was waiting for"
-          would be nonsense — nothing went wrong with it.
-
-          `reason` is the discriminator, and it is reliable: only a faulted run
-          has a `failureReason`, because a pause is not a failure.
-        */}
         <p className="text-[11px]" style={{ color: CHROME.textMuted }}>
           {reason
             ? 'This clears the retry count so the failed step gets its full allowance again, and moves the run on. Fix whatever it was waiting for first.'
@@ -189,10 +145,6 @@ export default function ResumeDialog({ instance, detail, loadingDetail, open, bu
           />
         </div>
 
-        {/*
-          Only offered when the loop guard is what stopped it. Anywhere else the
-          checkbox would be a switch with no effect, which is worse than absent.
-        */}
         {looping && (
           <div className="rounded-lg px-2.5 py-2" style={{ backgroundColor: withAlpha(STATUS.warning, 0.1) }}>
             <p className="mb-1.5 flex items-start gap-1.5 text-[11px] leading-snug" style={{ color: CHROME.textSecondary }}>

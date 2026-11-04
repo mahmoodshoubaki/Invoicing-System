@@ -7,11 +7,6 @@ import { controlClass, labelClass } from '@/components/ui/kit';
 import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 
-/**
- * One address line (To or CC): a box and its Add button (Enter adds too), the
- * addresses added so far — each removable — the old email's addresses to add
- * with a click, and what is wrong.
- */
 function AddressLine({ label, line, resend }) {
   const addresses = resend[line];
   const problem = resend.problems[line];
@@ -98,11 +93,6 @@ function AddressLine({ label, line, resend }) {
 }
 
 /**
- * Who a resend goes to (2026-10-13): the person it was for again — ticked by
- * default, at the address they have now — and To / CC addresses added one at a
- * time, which get the email only. Each person gets their own copy; every email
- * shows the same To and CC lines.
- *
  * @param {{ resend: ReturnType<import('./useResend').useResend>, previousName: string }} props
  */
 export default function ResendRecipients({ resend, previousName }) {

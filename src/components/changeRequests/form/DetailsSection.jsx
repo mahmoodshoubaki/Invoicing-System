@@ -7,8 +7,6 @@ import { Textarea } from '@/components/forms/FormField';
 import { CR_DETAILS_MAX } from '@/constants/changeRequests';
 
 /**
- * Anything the reasons do not say — the user's own words for the approver.
- *
  * @param {{ form: ReturnType<import('./useChangeRequestForm').useChangeRequestForm> }} props
  */
 export default function DetailsSection({ form }) {

@@ -18,22 +18,6 @@ import { fetchAllRoles, selectRoles, selectRolesLoading } from '@/store/slices/r
 import { fetchGroups, selectGroups, selectGroupsLoading } from '@/store/slices/groupsSlice';
 import { resolveAssignees, selectAssigneesById } from '@/store/slices/workflowSlice';
 
-/**
- * Handing an open to-do to somebody else.
- *
- * Three things about this are worth stating on the screen, because all three
- * are assumed wrong by default:
- *
- *   1. **The deadline does not restart.** The replacement keeps the original
- *      due date and escalation clock — a handover is the same piece of work,
- *      not a new one. Somebody passing on an already-overdue task should know
- *      they are not buying time.
- *   2. **The old to-do is not cancelled.** It closes as *Reassigned*, which is
- *      its own task status, so the run's history shows a handover rather than
- *      work that was thrown away.
- *   3. **Anybody named can answer it.** Like any assignee list, the first
- *      person to respond finishes it for everyone.
- */
 export default function ReassignDialog({ task, open, busy, onClose, onConfirm }) {
   const dispatch = useDispatch();
 
@@ -52,20 +36,12 @@ export default function ReassignDialog({ task, open, busy, onClose, onConfirm })
     dispatch(fetchGroups());
   }, [dispatch]);
 
-  /*
-   * Chips need names, and the picker resolves them through the same shared
-   * lookup the builder uses — `?ids=` returns people whether or not they are
-   * still active, which is what stops a departed colleague rendering as a guid.
-   */
   const userKey = userIds.join(',');
   useEffect(() => {
     if (userIds.length > 0) dispatch(resolveAssignees(userIds));
-    // `userKey` is the real dependency; the array identity changes every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userKey, dispatch]);
 
-  // At least one of either, or the server refuses with WF-006. Checked here so
-  // that is never how somebody finds out.
   const ready = userIds.length > 0 || roleIds.length > 0 || groupIds.length > 0;
 
   const overdueNote = useMemo(() => Boolean(task?.dueOn), [task]);
@@ -102,14 +78,6 @@ export default function ReassignDialog({ task, open, busy, onClose, onConfirm })
           </p>
         </div>
 
-        {/*
-          Who holds it now — the thing a person handing work on needs to see
-          before choosing who gets it next, and the easiest way to avoid
-          "reassigning" a to-do to the people it is already with.
-
-          Current assignees, from the task record: not the definition's, which
-          would be wrong for an expression-assigned or already-handed-on to-do.
-        */}
         <div>
           <p className="mb-1 text-[11px] font-medium" style={{ color: CHROME.textSecondary }}>
             Currently assigned to
@@ -122,8 +90,6 @@ export default function ReassignDialog({ task, open, busy, onClose, onConfirm })
           />
         </div>
 
-        {/* The deadline surviving the handover is the fact people get wrong,
-            so it is shown with the actual date rather than described. */}
         {overdueNote && (
           <p
             className="flex items-start gap-1.5 rounded-md px-2 py-1.5 text-[11px] leading-snug"

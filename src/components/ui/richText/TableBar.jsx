@@ -9,10 +9,7 @@ import { CHROME } from '@/theme/vizPalette';
 import { Divider, TableAction } from './toolbarParts';
 
 /**
- * While the cursor is in a table: its rows, columns and cells.
- *
  * @param {{ chain: () => Object, canMerge: boolean, canSplit: boolean }} props
- *   `chain` starts a focused editor command chain.
  */
 export default function TableBar({ chain, canMerge, canSplit }) {
   return (

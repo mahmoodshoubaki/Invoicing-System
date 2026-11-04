@@ -10,8 +10,6 @@ import LateBadge from './LateBadge';
 import { plural, sourceNote } from './sourceNote';
 
 /**
- * The latest workflow tasks past their due date, each opening its run.
- *
  * @param {{ source: { status: string, data: Object|null, error: Error|null, reload: () => void }, href: string }} props
  */
 export default function SlaViolationsCard({ source, href }) {

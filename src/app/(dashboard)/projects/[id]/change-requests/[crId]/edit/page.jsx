@@ -22,12 +22,6 @@ import { useToast } from '@/hooks/useToast';
 import { ROUTES } from '@/constants/routes';
 import { CHROME } from '@/theme/vizPalette';
 
-/**
- * Editing a change request the approver sent back (2026-10-19) —
- * ChangeRequests.Update, and only its requester (the server checks). The form
- * opens with the request as it was sent; Resubmit sends it again whole — what
- * is taken out is dropped.
- */
 export default function EditChangeRequestPage() {
   const { id: rawId, crId } = useParams();
   const projectCode = decodeURIComponent(rawId);

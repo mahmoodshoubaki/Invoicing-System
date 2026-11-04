@@ -17,9 +17,6 @@ function Heading({ children, hint }) {
 }
 
 /**
- * A Send notification step's Recipients tab: who it goes to, who is copied in,
- * and what the copied get.
- *
  * @param {{ step: Object, ctx: Object, onChange: (patch: Object) => void }} props
  */
 function SendRecipientsFields({ step, ctx, onChange }) {

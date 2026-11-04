@@ -3,12 +3,6 @@
 import { CHROME } from '@/theme/vizPalette';
 
 /**
- * A stage's or step's name, at the top of its panel.
- *
- * Typing changes the title only; the id follows it when the box is left
- * (`onCommit`), because re-deriving an id per keystroke remounted whatever was
- * being typed into. The panel follows the item through that change of id.
- *
  * @param {{ value: string, placeholder: string, label: string, onChange: (v: string) => void, onCommit: () => void }} props
  */
 export default function TitleInput({ value, placeholder, label, onChange, onCommit }) {

@@ -11,13 +11,6 @@ import { usePermission } from '@/hooks/usePermission';
 import { allow, WORKFLOW_INSTANCE_PERMISSIONS } from '@/constants/workflowPermissions';
 
 /**
- * A failure, said where it happened — with its tracking number.
- *
- * Every error body carries `traceId`, which is the action's tracking number:
- * support types it into the trace page and sees everything the click caused.
- * So it is shown (and copyable), and linked straight to that page for whoever
- * may read it. The message is the backend's own wording, never ours.
- *
  * @param {{ error: Error|string|null, onRetry?: () => void, compact?: boolean }} props
  */
 function ErrorNote({ error, onRetry, compact = false }) {
@@ -35,7 +28,7 @@ function ErrorNote({ error, onRetry, compact = false }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      // Clipboard can be refused (insecure context); the number is on screen anyway.
+      // ignore
     }
   };
 

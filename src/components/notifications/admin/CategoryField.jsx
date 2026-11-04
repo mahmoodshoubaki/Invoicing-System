@@ -10,23 +10,11 @@ const NEW = '__new__';
 const sameText = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
 /**
- * A notification type's category: picked from the ones the types already
- * use, or a new one typed in.
- *
- * It used to be a text box with the browser's suggestion list, which looks
- * like a dropdown and does not open like one — the suggestions only appear on
- * ↓ or matching letters. Now the existing categories are a real list, and
- * "New category…" turns it into a text box. A typed name that matches an
- * existing one, ignoring case, takes that one's spelling, so "invoices" does
- * not start a second "Invoices" group.
- *
  * @param {{ value: string, categories: string[], onChange: (category: string) => void }} props
  */
 export default function CategoryField({ value, categories, onChange }) {
   const [typing, setTyping] = useState(false);
 
-  // Typing when asked to, when there is nothing to pick from, or when the
-  // current value is not one of the list (a new one being typed).
   const known = categories.some((c) => c === value);
   const typed = typing || categories.length === 0 || (value !== '' && !known);
 

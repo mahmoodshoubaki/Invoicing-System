@@ -16,11 +16,6 @@ export const WORKFLOW_TABS = [
   { key: 'variables', label: 'Variables' },
 ];
 
-/**
- * The side panel with nothing on the canvas open: the workflow itself — its
- * name and what starts it, who hears when a run goes wrong, and its variables.
- * The trigger card and its menu open it too.
- */
 function WorkflowInspector({
   tab, onTab, state, dispatch, events, targetTypes, catalogsLoaded, notificationTypes, resolvedById, fields,
 }) {

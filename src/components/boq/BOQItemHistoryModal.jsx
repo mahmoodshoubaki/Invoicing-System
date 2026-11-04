@@ -19,10 +19,6 @@ import {
   selectBOQItemHistoryLoading,
 } from '@/store/slices/boqSlice';
 
-/**
- * Shows past revisions of a single BOQ item. Used from both the standalone
- * Manage BOQ page and the BOQ tab on the project detail page.
- */
 export default function BOQItemHistoryModal({ open, onClose, boqItemId }) {
   const dispatch = useDispatch();
   const currency = useSelector((s) => s.ui.currency);

@@ -5,11 +5,6 @@ import { useEffect, useState } from 'react';
 import { notificationRepository } from '@/repositories/notificationRepository';
 
 /**
- * Notification types, for every type dropdown (Send notification steps, a
- * task's checkboxes, the run checkboxes). GetTypes needs Notifications.View,
- * which a workflow author may not hold: then this stays null and the dropdowns
- * become number boxes rather than failing.
- *
  * @param {boolean} canRead
  * @returns {Array|null}
  */

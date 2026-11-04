@@ -23,13 +23,7 @@ function Field({ id, label, error, children }) {
 }
 
 /**
- * Names the copy of a notification type — a new code and both names — and
- * says what a copy is: paused, with its words saved but not published.
- *
- * @param {{
- *   type: Object, step: string|null, error: string|null,
- *   onClose: () => void, onConfirm: (names: { code: string, englishName: string, arabicName: string }) => void,
- * }} props  type: mapType's
+ * @param {{ type: Object, step: string|null, error: string|null, onClose: () => void, onConfirm: (names: { code: string, englishName: string, arabicName: string }) => void, }} props
  */
 export default function DuplicateTypeDialog({ type, step, error, onClose, onConfirm }) {
   const [form, setForm] = useState(() => ({

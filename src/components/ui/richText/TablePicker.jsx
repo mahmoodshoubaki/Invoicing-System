@@ -1,7 +1,5 @@
 'use client';
 
-/** Choosing a new table's size, and whether its first row is a header. */
-
 import { useState } from 'react';
 
 import { CHROME } from '@/theme/vizPalette';
@@ -10,7 +8,6 @@ const PICKER_ROWS = 8;
 
 const PICKER_COLS = 8;
 
-/** Choose a table's size by pointing at a grid, and whether its first row is a header. */
 export function TablePicker({ onPick }) {
   const [size, setSize] = useState({ rows: 0, cols: 0 });
   const [header, setHeader] = useState(true);

@@ -4,7 +4,6 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { MIGRATION_MAX_BYTES, readSelection, selectionSignature } from '@/lib/dataMigration';
 
-/** The picked Migrations folder: its workbook (one of the .xlsx at its top) and the files to send. */
 export function useMigrationFolder() {
   const [selection, setSelection] = useState(null);
   const [workbookIndex, setWorkbookIndex] = useState(0);

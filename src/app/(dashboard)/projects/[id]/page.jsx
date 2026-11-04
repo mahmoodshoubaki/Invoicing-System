@@ -42,12 +42,6 @@ import {
 } from '@/store/slices/lookupsSlice';
 
 export default function ProjectDetailPage() {
-  // The route param is the project code (GetProjectsList no longer returns
-  // an id) — used directly as the key for every per-project fetch below.
-  // Client-side navigations (router.push/<Link>) don't decode %2F etc. back
-  // out of the segment the way server-side rendering does, so decode it
-  // ourselves here. Safe either way: a value Next already decoded (no % left)
-  // passes through decodeURIComponent unchanged.
   const { id: rawId } = useParams();
   const projectCode = decodeURIComponent(rawId);
   const router   = useRouter();
@@ -68,13 +62,11 @@ export default function ProjectDetailPage() {
   const invoiceStatusColorsMap = useSelector(selectInvoiceStatusColorsMap);
   const invoices              = useSelector(selectInvoices);
   const invoicesLoading       = useSelector(selectInvoicesLoading);
-  // `?tab=change-requests` opens the page on that tab — the change request form's Back and Cancel land there.
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab]       = useState(
     () => PROJECT_TABS.find((t) => tabSlug(t) === searchParams.get('tab')) ?? 'Overview'
   );
   const { can } = usePermission();
-  // Change requests are ChangeRequests.View's to read (2026-10-19).
   const canViewChangeRequests = allow(can, CR_PERMISSIONS.VIEW);
   const hiddenTabs = useMemo(() => (canViewChangeRequests ? [] : ['Change requests']), [canViewChangeRequests]);
   const [archiveModal, setArchiveModal] = useState(false);
@@ -87,35 +79,14 @@ export default function ProjectDetailPage() {
     dispatch(fetchInvoicesByProjectCode(projectCode));
   }, [dispatch, projectCode]);
 
-  // After a delete: the invoice list, and the BOQ — a deleted In Progress
-  // invoice stops holding its items, so their editability changes too.
   const reloadInvoices = useCallback(() => {
     dispatch(fetchInvoicesByProjectCode(projectCode));
     dispatch(fetchBOQByProjectCode(projectCode));
   }, [dispatch, projectCode]);
 
-  // aggregateSubProjectFinancials builds a fresh object every call — without
-  // this useMemo, ProjectStatCards (and OverviewTab) would get a new `totals`
-  // reference on every render of this page (e.g. every tab click), which
-  // defeats their React.memo regardless of whether subProjects actually
-  // changed.
-  /*
-   * The sub-project summaries carry every figure except the three about
-   * invoices, which are counted from the project's invoices themselves:
-   * rejected and cancelled ones are money nobody will pay, so they count
-   * towards nothing. See summariseProjectInvoices.
-   */
   const totals = useMemo(() => {
     const subTotals = aggregateSubProjectFinancials(subProjects);
 
-    /*
-     * Kept to THIS project's invoices. The invoices slice holds one list,
-     * shared with the invoices page, so arriving here from there leaves every
-     * project's invoices in the store until this project's fetch lands — and a
-     * money tile must never show another project's total, even for a moment.
-     * Rows that carry no `projectCode` are trusted, since then the fetch is all
-     * there is to go on.
-     */
     const invoiceTotals = summariseProjectInvoices(
       invoices.filter((i) => !i.projectCode || i.projectCode === projectCode)
     );
@@ -123,15 +94,10 @@ export default function ProjectDetailPage() {
     return {
       ...subTotals,
       ...invoiceTotals,
-      // Work in progress: revenue earned that the money has not arrived for
-      // yet. Counted from what was actually collected rather than from the
-      // sub-project summaries, so it moves the moment an invoice is collected.
       wip: subTotals.totalRevenue - invoiceTotals.collectedValue,
     };
   }, [subProjects, invoices, projectCode]);
 
-  // Memoised so ProjectTabs — which is memo'd — isn't handed a brand-new
-  // object on every render of this page.
   const tabCounts = useMemo(() => ({
     'EPM Sub-Projects': subProjects.length,
     BOQ: boqItems.length,
@@ -185,8 +151,6 @@ export default function ProjectDetailPage() {
 
         <ProjectTabs activeTab={activeTab} onChange={setActiveTab} counts={tabCounts} hidden={hiddenTabs} />
 
-        {/* Panels cross-fade on switch. Only the active one is mounted, so the
-            memoised tabs below still skip re-rendering entirely. */}
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -233,7 +197,6 @@ export default function ProjectDetailPage() {
                 invoiceStatusesMap={invoiceStatusesMap}
                 invoiceStatusColorsMap={invoiceStatusColorsMap}
                 currency={currency}
-                // A delete changes the list and the money totals above it.
                 onInvoicesChanged={reloadInvoices}
               />
             )}

@@ -25,7 +25,6 @@ const BUSINESS_UNITS = [
 
 const INVOICING_PLATFORMS = ['Etimad', 'Other'];
 
-// TODO: replace with real users API when available
 const pmUsers = [];
 const bdmUsers = [];
 const buHeadUsers = [];
@@ -145,7 +144,6 @@ export default function NewProjectPage() {
 
       <form onSubmit={handleSubmit}>
        <Reveal className="flex flex-col gap-5">
-        {/* Section 1: Contract Info */}
         <FormSection title="Contract Information" icon={FileSignature}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
@@ -179,7 +177,6 @@ export default function NewProjectPage() {
           </div>
         </FormSection>
 
-        {/* Section 2: Project Details */}
         <FormSection title="Project Details" icon={FolderKanban}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
@@ -212,7 +209,6 @@ export default function NewProjectPage() {
           </div>
         </FormSection>
 
-        {/* Section 3: Team */}
         <FormSection title="Project Team" icon={Users}>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <Select
@@ -313,7 +309,6 @@ export default function NewProjectPage() {
           </div>
         </FormSection>
 
-        {/* Section 6: Revenue Breakdown */}
         <FormSection title={`Revenue Breakdown (${currency})`} icon={Layers}>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Input

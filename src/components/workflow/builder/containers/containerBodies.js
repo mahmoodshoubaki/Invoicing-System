@@ -1,9 +1,3 @@
-/**
- * The step types that hold other steps, and what each draws on the canvas
- * below its header: the lists of steps inside it. Their own settings are in
- * the side panel like every other step's.
- */
-
 import { STEP_TYPE } from '@/constants/workflow';
 
 import { BranchBody } from './BranchBody';

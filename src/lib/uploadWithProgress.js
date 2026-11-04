@@ -17,12 +17,10 @@ function errorFrom(xhr, tracking) {
 }
 
 /**
- * POSTs a multipart body with upload progress, which fetch cannot report.
- *
- * @param {string} url  same-origin, through the backend proxy
+ * @param {string} url
  * @param {FormData} formData
  * @param {{ onProgress?: (p: { loaded: number, total: number, uploaded: boolean }) => void, signal?: AbortSignal }} [options]
- * @returns {Promise<any>} the parsed JSON answer
+ * @returns {Promise<any>}
  */
 export function uploadWithProgress(url, formData, { onProgress, signal } = {}) {
   const tracking = newCorrelationId();

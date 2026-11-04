@@ -2,14 +2,13 @@
 
 import Sidebar from './Sidebar';
 import Header from './Header';
+import { APP_NAME, COMPANY_NAME } from '@/constants/appConfig';
 
 export default function AppShell({ children }) {
   return (
     <div className="min-h-screen bg-app flex flex-col">
       <Header />
 
-      {/* Sidebar and page side by side, between the fixed header and the footer.
-          Reversed in RTL so the sidebar stays on the left, as before. */}
       <div className="flex flex-1 pt-16 rtl:flex-row-reverse">
         <Sidebar />
 
@@ -23,7 +22,7 @@ export default function AppShell({ children }) {
       {/* Footer, full width under the sidebar */}
       <footer className="py-3 px-6 border-t border-gray-100 bg-white">
         <p className="text-xs text-gray-400 text-center">
-          © {new Date().getFullYear()} Devoteam Middle East · Enterprise Invoicing & Tracking System
+          © {new Date().getFullYear()} {COMPANY_NAME} · {APP_NAME}
         </p>
       </footer>
     </div>

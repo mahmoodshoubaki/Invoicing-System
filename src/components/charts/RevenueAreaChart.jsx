@@ -10,7 +10,6 @@ import ChartTooltip from './ChartTooltip';
 import { CHROME, SERIES_ROLE } from '@/theme/vizPalette';
 import { formatCurrency } from '@/utils/formatters';
 
-/** Series definitions, in the validated slot order (see theme/vizPalette.js). */
 const SERIES = [
   { key: 'revenue', name: 'Revenue', color: SERIES_ROLE.revenue },
   { key: 'invoiced', name: 'Invoiced', color: SERIES_ROLE.invoiced },
@@ -23,15 +22,6 @@ const compact = (v) => {
   return String(v);
 };
 
-/**
- * Monthly revenue / invoiced / collected. One y-axis by design — these three
- * measures share a unit and scale, so they belong on one scale. (A second
- * y-axis would be the single most misleading thing this chart could do.)
- *
- * Ships a table view alongside the plot: three of the app's series colours
- * are fine on contrast, but a table is the honest fallback for anyone the
- * colour channel fails, and it doubles as the copy-paste path.
- */
 export default function RevenueAreaChart({ data = [] }) {
   const currency = useSelector((s) => s.ui.currency);
   const [view, setView] = useState('chart');
@@ -89,8 +79,6 @@ export default function RevenueAreaChart({ data = [] }) {
               ))}
             </defs>
 
-            {/* Recessive chrome: solid horizontal hairlines only. Not dashed —
-                a dashed grid reads as a threshold or projection line. */}
             <CartesianGrid stroke={CHROME.grid} vertical={false} />
             <XAxis
               dataKey="month"
@@ -120,8 +108,6 @@ export default function RevenueAreaChart({ data = [] }) {
                 strokeWidth={2}
                 fill={`url(#fill-${s.key})`}
                 dot={false}
-                // ≥8px hit target, with a 2px surface ring so overlapping
-                // points stay separable where the series converge.
                 activeDot={{ r: 5, strokeWidth: 2, stroke: CHROME.surface }}
                 animationDuration={900}
                 animationEasing="ease-out"

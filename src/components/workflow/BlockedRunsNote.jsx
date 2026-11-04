@@ -8,11 +8,6 @@ import { withAlpha } from '@/utils/color';
 import { ROUTES } from '@/constants/routes';
 
 /**
- * Why going live was refused (409 WF-024): runs are waiting in a stage that
- * changed, and moving them would strand them. Each links to its run, because
- * the way forward is there — finish or cancel it — or in the builder: publish a
- * version that leaves that stage alone.
- *
  * @param {{ runs: Array<{ instanceId: string, stageId: string|null, stageTitle: string|null }> }} props
  */
 export default function BlockedRunsNote({ runs }) {

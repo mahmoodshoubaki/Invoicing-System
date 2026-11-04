@@ -15,20 +15,10 @@ import { notificationRepository } from '@/repositories/notificationRepository';
 import { markAllSeen, selectUnseenCount } from '@/store/slices/notificationsSlice';
 import { useOpenNotification } from '@/hooks/useOpenNotification';
 
-/** What the panel shows at most; the inbox page has the rest. */
 const PANEL_TAKE = 15;
 
 const EMPTY = { items: [], total: 0, unreadCount: 0 };
 
-/**
- * The bell in the header, and its panel.
- *
- * The badge counts UNSEEN — things that arrived since the person last opened
- * the bell. Opening it loads the newest notifications and then marks them all
- * seen, so the badge empties the moment the person is looking. READ is a
- * different thing, set one notification at a time by clicking it; that is what
- * the bold rows and the Unread tab are about.
- */
 export default function NotificationBell() {
   const dispatch = useDispatch();
   const unseen = useSelector(selectUnseenCount);
@@ -70,8 +60,6 @@ export default function NotificationBell() {
     setOpen(true);
     setNow(Date.now());
     await load(tab);
-    // Seen = the person opened the bell while these were there. After the list
-    // has loaded, so what they are shown is what gets marked.
     dispatch(markAllSeen());
   };
 
@@ -80,7 +68,6 @@ export default function NotificationBell() {
     load(next);
   };
 
-  // Outside click and Escape both close it — the two ways people dismiss a popover.
   useEffect(() => {
     if (!open) return undefined;
     const onClick = (e) => { if (!ref.current?.contains(e.target)) setOpen(false); };

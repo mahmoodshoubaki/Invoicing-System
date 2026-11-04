@@ -6,21 +6,13 @@ import ReassignDialog from '@/components/workflow/tasks/ReassignDialog';
 import { describeTargets } from '@/lib/runDetail';
 
 /**
- * The dialogs a run's actions open: pause or stop, resume, and hand a to-do on.
- *
- * @param {{
- *   run: Object, instanceId: string, busy: boolean, openTaskCount: number,
- *   actions: ReturnType<import('./useRunActions').useRunActions>,
- * }} props
+ * @param {{ run: Object, instanceId: string, busy: boolean, openTaskCount: number, actions: ReturnType<import('./useRunActions').useRunActions>, }} props
  */
 export default function RunDialogs({ run, instanceId, busy, openTaskCount, actions }) {
   const { stopping, resuming, handingOn } = actions;
 
   return (
     <>
-      {/* Mounted per opening so the reason box starts empty — a reason left
-          over from a previous glance at this dialog is the last thing that
-          should ride along with an irreversible action. */}
       {stopping && (
         <StopRunDialog
           key={stopping}
@@ -47,9 +39,6 @@ export default function RunDialogs({ run, instanceId, busy, openTaskCount, actio
         />
       )}
 
-      {/* Keyed per task so the pickers start empty each time. A run's task row
-          does not carry the run's own details, so they are added for the
-          dialog's heading. */}
       {handingOn && (
         <ReassignDialog
           key={handingOn.taskId}

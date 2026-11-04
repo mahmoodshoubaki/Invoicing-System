@@ -12,9 +12,6 @@ const numberClass =
 const whole = (value) => Math.max(0, Number(value) || 0);
 
 /**
- * When a task's reminder goes out: so long before the due date, and optionally
- * again every so often until the task is answered.
- *
  * @param {{ reminder: Object, problem: string|null, onChange: (patch: Object) => void }} props
  */
 function ReminderTiming({ reminder, problem, onChange }) {

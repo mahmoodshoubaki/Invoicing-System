@@ -23,8 +23,6 @@ function changesOf(version) {
 }
 
 /**
- * A change request's earlier versions, oldest first; picking one shows it in full.
- *
  * @param {{ open: boolean, onClose: () => void, changeRequest: Object, projectCode: string }} props
  */
 export default function ChangeRequestHistoryModal({ open, onClose, changeRequest, projectCode }) {

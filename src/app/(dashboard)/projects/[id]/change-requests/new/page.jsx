@@ -25,13 +25,7 @@ import { CR_PERMISSIONS } from '@/constants/changeRequests';
 import { ROUTES } from '@/constants/routes';
 import { CHROME } from '@/theme/vizPalette';
 
-/**
- * Raising a change request on a project's BOQ (2026-10-19) —
- * ChangeRequests.Create. Only one may be open on a BOQ at a time, so with one
- * already open the page says so and links to it instead of offering the form.
- */
 export default function NewChangeRequestPage() {
-  // See boq/page.jsx for why this is decoded defensively.
   const { id: rawId } = useParams();
   const projectCode = decodeURIComponent(rawId);
   const router = useRouter();

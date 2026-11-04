@@ -11,11 +11,6 @@ import { useToast } from '@/hooks/useToast';
 import { approveApiDomain } from '@/store/slices/workflowSlice';
 import { hostProblem } from './hostProblem';
 
-/**
- * Approving a host a workflow's API calls may reach — Workflows.ManageApiDomains.
- * Re-approving a withdrawn host re-enables the same row rather than adding a
- * second one, so "approved" is the honest word either way.
- */
 export default function ApproveDomainForm() {
   const dispatch = useDispatch();
   const toast = useToast();

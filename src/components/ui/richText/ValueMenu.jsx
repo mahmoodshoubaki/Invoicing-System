@@ -5,15 +5,7 @@ import { Braces } from 'lucide-react';
 import { CHROME, STATUS } from '@/theme/vizPalette';
 
 /**
- * Inserts a `{{ value }}` — one of the names this text may use — filled in
- * when the notification is sent.
- *
- * `align` says which edge the list hangs from — `right` for a button at the right end of a row.
- *
- * @param {{
- *   open: boolean, onToggle: () => void, names: string[], onInsert: (name: string) => void,
- *   align?: 'left'|'right',
- * }} props
+ * @param {{ open: boolean, onToggle: () => void, names: string[], onInsert: (name: string) => void, align?: 'left'|'right', }} props
  */
 export default function ValueMenu({ open, onToggle, names, onInsert, align = 'left' }) {
   return (

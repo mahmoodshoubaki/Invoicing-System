@@ -1,15 +1,5 @@
-/**
- * Response mappers for the Notifications module.
- *
- * The API already speaks camelCase; these exist so every screen sees the same
- * field always present (null rather than missing), and so a renamed field is
- * one edit here rather than a hunt across pages. Shapes are the backend's own
- * DTOs (`notifications-frontend-handoff.md`, checked against the source).
- */
-
 const list = (value) => (Array.isArray(value) ? value : []);
 
-/** The shape every lookup shares: channels, priorities, languages, statuses… */
 export function mapLookup(raw) {
   return {
     key: raw.key,
@@ -21,10 +11,6 @@ export function mapLookup(raw) {
     isActive: raw.isActive !== false,
   };
 }
-
-// ---------------------------------------------------------------------------
-// The bell
-// ---------------------------------------------------------------------------
 
 export function mapInboxNotification(raw) {
   return {
@@ -46,10 +32,6 @@ export function mapInboxNotification(raw) {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Types and their words
-// ---------------------------------------------------------------------------
-
 export function mapType(raw) {
   return {
     notificationTypeId: raw.notificationTypeId,
@@ -61,11 +43,7 @@ export function mapType(raw) {
     priorityKey: raw.priorityKey ?? null,
     isPaused: raw.isPaused === true,
     isSystemType: raw.isSystemType === true,
-    // Empty = sends nothing yet (no published words on any channel).
     liveChannelKeys: list(raw.liveChannelKeys),
-    // The placeholders of its live words, each name once with its default —
-    // what a workflow can type values for. RecipientName and ActionUrl are
-    // never listed: the module fills those itself.
     placeholders: list(raw.placeholders).map((p) => ({ key: p.key ?? '', value: p.value ?? '' })),
   };
 }
@@ -127,10 +105,6 @@ export function mapPreview(raw) {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Email senders and settings
-// ---------------------------------------------------------------------------
-
 export function mapEmailSender(raw) {
   return {
     emailSenderId: raw.emailSenderId,
@@ -161,7 +135,6 @@ export function mapEmailSender(raw) {
   };
 }
 
-/** One settings row — shared by the Workflow and Notifications settings screens. */
 export function mapSetting(raw) {
   return {
     key: raw.key,
@@ -171,10 +144,6 @@ export function mapSetting(raw) {
     isKnown: raw.isKnown !== false,
   };
 }
-
-// ---------------------------------------------------------------------------
-// Delivery monitor
-// ---------------------------------------------------------------------------
 
 export function mapDeliveryRow(raw) {
   return {
@@ -205,7 +174,6 @@ export function mapDeliveryRow(raw) {
     workflowInstanceId: raw.workflowInstanceId ?? null,
     correlationId: raw.correlationId ?? null,
     resentFromNotificationId: raw.resentFromNotificationId ?? null,
-    // Sent from the template editor's "Send test email", not by the system.
     isTest: raw.isTest === true,
     isArchived: raw.isArchived === true,
     canBeRequeued: raw.canBeRequeued === true,
@@ -224,9 +192,7 @@ export function mapNotificationDetails(raw) {
     errorMessage: raw.errorMessage ?? null,
     recipientUserId: raw.recipientUserId ?? null,
     recipientName: raw.recipientName ?? null,
-    // The one person this copy was delivered to.
     recipientEmail: raw.recipientEmail ?? null,
-    // The email's To and Cc lines as the reader saw them, one address per line.
     toEmail: raw.toEmail ?? null,
     ccEmail: raw.ccEmail ?? null,
     actionUrl: raw.actionUrl ?? null,
@@ -236,8 +202,6 @@ export function mapNotificationDetails(raw) {
     correlationId: raw.correlationId ?? null,
     resentFromNotificationId: raw.resentFromNotificationId ?? null,
     resentAsNotificationIds: list(raw.resentAsNotificationIds),
-    // Every copy it was resent as, oldest first (2026-10-13). `recipientName`
-    // is empty for a typed address — the email names it then. `line` is "To" or "CC".
     resentAs: list(raw.resentAs).map((r) => ({
       notificationId: r.notificationId,
       createdOn: r.createdOn ?? null,
@@ -306,10 +270,6 @@ export function mapStatistics(raw) {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Audit — config changes are the same shape in Workflow and Notifications
-// ---------------------------------------------------------------------------
-
 export function mapConfigChange(raw) {
   return {
     changedOn: raw.changedOn ?? null,
@@ -345,10 +305,6 @@ export function mapSendRequest(raw) {
     })),
   };
 }
-
-// ---------------------------------------------------------------------------
-// Background jobs (every module's) and the correlation trace (Workflow)
-// ---------------------------------------------------------------------------
 
 export function mapBackgroundJob(raw) {
   return {

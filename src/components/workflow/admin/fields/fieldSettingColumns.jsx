@@ -8,25 +8,12 @@ import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 import { LABEL_MAX } from '@/lib/fieldSettingsDraft';
 
-/** Grey text beside a locked switch: why it is locked. */
 function Reason({ text }) {
   return <span className="text-[11px] leading-snug" style={{ color: CHROME.textMuted }}>{text}</span>;
 }
 
 /**
- * The Workflow fields table's columns (2026-10-13), for the shared Table: what
- * the builder calls a field, whether it shows there, whether it can hold a
- * person a task is given to, and whether a task can fill it. A field's name
- * never changes — saved workflows hold it — so it is shown, not edited.
- *
- * A switch the server locks says why beside it (`cannotBePersonReason`,
- * `cannotFillReason`). `historyWarning` is only a warning: the switch stays
- * open.
- *
- * @param {{
- *   canEdit: boolean, onEdit: (name: string, patch: Object) => void,
- *   changedNames: Set<string>, problemOf: (name: string) => string|null,
- * }} options
+ * @param {{ canEdit: boolean, onEdit: (name: string, patch: Object) => void, changedNames: Set<string>, problemOf: (name: string) => string|null, }} options
  */
 export function fieldSettingColumns({ canEdit, onEdit, changedNames, problemOf }) {
   return [

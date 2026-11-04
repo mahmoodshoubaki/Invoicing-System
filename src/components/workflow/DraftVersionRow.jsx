@@ -10,10 +10,6 @@ import { formatDateTime } from '@/utils/formatters';
 import { ROUTES } from '@/constants/routes';
 
 /**
- * The draft, at the top of a workflow's versions (2026-10-11): who saved it
- * when, a way into it, and — for whoever may delete — a way to throw it away.
- * It has no number until it is published.
- *
  * @param {{ code: string, row: Object, canManage: boolean, canDiscard: boolean, onDiscard: () => void }} props
  */
 export default function DraftVersionRow({ code, row, canManage, canDiscard, onDiscard }) {

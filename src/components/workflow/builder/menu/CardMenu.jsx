@@ -9,7 +9,6 @@ const MARGIN = 8;
 
 const enabledItems = (root) => [...(root?.querySelectorAll('[role="menuitem"]:not([disabled])') ?? [])];
 
-/** One row of the menu. */
 function MenuItem({ item, onPick }) {
   const Icon = item.icon;
   const tone = item.danger ? STATUS.critical : CHROME.textPrimary;
@@ -40,11 +39,6 @@ function MenuItem({ item, onPick }) {
   );
 }
 
-/**
- * The popup. Placed where it was asked for, then nudged back inside the window
- * — written straight onto the element once it can be measured, so it never
- * draws a frame in the wrong place.
- */
 function MenuPopup({ menu, onClose }) {
   const ref = useRef(null);
 
@@ -62,7 +56,6 @@ function MenuPopup({ menu, onClose }) {
     enabledItems(el)[0]?.focus();
   }, [menu]);
 
-  // It closes the moment anything else happens: a press outside it, a scroll, the window changing.
   useEffect(() => {
     const outside = (e) => {
       if (!ref.current?.contains(e.target)) onClose();
@@ -87,8 +80,6 @@ function MenuPopup({ menu, onClose }) {
 
   const pick = (item) => {
     onClose();
-    // Back to where the menu came from first — an action that moves focus
-    // somewhere of its own (opening the side panel) then wins.
     giveFocusBack();
     item.onSelect?.();
   };
@@ -141,13 +132,6 @@ function MenuPopup({ menu, onClose }) {
 }
 
 /**
- * The menu a card opens on right-click or from its ⋯ (see useCardMenu).
- *
- * Arrow keys move through it, Enter picks, Esc closes it and puts focus back.
- *
- * Each item: `{ key, label, icon?, hint?, danger?, disabled?, onSelect }`, or
- * `{ separator: true }`.
- *
  * @param {{ menu: Object|null, onClose: () => void }} props
  */
 export default function CardMenu({ menu, onClose }) {

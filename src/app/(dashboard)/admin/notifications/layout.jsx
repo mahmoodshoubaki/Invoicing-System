@@ -8,11 +8,6 @@ import { usePermission } from '@/hooks/usePermission';
 import { allow } from '@/constants/workflowPermissions';
 import { NOTIFICATION_ADMIN_TABS } from '@/components/notifications/admin/adminTabs';
 
-/**
- * The notifications admin area: one tab bar over every page, showing only the
- * pages this person may open. Each page still checks its own permission (the
- * route guard does too) — the bar only decides what is offered.
- */
 export default function NotificationsAdminLayout({ children }) {
   const pathname = usePathname();
   const { can } = usePermission();

@@ -1,12 +1,5 @@
 'use client';
 
-/**
- * A parallel step on the canvas: its branches, each a list of steps. Naming,
- * adding, removing and reordering branches happens here, because the branches
- * ARE the shape of the flow. When it stops early is in the side panel
- * (ParallelEditor).
- */
-
 import { memo } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 
@@ -49,8 +42,6 @@ export const ParallelBranches = memo(function ParallelBranches(props) {
               <input
                 value={branch.title ?? ''}
                 onChange={(e) => {
-                  // The id follows the title and is never shown — it only has to be
-                  // unique within this step, and appears in a run's branch map.
                   const title = e.target.value;
                   const taken = branches.filter((_, i) => i !== branchIndex).map((b) => b.id);
                   patchBranch(branchIndex, { title, id: uniqueSlug(title, taken, `branch-${branchIndex + 1}`) });

@@ -27,7 +27,6 @@ import {
   selectInstancesError, selectInstancesLoaded, selectIsAdvancing, selectInstancesTotal,
 } from '@/store/slices/workflowRunsSlice';
 
-/** Runs a page to start with — the reader can choose another. */
 const RUNS_PAGE_SIZE = 50;
 import TargetLinks from '@/components/workflow/TargetLinks';
 import TablePagination from '@/components/common/TablePagination';
@@ -35,25 +34,17 @@ import { pageInfo } from '@/lib/pageInfo';
 import { faultedAgain } from '@/lib/runVariables';
 import { selectDefinitions } from '@/store/slices/workflowSlice';
 
-/** No push, so this is the only way the screen learns anything changed. */
 const POLL_INTERVAL_MS = 30_000;
 
-/**
- * Faulted first — this screen exists to answer "what is stuck?", and a run that
- * gave up is the only thing on it that will never move again on its own.
- */
 const FILTERS = [
   { key: 'all', label: 'All', statusKey: null },
   { key: 'faulted', label: 'Faulted', statusKey: INSTANCE_STATUS.FAULTED },
-  // Beside Faulted rather than beside Completed: both are runs that have
-  // stopped and can be picked back up, and the same Resume button serves them.
   { key: 'paused', label: 'Paused', statusKey: INSTANCE_STATUS.PAUSED },
   { key: 'cancelled', label: 'Cancelled', statusKey: INSTANCE_STATUS.CANCELLED },
   { key: 'running', label: 'Running', statusKey: INSTANCE_STATUS.RUNNING },
   { key: 'completed', label: 'Completed', statusKey: INSTANCE_STATUS.COMPLETED },
 ];
 
-/** The clocks, when they apply — a sleeping run and a stuck one look identical without them. */
 function Clocks({ run }) {
   return (
     <>
@@ -73,13 +64,6 @@ function Clocks({ run }) {
   );
 }
 
-/**
- * Workflow runs (Admin › Monitoring) — every run, and the one button each one's status allows.
- *
- * Split out from the engine admin page: what the engine will tolerate is a
- * settings question and belongs with an administrator, while what a run is
- * doing right now is an operational one and is looked at far more often.
- */
 export default function WorkflowRunsPage() {
   const dispatch = useDispatch();
   const toast = useToast();
@@ -95,11 +79,6 @@ export default function WorkflowRunsPage() {
   const busy = useSelector(selectIsAdvancing);
 
   const [filter, setFilter] = useState('all');
-  /*
-   * Paged by the server (2026-10-21) — it used to show the first 50 and no
-   * more. A new tab or a new size starts at page 1; the page is clamped to the
-   * last there is, so runs finishing off the last page never leave it empty.
-   */
   const total = useSelector(selectInstancesTotal);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(RUNS_PAGE_SIZE);
@@ -121,30 +100,16 @@ export default function WorkflowRunsPage() {
     dispatch(fetchInstances({ statusKey, skip: (current - 1) * pageSize, take: pageSize }));
   }, [dispatch, statusKey, current, pageSize]);
 
-  // `usePolling` does NOT fire on mount — its first tick is a whole interval
-  // away — so without this the page sat on "No runs here" for 30 seconds
-  // before any request was made.
   useEffect(() => {
     if (canView) load();
   }, [canView, load]);
 
   usePolling(load, POLL_INTERVAL_MS, canView);
 
-  /*
-   * `failureReason` is on the list row as of 2026-09-13, so this no longer
-   * fetches the whole run first.
-   *
-   * It used to have to: the reason text is the only signal that the loop guard
-   * is what stopped a run, and that decides whether the dialog offers to reset
-   * the step count. Deciding it off a row that did not carry the reason would
-   * have meant offering the reset blind, or never offering it at all.
-   */
   const openResume = useCallback((run) => {
     setResuming(run);
   }, []);
 
-  // As on the run's page: a refused value stays in the dialog, and a run that
-  // faults again on a corrected value says so.
   const handleResume = useCallback(async ({ notes, resetStepCount, variableChanges }) => {
     const run = resuming;
     const result = await dispatch(resumeInstance({ instanceId: run.instanceId, notes, resetStepCount, variableChanges }));
@@ -170,8 +135,6 @@ export default function WorkflowRunsPage() {
       return;
     }
 
-    // A 200 is not proof of movement — saying "advanced" to somebody whose run
-    // sat still is worse than saying nothing.
     if (didAdvance(run, result.payload)) toast.success('Run advanced', run.definitionCode);
     else toast.info('Nothing moved', 'It is waiting on something — a person, a delay, or a deadline.');
 
@@ -240,14 +203,6 @@ export default function WorkflowRunsPage() {
           </p>
         </Card>
       ) : !loaded ? (
-        /*
-          Until a result for THIS filter has actually arrived. Keyed on `loaded`
-          rather than on `loading && runs.length === 0`, because that pair is
-          false in the two moments that matter: before the first request is
-          made, and while a filter change is in flight with the previous
-          filter's rows still in the store. Both used to render "No runs here"
-          over a question nobody had answered yet.
-        */
         <div className="flex flex-col items-center gap-2 py-20">
           <LoadingSpinner />
           <p className="text-[11px]" style={{ color: CHROME.textMuted }}>Loading runs…</p>
@@ -276,16 +231,6 @@ export default function WorkflowRunsPage() {
                   key={run.instanceId}
                   className="relative flex flex-wrap items-start gap-3 border-b border-[#f1f0ee] px-4 py-3 transition-colors last:border-0 hover:bg-[#fbfaf9]"
                 >
-                  {/*
-                    The whole row opens the run, not just the code — a row that
-                    looks like a target for the pointer should be one.
-
-                    Done as a stretched overlay rather than by wrapping the row
-                    in a Link, because the row holds its own buttons and an
-                    anchor containing a button is invalid and swallows the
-                    click. The overlay sits above the (non-interactive) text and
-                    below the buttons, so Advance and Resume still work.
-                  */}
                   <Link
                     href={ROUTES.MONITORING_RUN(run.instanceId)}
                     aria-label={`Open run ${run.definitionCode ?? ""}`}
@@ -318,9 +263,6 @@ export default function WorkflowRunsPage() {
                         v{run.definitionVersion}
                         {run.currentStageTitle && ` · ${run.currentStageTitle}`}
                       </span>
-                      {/* Sits above the row's stretched link (ProjectLink carries its
-                          own z-index and stops the click), so it opens the project
-                          rather than the run. */}
                       <TargetLinks
                         targetTypeKey={run?.targetTypeKey ?? definitions.find((d) => d.code === run?.definitionCode)?.targetTypeKey ?? null}
                         targetIds={run.targetIds}
@@ -350,11 +292,6 @@ export default function WorkflowRunsPage() {
                     )}
                   </div>
 
-                  {/* Above the row overlay (z-20 over z-10), or the link would
-                      swallow the click and open the run instead of acting on it.
-
-                      One button, chosen by status. They are not interchangeable:
-                      advancing a faulted run answers 200 and does nothing. */}
                   {canRun && action === "resume" && (
                     <div className="relative z-20">
                       <Button
@@ -388,7 +325,6 @@ export default function WorkflowRunsPage() {
       )}
       {pagination && <TablePagination {...pagination} busy={loading} />}
 
-      {/* Mounted per run so the note and the checkbox start clean each time. */}
       {resuming && (
         <ResumeDialog
           key={resuming.instanceId}

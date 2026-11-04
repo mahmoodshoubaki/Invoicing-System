@@ -7,16 +7,6 @@ import { CheckCircle2, Inbox } from 'lucide-react';
 import EmptyState from '@/components/common/EmptyState';
 import TaskCard from './TaskCard';
 
-/**
- * The to-do list itself.
- *
- * Deliberately a component that takes `tasks`, not a screen that fetches them.
- * `WorkflowTasks.ViewAll` and `ActAll` already exist in the permission catalog
- * with no endpoint behind them yet, so a supervisor's "every user's tasks" view
- * is clearly coming. When it arrives it should be a different `tasks` array and
- * a different `filter` passed to this same component — not a second screen that
- * duplicates the card, the comment rule and the outcome buttons.
- */
 export const TASK_FILTERS = {
   ALL: 'all',
   OVERDUE: 'overdue',
@@ -57,8 +47,6 @@ function TaskList({ tasks, filter = TASK_FILTERS.ALL, onComplete, completingTask
 
   return (
     <ul className="flex flex-col gap-3" data-motion>
-      {/* AnimatePresence lets a completed card animate out rather than vanish,
-          which is the difference between "that worked" and "did I click it?" */}
       <AnimatePresence initial={false} mode="popLayout">
         {visible.map((task) => (
           <TaskCard

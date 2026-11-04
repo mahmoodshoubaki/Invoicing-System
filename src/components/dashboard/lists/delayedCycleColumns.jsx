@@ -5,10 +5,8 @@ import LateBadge from '../LateBadge';
 import ProjectCell from './ProjectCell';
 import ViewLink from './ViewLink';
 
-/** Where a late cycle opens: its BOQ item. */
 export const delayedCycleHref = (row) => ROUTES.PROJECT_BOQ_ITEM(encodeURIComponent(row.projectCode ?? ''), row.boqItemId);
 
-/** The columns of the delayed BOQ cycles table. */
 export function delayedCycleColumns() {
   return [
     { key: 'projectCode', label: 'Project', render: (code, row) => <ProjectCell code={code} name={row.projectName} /> },

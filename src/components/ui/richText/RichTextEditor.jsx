@@ -1,7 +1,5 @@
 'use client';
 
-/** The visual editor for an HTML body. */
-
 import { useEffect, useRef } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
 
@@ -12,18 +10,7 @@ import { STATUS } from '@/theme/vizPalette';
 import { Toolbar } from './Toolbar';
 
 /**
- * A visual editor for an HTML body — formatting, colours, alignment, lists,
- * links, buttons and images — that reads and writes the same HTML string a
- * code field would. Content is held in the editor's own document model, so a
- * stored body is parsed into it (scripts, handlers and unknown markup never
- * reach the page) rather than injected as HTML.
- *
- * @param {{
- *   value: string, onChange: (html: string) => void,
- *   dir?: 'ltr'|'rtl', readOnly?: boolean, invalid?: boolean,
- *   valueNames?: string[],  offered by the "Value" menu
- *   ariaLabel?: string,
- * }} props
+ * @param {{ value: string, onChange: (html: string) => void, dir?: 'ltr'|'rtl', readOnly?: boolean, invalid?: boolean, valueNames?: string[], offered by the "Value" menu ariaLabel?: string, }} props
  */
 export default function RichTextEditor({ value, onChange, dir = 'ltr', readOnly = false, invalid = false, valueNames = [], ariaLabel }) {
   const lastEmitted = useRef(value);

@@ -1,5 +1,3 @@
-/** Role entity — one item from GetAllRoles. Not named createRole: that name is
- *  reserved for the actual CreateRole operation, not this GET mapping. */
 export function mapRole(raw) {
   return {
     id: raw.id,
@@ -9,7 +7,6 @@ export function mapRole(raw) {
   };
 }
 
-/** Request body for CreateRole. */
 export function createRolePayload(data) {
   return {
     name: data.name,
@@ -18,7 +15,6 @@ export function createRolePayload(data) {
   };
 }
 
-/** Request body for UpdateRole. */
 export function updateRolePayload(data) {
   return {
     name: data.name,

@@ -19,10 +19,6 @@ import { allow, WORKFLOW_INSTANCE_PERMISSIONS } from '@/constants/workflowPermis
 
 const PAGE_SIZE = 25;
 
-/**
- * Actions get a quiet tone each so a column of them can be scanned by shape:
- * additions green, removals red, switches amber, everything else slate.
- */
 const ACTION_TONE = {
   Created: STATUS.good,
   Approved: STATUS.good,
@@ -37,7 +33,6 @@ const ACTION_TONE = {
 
 const EMPTY = { items: [], total: 0 };
 
-/** One change: the summary on a line, the before → after underneath on demand. */
 const ChangeRow = memo(function ChangeRow({ change, now, canTrace, traceHref }) {
   const [open, setOpen] = useState(false);
   const tone = ACTION_TONE[change.action] ?? STATUS.info;
@@ -126,14 +121,7 @@ const ChangeRow = memo(function ChangeRow({ change, now, canTrace, traceHref }) 
 });
 
 /**
- * Who changed what, newest first — the same shape in Workflow and in
- * Notifications, so one view serves both and they read alike.
- *
- * @param {{
- *   load: (filters: Object) => Promise<{ items: Array, total: number }>,
- *   areas: string[],
- *   initialCorrelationId?: string,
- * }} props
+ * @param {{ load: (filters: Object) => Promise<{ items: Array, total: number }>, areas: string[], initialCorrelationId?: string, }} props
  */
 function ConfigChangesView({ load, areas, initialCorrelationId = '' }) {
   const traceHref = ROUTES.MONITORING_TRACE;
@@ -143,7 +131,6 @@ function ConfigChangesView({ load, areas, initialCorrelationId = '' }) {
   const [filters, setFilters] = useState({ area: '', fromDate: '', toDate: '', correlationId: initialCorrelationId });
   const [draftCorrelation, setDraftCorrelation] = useState(initialCorrelationId);
   const [skip, setSkip] = useState(0);
-  // Rows a page, as the reader chooses (2026-10-21) — PAGE_SIZE to start with.
   const [take, setTake] = useState(PAGE_SIZE);
   const [data, setData] = useState(EMPTY);
   const [loading, setLoading] = useState(true);
@@ -245,7 +232,6 @@ function ConfigChangesView({ load, areas, initialCorrelationId = '' }) {
       ) : (
         <ul className={`transition-opacity ${loading ? 'opacity-60' : ''}`}>
           {data.items.map((change, i) => (
-            // Two changes can share a time and a tracking number; position keeps keys unique.
             <ChangeRow key={`${change.changedOn}-${change.itemName}-${i}`} change={change} now={now} canTrace={canTrace} traceHref={traceHref} />
           ))}
         </ul>

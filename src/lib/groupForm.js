@@ -4,8 +4,6 @@ const NOT_FOUND = 'IDT-015';
 const joined = (messages) => (Array.isArray(messages) ? messages : [messages]).filter(Boolean).join(' ');
 
 /**
- * A CreateGroup / UpdateGroup refusal as form errors.
- *
  * @returns {{ name?: string, general?: string, gone?: boolean }}
  */
 export function groupFormErrors(err) {
@@ -17,7 +15,6 @@ export function groupFormErrors(err) {
   return { general: err?.message || 'The group could not be saved.' };
 }
 
-/** What stops the form before it is sent. */
 export function groupFormProblems({ name }) {
   return String(name ?? '').trim() ? {} : { name: 'A name is required.' };
 }

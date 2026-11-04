@@ -10,14 +10,7 @@ import { withAlpha } from '@/utils/color';
 import VersionPicker from './VersionPicker';
 
 /**
- * The bar over every editing tab: which version is being edited, and what can
- * be done with it — save the draft, throw it away, publish, or turn the channel
- * off. Why a save is blocked shows under it, whichever tab is open.
- *
- * @param {{
- *   editor: ReturnType<import('./useTemplateDraft').useTemplateDraft>,
- *   channelLabel: string, canManage: boolean, canPublish: boolean,
- * }} props
+ * @param {{ editor: ReturnType<import('./useTemplateDraft').useTemplateDraft>, channelLabel: string, canManage: boolean, canPublish: boolean, }} props
  */
 export default function VersionBar({ editor, channelLabel, canManage, canPublish }) {
   const [confirmOff, setConfirmOff] = useState(false);

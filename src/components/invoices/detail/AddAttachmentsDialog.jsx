@@ -10,10 +10,6 @@ import { useToast } from '@/hooks/useToast';
 import { CHROME, STATUS } from '@/theme/vizPalette';
 
 /**
- * Adding files to an invoice after it was created (2026-10-11) — at any stage
- * while it is open, not once it is Collected or Cancelled (INV-013). The same
- * limits as creating one, checked by the uploader as files are picked.
- *
  * @param {{ invoiceId: string, onClose: () => void, onAdded: () => void }} props
  */
 export default function AddAttachmentsDialog({ invoiceId, onClose, onAdded }) {

@@ -8,10 +8,6 @@ import { withAlpha } from '@/utils/color';
 import { isEmailOrPlaceholder } from '@/lib/workflowNotifications';
 
 /**
- * A list of addresses as chips: type one and press Enter (or a comma, or
- * paste several). Each is an address or a `{{field}}` holding one — the field
- * is checked when the run gets there, a typed address is checked now.
- *
  * @param {{ values: string[], onChange: (values: string[]) => void, placeholder?: string, ariaLabel?: string }} props
  */
 function EmailListInput({ values, onChange, placeholder = 'name@example.com or {{ClientEmail}}', ariaLabel }) {

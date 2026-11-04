@@ -11,20 +11,7 @@ import { CHROME } from '@/theme/vizPalette';
 import NotAvailable from './NotAvailable';
 
 /**
- * A short dashboard list with its own loading, no-access, error and empty states.
- *
- * @param {{
- *   title: string,
- *   icon?: import('react').ComponentType<any>,
- *   subtitle: string,
- *   source: { status: string, error: Error|null, reload: () => void },
- *   isEmpty: boolean,
- *   forbiddenText: string,
- *   emptyTitle: string,
- *   emptyText: string,
- *   children: import('react').ReactNode,
- *   href?: string,
- * }} props
+ * @param {{ title: string, icon?: import('react').ComponentType<any>, subtitle: string, source: { status: string, error: Error|null, reload: () => void }, isEmpty: boolean, forbiddenText: string, emptyTitle: string, emptyText: string, children: import('react').ReactNode, href?: string, }} props
  */
 export default function DashboardListCard({
   title, icon: Icon = null, subtitle, source, isEmpty, forbiddenText, emptyTitle, emptyText, children, href = null,

@@ -11,23 +11,12 @@ import { withProjectStatus } from './lists/listHref';
 import { pendingBreakdown } from './lists/pendingTypes';
 import { plural, sourceNote } from './sourceNote';
 
-/** The chip under a count: `busyText` while there is something, "All clear" at zero. */
 const flag = (count, busyText) => (count == null
   ? {}
   : { delta: count > 0 ? busyText : 'All clear', deltaType: count > 0 ? 'negative' : 'positive' });
 
 /**
- * The figures no month changes: collected all time, and what is late or waiting
- * right now. Each opens the full list behind it.
- *
- * @param {{
- *   invoices: { status: string, data: Object|null },
- *   pending: { status: string, data: Object|null },
- *   delayed: { status: string, data: Object|null },
- *   sla: { status: string, data: Object|null },
- *   projectStatus: string,
- *   money: (v: number) => string,
- * }} props
+ * @param {{ invoices: { status: string, data: Object|null }, pending: { status: string, data: Object|null }, delayed: { status: string, data: Object|null }, sla: { status: string, data: Object|null }, projectStatus: string, money: (v: number) => string, }} props
  */
 export default function SummaryCards({ invoices, pending, delayed, sla, projectStatus, money }) {
   const collected = invoices.data?.byStatus.find((s) => s.statusId === INVOICE_STATUS_ID.COLLECTED) ?? null;

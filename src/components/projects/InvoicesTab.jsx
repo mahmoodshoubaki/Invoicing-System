@@ -17,7 +17,6 @@ import { useToast } from '@/hooks/useToast';
 import { DELETABLE_INVOICE_STATUS_IDS, INVOICE_STATUS } from '@/constants/statuses';
 import { PENDING_LABEL } from '@/utils/invoiceDisplay';
 
-/** Only In Progress, Rejected and Cancelled invoices can be deleted. */
 const isDeletable = (invoice) => DELETABLE_INVOICE_STATUS_IDS.includes(invoice.statusId);
 
 function InvoicesTab({
@@ -30,17 +29,11 @@ function InvoicesTab({
   const encoded = encodeURIComponent(projectCode);
   const canDelete = can('Invoices', 'Delete');
 
-  /*
-   * Ticked rows, by id. Read back through the current list, so a row that left
-   * (deleted, or moved out of a deletable status) quietly stops counting
-   * without anything having to clean the set up.
-   */
   const [tickedIds, setTickedIds] = useState(() => new Set());
   const deletableRows = useMemo(() => invoices.filter(isDeletable), [invoices]);
   const selected = useMemo(() => deletableRows.filter((i) => tickedIds.has(i.id)), [deletableRows, tickedIds]);
   const allTicked = deletableRows.length > 0 && selected.length === deletableRows.length;
 
-  /** The invoices the delete dialog is asking about, or null when it is shut. */
   const [pendingDelete, setPendingDelete] = useState(null);
 
   const toggle = useCallback((id) => {
@@ -63,13 +56,6 @@ function InvoicesTab({
     onInvoicesChanged?.();
   }, [onInvoicesChanged, toast]);
 
-  /**
-   * Which invoice's revisions are open, or null.
-   *
-   * The id IS the open/closed state — one piece of state rather than a boolean
-   * beside it, so the two can never disagree. The modal fetches on open and
-   * clears on close, so nothing has to be reset here.
-   */
   const [historyInvoiceId, setHistoryInvoiceId] = useState(null);
   const summary = useMemo(() => {
     const totalAmount = invoices.reduce((sum, i) => sum + (i.totalAmount || 0), 0);
@@ -104,8 +90,6 @@ function InvoicesTab({
   ], [invoices.length, summary, currency]);
 
   const columns = useMemo(() => [
-    // Ticking is for deleting, so the column exists only for those who may.
-    // A row that cannot be deleted has no box rather than a disabled one.
     ...(canDelete ? [{
       key: 'select',
       label: (
@@ -182,8 +166,6 @@ function InvoicesTab({
       resizable: false,
       render: (_, row) => (
         <div className="flex items-center justify-end gap-0.5" onClick={(e) => e.stopPropagation()}>
-          {/* Every past revision of this invoice — the same timeline the
-              invoice page shows, without leaving the project. */}
           <Button
             variant="ghost"
             size="xs"

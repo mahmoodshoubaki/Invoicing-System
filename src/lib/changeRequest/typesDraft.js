@@ -1,15 +1,12 @@
 import { CR_OTHER_TYPE_MAX } from '@/constants/changeRequests';
 
-/** Whether a ticked type asks for a description (Other). */
 export function needsTypeText(typeKeys, types) {
   return (typeKeys ?? []).some((key) => (types ?? []).find((t) => t.key === key)?.requiresText);
 }
 
 /**
- * The type and project-effect problems of a request, as the server refuses them.
- *
  * @param {{ typeKeys?: number[], otherTypeText?: string, projectEffectKey?: number|null }} draft
- * @param {Array<{ key: number, requiresText: boolean }>} types  the lookup
+ * @param {Array<{ key: number, requiresText: boolean }>} types
  * @returns {{ typeKeys: string|null, otherTypeText: string|null, projectEffectKey: string|null }}
  */
 export function typeProblems(draft, types) {
@@ -27,7 +24,6 @@ export function typeProblems(draft, types) {
   };
 }
 
-/** "Change Invoice Date(s), Other: Split milestone 2". */
 export function typesText(typeKeys, otherTypeText, typesMap) {
   return (typeKeys ?? [])
     .map((key) => {

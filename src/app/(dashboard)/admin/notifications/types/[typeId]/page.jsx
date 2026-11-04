@@ -28,7 +28,6 @@ import { CHANNEL, NOTIFICATION_PERMISSIONS } from '@/constants/notifications';
 import { ROUTES } from '@/constants/routes';
 import { notificationRepository } from '@/repositories/notificationRepository';
 
-/** A warning strip over the tabs. */
 function Notice({ icon: Icon, children }) {
   return (
     <p className="mb-4 flex items-start gap-2 rounded-lg px-3 py-2.5 text-xs" style={{ backgroundColor: withAlpha(STATUS.warning, 0.12), color: CHROME.textSecondary }}>
@@ -38,14 +37,6 @@ function Notice({ icon: Icon, children }) {
   );
 }
 
-/**
- * One notification type: its details, and its words per channel, in tabs.
- *
- * Reading is `View`. Changing its details or writing words is `Manage`;
- * making a version live, rolling back or turning a channel off is `Publish` —
- * separate, so whoever writes a version is not automatically the one who sends
- * it. Deleting is `Delete`, and never for a standard type.
- */
 export default function NotificationTypePage() {
   const { typeId } = useParams();
   const router = useRouter();
@@ -54,7 +45,6 @@ export default function NotificationTypePage() {
   const canManage = allow(can, NOTIFICATION_PERMISSIONS.MANAGE);
   const canPublish = allow(can, NOTIFICATION_PERMISSIONS.PUBLISH);
   const canDelete = allow(can, NOTIFICATION_PERMISSIONS.DELETE);
-  // Sending a test needs Manage Settings; listing the senders to send through needs Manage.
   const canSendTest = canManage && allow(can, NOTIFICATION_PERMISSIONS.MANAGE_SETTINGS);
 
   const priorities = useNotificationLookup('priorities');
@@ -71,8 +61,6 @@ export default function NotificationTypePage() {
   const [busy, setBusy] = useState(null);
   const [actionError, setActionError] = useState(null);
 
-  // What each channel's editor reports — unsaved edits, and problems per tab —
-  // for the tab bar and the channel switch.
   const [status, setStatus] = useState({});
   const reportStatus = useCallback((channelKey, next) => {
     setStatus((prev) => {
@@ -93,7 +81,6 @@ export default function NotificationTypePage() {
 
   useLoadOnChange(load);
 
-  // Senders (to name this type's own, and to test through) and categories (for the form) — fetched once.
   useEffect(() => {
     if (canManage) notificationRepository.getEmailSenders().then(setSenders).catch(() => setSenders(null));
     notificationRepository.getTypes().then(setAllTypes).catch(() => {});
@@ -101,7 +88,6 @@ export default function NotificationTypePage() {
 
   const categories = useMemo(() => [...new Set(allTypes.map((t) => t.category).filter(Boolean))].sort(), [allTypes]);
 
-  /** Pause/resume or delete: one at a time, its error shown over the tabs. */
   const run = async (name, action) => {
     setBusy(name);
     setActionError(null);
@@ -120,8 +106,6 @@ export default function NotificationTypePage() {
     load();
   });
 
-  // NTF-006 (still live) / NTF-023 (standard) — the message says what to do,
-  // so the confirm box closes to show it.
   const remove = () => run('delete', async () => {
     try {
       await notificationRepository.deleteType(type.notificationTypeId);

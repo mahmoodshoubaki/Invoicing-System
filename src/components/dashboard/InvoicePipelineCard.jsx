@@ -18,8 +18,6 @@ const ICONS = {
 };
 
 /**
- * Every invoice the user can see, all time, by status — named and coloured by the status lookup.
- *
  * @param {{ statuses: Array<{ id: number, label: string, colorHex: string }>, invoices: { status: string, data: Object|null }, money: (v: number) => string }} props
  */
 export default function InvoicePipelineCard({ statuses, invoices, money }) {

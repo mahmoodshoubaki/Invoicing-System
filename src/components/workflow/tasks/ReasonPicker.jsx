@@ -5,13 +5,7 @@ import { OTHER_REASON_KEY, REASON_TEXT_MAX } from '@/lib/taskReasons';
 import { CHROME, STATUS } from '@/theme/vizPalette';
 
 /**
- * A button's reasons as a drop-down, with "Other" last; "Other" opens a text box.
- *
- * @param {{
- *   id: string, reasons: { required: boolean, options: Array<{ key: string, label: string }> },
- *   value: { reasonKey: string, otherReason: string }, onChange: (value) => void,
- *   error?: string|null, disabled?: boolean,
- * }} props
+ * @param {{ id: string, reasons: { required: boolean, options: Array<{ key: string, label: string }> }, value: { reasonKey: string, otherReason: string }, onChange: (value) => void, error?: string|null, disabled?: boolean, }} props
  */
 export default function ReasonPicker({ id, reasons, value, onChange, error = null, disabled = false }) {
   const other = value.reasonKey === OTHER_REASON_KEY;

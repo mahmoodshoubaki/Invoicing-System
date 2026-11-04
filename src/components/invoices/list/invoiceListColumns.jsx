@@ -8,12 +8,9 @@ import { CHROME } from '@/theme/vizPalette';
 import { formatCurrency, formatDateTime } from '@/utils/formatters';
 import { PENDING_LABEL } from '@/utils/invoiceDisplay';
 
-/** Where an invoice opens: its page, told which project it is on. */
 export const invoiceHref = (row) => `${ROUTES.INVOICE_DETAIL(row.id)}?projectCode=${encodeURIComponent(row.projectCode ?? '')}`;
 
 /**
- * The columns of the all-invoices table.
- *
  * @param {{ currency: string, statusesMap: Object, colorsMap: Object }} lookups
  */
 export function invoiceListColumns({ currency, statusesMap, colorsMap }) {

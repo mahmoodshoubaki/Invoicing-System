@@ -1,12 +1,9 @@
 'use client';
 
-/** A colour menu: swatches, none, and a custom colour. */
-
 import { CHROME } from '@/theme/vizPalette';
 
 import { toHex } from './palettes';
 
-/** A row of colour swatches, with "none" and a custom colour. */
 export function Swatches({ colors, current: raw, onPick, onClear, clearLabel }) {
   const current = toHex(raw);
   return (

@@ -1,7 +1,5 @@
 'use client';
 
-/** One input an action describes for itself: its label, its type, its choices. */
-
 import { memo, useRef } from 'react';
 
 import TokenPicker from '@/components/workflow/builder/TokenPicker';
@@ -10,23 +8,10 @@ import { CHROME, STATUS } from '@/theme/vizPalette';
 
 import { controlClass, Label } from './shared';
 
-/**
- * One input an action declared, drawn as the control its type asks for.
- *
- * The point of the whole thing: an input used to be a text box next to its raw
- * key with an example value as a hint, which nobody could be expected to
- * decode. A described input is a labelled control that shows a name and sends a
- * value.
- *
- * `choices` are read live from the module's own source of truth, so an option
- * added server-side appears without a redeploy — nothing here is cached.
- */
 export const DescribedInput = memo(function DescribedInput({ input, value, fields, onChange }) {
   const ref = useRef(null);
   const current = value == null ? '' : String(value);
 
-  // A choice set with a placeholder in the box: the run decides which option it
-  // lands on, so the dropdown cannot show a selection and says so instead.
   const isPlaceholder = current.includes('{{');
 
   const control = (() => {
@@ -44,8 +29,6 @@ export const DescribedInput = memo(function DescribedInput({ input, value, field
           {input.choices.map((c) => (
             <option key={c.value} value={c.value}>{c.label}</option>
           ))}
-          {/* A saved step naming a choice the module has since dropped stays
-              visible rather than silently resetting to nothing. */}
           {current && !known && <option value={current}>{current} — no longer offered</option>}
         </select>
       );

@@ -6,10 +6,6 @@ import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 
 /**
- * Problems on rows the table is not showing right now — on another page, or
- * left out by the search. Without this a Save held back by a row out of sight
- * would give no reason. "Show" searches for that row.
- *
  * @param {{ items: Array<{ name: string, label: string, message: string }>, onShow: (name: string) => void }} props
  */
 export default function OffPageProblems({ items, onShow }) {

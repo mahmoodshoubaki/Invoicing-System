@@ -10,13 +10,7 @@ import { pendingHref, pendingTitle, pendingType } from './lists/pendingTypes';
 import { plural, sourceNote } from './sourceNote';
 
 /**
- * The newest invoices, change requests and BOQ items still waiting for a decision.
- *
- * @param {{
- *   source: { status: string, data: Object|null, error: Error|null, reload: () => void },
- *   money: (v: number) => string,
- *   href: string,
- * }} props
+ * @param {{ source: { status: string, data: Object|null, error: Error|null, reload: () => void }, money: (v: number) => string, href: string, }} props
  */
 export default function PendingApprovalsCard({ source, money, href }) {
   const items = source.data?.items ?? [];

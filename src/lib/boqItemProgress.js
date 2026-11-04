@@ -1,9 +1,3 @@
-/**
- * Where a BOQ item is, as steps (2026-10-21): submitted, the workflow
- * reviewing it (see lib/workflowProgress), and the decision. A draft has not
- * been submitted, so that is the step it is on.
- */
-
 import { BOQ_ITEM_STATUS_ID } from '@/constants/statuses';
 import { STEP, TONE, assembleSteps, workflowSteps } from '@/lib/workflowProgress';
 

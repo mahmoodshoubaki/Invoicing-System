@@ -8,7 +8,6 @@ import { formatDateTime } from '@/utils/formatters';
 import { ROUTES } from '@/constants/routes';
 import { INSTANCE_STATUS, INSTANCE_STATUS_COLORS } from '@/constants/workflow';
 
-/** One recorded move: from where to where, when, by whom — and the trace of what else it did. */
 function HistoryRow({ row, last }) {
   const rowColor = INSTANCE_STATUS_COLORS[row.toStatusKey] ?? CHROME.textMuted;
 
@@ -32,15 +31,6 @@ function HistoryRow({ row, last }) {
           <strong>{row.toStageTitle ?? row.toStageId ?? '—'}</strong>
         </p>
 
-        {/*
-          Who moved it, and when.
-
-          A row with no `performedByName` is not missing data — it is the
-          engine's own work: a deadline firing, a delay waking up, a retry
-          coming back. Saying so is the useful distinction on a timeline,
-          because "nobody touched this, it happened on its own" is exactly
-          what somebody reading a run is trying to establish.
-        */}
         <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[11px]" style={{ color: CHROME.textMuted }}>
           <span>{row.performedOn ? formatDateTime(row.performedOn) : 'no time recorded'}</span>
           <span aria-hidden="true">·</span>
@@ -55,10 +45,6 @@ function HistoryRow({ row, last }) {
               by the engine
             </span>
           )}
-          {/* Everything the same action caused — the tasks it made, the
-              notifications that went out. Only on rows that carry a tracking
-              number (none before 2026-10-07). The page itself needs
-              WorkflowInstances.View, which is all the trace asks for. */}
           {row.correlationId && (
             <>
               <span aria-hidden="true">·</span>
@@ -75,8 +61,6 @@ function HistoryRow({ row, last }) {
           )}
         </p>
 
-        {/* Notes carry the cancellation reason and the note left on a resume,
-            so they are never decoration. */}
         {row.notes && (
           <p className="mt-1 rounded-md px-2 py-1 text-[11px] leading-snug" style={{ backgroundColor: '#fbfaf9', color: CHROME.textSecondary }}>
             {row.notes}
@@ -87,16 +71,6 @@ function HistoryRow({ row, last }) {
   );
 }
 
-/**
- * Where the run is NOW, as the last entry.
- *
- * The history records stage transitions, so on a live run it stops at "arrived
- * in QS review" and says nothing about the to-do that arrival created — which
- * reads as a timeline that just stops. This closes the gap between the two
- * panels: the last thing that happened, and the thing being waited for.
- *
- * It is the present, not a record, so it is drawn hollow.
- */
 function NowRow({ run, openTasks }) {
   return (
     <li className="flex gap-3">
@@ -134,10 +108,6 @@ function NowRow({ run, openTasks }) {
 }
 
 /**
- * The audit trail — its own call since 2026-09-13, because a long-running
- * workflow's history has no ceiling and shipping all of it on every poll of the
- * run's state was the cost of a timeline.
- *
  * @param {{ run: Object, history: Array, loaded: boolean, openTasks: Array }} props
  */
 export default function RunHistoryPanel({ run, history, loaded, openTasks }) {
@@ -158,8 +128,6 @@ export default function RunHistoryPanel({ run, history, loaded, openTasks }) {
       ) : (
         <ol className="flex flex-col">
           {history.map((row, index) => (
-            // The "Now" entry is part of the timeline, so the last recorded row
-            // still needs its connector when one follows.
             <HistoryRow key={`${row.performedOn}-${index}`} row={row} last={index === history.length - 1 && !live} />
           ))}
           {live && <NowRow run={run} openTasks={openTasks} />}

@@ -5,15 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import ValueMenu from '@/components/ui/richText/ValueMenu';
 
 /**
- * The visual editor's Value menu, for a plain text box: inserts `{{ Name }}`
- * where the cursor is. The menu keeps the box focused while it is open (its
- * buttons take no focus), so the cursor is still there to insert at.
- *
- * @param {{
- *   names: string[],  what the words may use — the listed placeholders and the built-ins
- *   inputRef: React.RefObject<HTMLInputElement|HTMLTextAreaElement>,
- *   value: string, onChange: (value: string) => void,
- * }} props
+ * @param {{ names: string[], what the words may use — the listed placeholders and the built-ins inputRef: React.RefObject<HTMLInputElement|HTMLTextAreaElement>, value: string, onChange: (value: string) => void, }} props
  */
 export default function ValueInsertButton({ names, inputRef, value, onChange }) {
   const [open, setOpen] = useState(false);

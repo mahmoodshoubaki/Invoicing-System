@@ -3,8 +3,6 @@
 import { Filter } from 'lucide-react';
 
 /**
- * The project status every dashboard figure keeps to, styled for the dark header.
- *
  * @param {{ filters: ReturnType<import('./useDashboard').useDashboardFilters> }} props
  */
 export default function ProjectStatusFilter({ filters }) {

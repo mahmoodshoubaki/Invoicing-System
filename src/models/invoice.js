@@ -2,19 +2,6 @@ import { createWaitingTask } from '@/models/waitingTask';
 import { INVOICE_STATUS_ID } from '@/constants/statuses';
 
 /**
- * The money a project's invoices add up to, in the three figures the project
- * page reports.
- *
- * Rejected and cancelled invoices are not money: nobody will ever pay them, so
- * they count towards nothing here — not the total raised, and not what is still
- * outstanding. Everything else that is not yet collected is outstanding,
- * whatever stage it has reached.
- *
- *   totalInvoicesValue = collectedValue + nonCollectedValue
- *
- * Amounts are `totalAmount`, the invoice's own total, which is what the
- * Invoices tab shows per row.
- *
  * @param {Array<{statusId: number|null, totalAmount: number}>} invoices
  * @returns {{totalInvoicesValue: number, collectedValue: number, nonCollectedValue: number}}
  */
@@ -35,10 +22,6 @@ export function summariseProjectInvoices(invoices = []) {
 }
 
 /**
- * Maps a raw invoice line from the API into a consistent model.
- * Skips the nested `invoice` back-reference each line carries — it's a
- * duplicate of the parent invoice and never needed client-side.
- *
  * @param {Object} raw
  * @returns {Object}
  */
@@ -53,9 +36,6 @@ export function createInvoiceLine(raw) {
     itemTitleEnSnapshot:     raw.itemTitleEnSnapshot     ?? null,
     itemDescriptionSnapshot: raw.itemDescriptionSnapshot ?? null,
     lineTotal:               raw.lineTotal ?? 0,
-    // null when this line's BOQ item has no tracker plan, or no cycle was
-    // associated with this invoice line — not every line necessarily maps
-    // to a tracker cycle.
     trackerCycleNumber:      raw.trackerCycleNumber ?? null,
     trackerCycleStatusId:    raw.trackerCycleStatusId ?? null,
     varianceDays:            raw.varianceDays ?? null,
@@ -63,25 +43,14 @@ export function createInvoiceLine(raw) {
 }
 
 /**
- * Builds the CreateInvoice request as multipart/form-data: the non-file
- * fields go in as a single JSON string under the "request" field, and each
- * attachment is appended as its own "attachments" file part — the backend's
- * IFormFile binding reads filename/content-type/size directly off each
- * part's own headers, so none of that is duplicated as separate fields.
- * `data.attachments` is expected in the shape AttachmentUploader produces:
- * `{file, name, size, type}` per entry.
- *
  * @param {Object} data
  * @returns {FormData}
  */
 export function createInvoiceFormData(data) {
   const request = {
-    // No invoice number, baseline collection date, financial claim reference or
-    // receipt issue date: workflow tasks fill those in.
     projectCode:            data.projectCode,
     wip:                   Number(data.wip) || 0,
     revenue:                Number(data.revenue) || 0,
-    // No `submittedBy`: the backend sets it from the signed-in user.
     lines: (data.lines ?? []).map((line) => ({
       boqItemId:               line.boqItemId,
       quantity:                Number(line.quantity),
@@ -101,17 +70,6 @@ export function createInvoiceFormData(data) {
 }
 
 /**
- * Builds the UpdateInvoice request as multipart/form-data. Mirrors
- * createInvoiceFormData's shape (a JSON "Request" field plus file parts)
- * but is otherwise a separate, narrower request: UpdateInvoice only ever
- * touches ReasonsForUpdate, ExpectedCollectionDate, which existing
- * attachments to delete, and which new ones to add — every other invoice
- * field is read-only once created. New attachments go under their own
- * "AttachmentIdsToAdd" file field (kept distinct from Create's
- * "Attachments" field per spec), read the same way off each part's own
- * headers. `data.attachmentsToAdd` is expected in the shape
- * AttachmentUploader produces: `{file, name, size, type}` per entry.
- *
  * @param {Object} data
  * @returns {FormData}
  */
@@ -120,8 +78,6 @@ export function createUpdateInvoiceFormData(data) {
     InvoiceId:              data.invoiceId,
     ReasonsForUpdate:       data.reasonsForUpdate,
     ExpectedCollectionDate:  data.expectedCollectionDate,
-    // Not edited here (a workflow task fills it), but UpdateInvoice CLEARS it
-    // when null or missing, so the current one is sent back unchanged.
     FinancialClaimReference: data.financialClaimReference ?? null,
     AttachmentIdsToDelete:  data.attachmentIdsToDelete ?? [],
   };
@@ -135,12 +91,8 @@ export function createUpdateInvoiceFormData(data) {
 }
 
 /**
- * Builds the AddInvoiceAttachments request (2026-10-11): plain form fields —
- * `InvoiceId`, and one `Attachments` file part per file — with no JSON
- * "Request" part, because the endpoint binds the form directly.
- *
  * @param {string} invoiceId
- * @param {Array<{file: File, name: string, status: string}>} attachments  AttachmentUploader's entries
+ * @param {Array<{file: File, name: string, status: string}>} attachments
  * @returns {FormData}
  */
 export function createAddAttachmentsFormData(invoiceId, attachments) {
@@ -153,12 +105,6 @@ export function createAddAttachmentsFormData(invoiceId, attachments) {
 }
 
 /**
- * Maps a raw invoice attachment from the API into a consistent model.
- * `contentId` identifies the stored file content and is what
- * DownloadInvoiceAttachment expects as its AttachmentId param — `id` is the
- * attachment record's own identity (used for AttachmentIdsToDelete), not
- * interchangeable with contentId.
- *
  * @param {Object} raw
  * @returns {Object}
  */
@@ -175,39 +121,29 @@ export function createInvoiceAttachment(raw) {
 
 
 /**
- * Maps a raw API invoice to a consistent model.
- *
  * @param {Object} raw
  * @returns {Object}
  */
 export function createInvoice(raw) {
   return {
     id:                      raw.id,
-    // Null until stage 2 fills it in (2026-10-11) — screens show "Pending".
     invoiceNumber:           raw.invoiceNumber ?? null,
     projectCode:             raw.projectCode   ?? null,
     vat:                     raw.vat ?? 0,
     wip:                     raw.wip ?? 0,
     revenue:                 raw.revenue ?? 0,
-    // The submitter's user id, set by the backend from whoever was signed in.
     submittedBy:             raw.submittedBy ?? null,
-    // What screens show. "Unknown" when the user is gone (null in the
-    // project list).
     submittedByName:         raw.submittedByName ?? null,
     statusId:                raw.statusId    ?? null,
     isDeleted:               raw.isDeleted ?? false,
     creationDate:            raw.creationDate            ?? null,
     submissionDate:          raw.submissionDate          ?? null,
-    // Also null until stage 2.
     baselineCollectionDate:  raw.baselineCollectionDate  ?? null,
     expectedCollectionDate:  raw.expectedCollectionDate  ?? null,
     reasonsForUpdate:        raw.reasonsForUpdate  ?? null,
-    // Both filled in by workflow tasks, never on the invoice forms. Null until then.
     financialClaimReference: raw.financialClaimReference ?? null,
     receiptIssueDate:        raw.receiptIssueDate ?? null,
     workflowInstanceId:      raw.workflowInstanceId ?? null,
-    // The to-dos its workflow is waiting on, and who holds each — shown to
-    // anyone who can see the invoice. Only GetInvoiceById carries it.
     waitingOn:               (raw.waitingOn ?? []).map(createWaitingTask),
     totalAmount:             raw.totalAmount ?? 0,
     lines:                   (raw.lines ?? []).map(createInvoiceLine),

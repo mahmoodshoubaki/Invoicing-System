@@ -7,10 +7,6 @@ import Button from '@/components/common/Button';
 import { STATUS } from '@/theme/vizPalette';
 
 /**
- * The bottom bar: Cancel and Submit (2026-10-19). Submit runs every check, then
- * sends the request for approval. There are no drafts: a request is raised
- * whole, and edited only if the approver sends it back.
- *
  * @param {{ form: Object, cancelHref: string, submitLabel: string }} props
  */
 export default function ChangeRequestActions({ form, cancelHref, submitLabel }) {

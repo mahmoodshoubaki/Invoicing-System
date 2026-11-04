@@ -5,7 +5,6 @@ import PublishDialog from '@/components/workflow/PublishDialog';
 import { formatDateTime } from '@/utils/formatters';
 import { hasPublishedOrSavedVersions } from '@/lib/workflowDrafts';
 
-/** "the unpublished draft from Sara, 10/10/2026, 10:42" */
 function describeDraft(row) {
   if (!row) return 'the unpublished draft';
   const who = row.savedByName ? ` from ${row.savedByName}` : '';
@@ -14,26 +13,13 @@ function describeDraft(row) {
 }
 
 /**
- * Every question the builder asks before it acts: deleting nested work,
- * going live, replacing somebody's draft, discarding the draft, and what to
- * do when somebody else saved first.
- *
- * @param {{
- *   state: Object, versions: Array, liveVersion: Object|null,
- *   editing: ReturnType<import('./useBuilderEditing').useBuilderEditing>,
- *   save: ReturnType<import('./useBuilderSave').useBuilderSave>,
- *   publish: ReturnType<import('./useBuilderPublish').useBuilderPublish>,
- *   reload: () => void,
- * }} props
+ * @param {{ state: Object, versions: Array, liveVersion: Object|null, editing: ReturnType<import('./useBuilderEditing').useBuilderEditing>, save: ReturnType<import('./useBuilderSave').useBuilderSave>, publish: ReturnType<import('./useBuilderPublish').useBuilderPublish>, reload: () => void, }} props
  */
 export default function BuilderDialogs({ state, versions, liveVersion, editing, save, publish, reload }) {
   const draftOnly = !hasPublishedOrSavedVersions(versions);
 
   return (
     <>
-      {/* Only the deletions that take nested work with them get a dialog.
-          Everything smaller is covered by Ctrl+Z, which is cheaper than a
-          prompt for a mistake that costs one click to undo. */}
       <ConfirmModal
         open={editing.pendingDelete !== null}
         title={editing.pendingDelete?.title}

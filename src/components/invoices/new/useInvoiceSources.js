@@ -15,10 +15,6 @@ import {
 } from '@/store/slices/invoicesSlice';
 
 /**
- * What a new invoice request is made from: the project, its financials, and
- * the BOQ items that can still be invoiced. A project with none sends the
- * person back after a short warning — there is nothing to request.
- *
  * @param {string} projectCode
  */
 export function useInvoiceSources(projectCode) {
@@ -34,10 +30,6 @@ export function useInvoiceSources(projectCode) {
   const boqItemsLoading = useSelector(selectInvoiceableBOQItemsLoading);
   const [redirecting, setRedirecting] = useState(false);
 
-  // Same source as the project card's Financial Summary — shown as reference
-  // context while filling out an invoice, not fed into the invoice's own
-  // Revenue/WIP fields (project-to-date totals aren't this invoice's
-  // revenue/WIP contribution).
   const projectFinancials = aggregateSubProjectFinancials(subProjects);
 
   useEffect(() => {
@@ -45,8 +37,6 @@ export function useInvoiceSources(projectCode) {
     dispatch(fetchSubProjectsSummary(projectCode));
   }, [dispatch, projectCode]);
 
-  // Checked off the resolved fetch result (not the isLoading selector) so
-  // there's no race with isLoading's initial `false` value on first render.
   useEffect(() => {
     dispatch(fetchInvoiceableBOQItems(projectCode))
       .unwrap()

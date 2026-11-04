@@ -3,13 +3,6 @@
 import { memo } from 'react';
 import { TrendingUp, TrendingDown, CheckCircle2 } from 'lucide-react';
 
-/**
- * Shows how many days late/early an invoiced tracker cycle was submitted,
- * per GetTrackerCycles' `varianceDays` (and the matching field on invoice
- * lines from GetInvoiceById): positive = late, negative = early, 0 = exact.
- * `null` means the line/cycle isn't tied to a tracker plan, or hasn't been
- * invoiced yet.
- */
 function VarianceBadge({ days, size = 'md' }) {
   const SIZES = { sm: 'px-2 py-0.5 text-xs', md: 'px-2.5 py-1 text-xs' };
   const sizeClass = SIZES[size] ?? SIZES.md;

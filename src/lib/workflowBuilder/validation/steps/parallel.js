@@ -8,8 +8,6 @@ import {
 } from '@/constants/workflow';
 import { isEmptyGroup, validateFilterGroup } from '@/lib/filterDescription';
 
-/** A parallel step's rules — and what may not run inside one of its branches. */
-
 export function checkParallel(step, { where, fields, errors }) {
   const branches = step.branches ?? [];
 
@@ -33,8 +31,6 @@ export function checkParallel(step, { where, fields, errors }) {
   }
 
   if (step.joinWhen && !isEmptyGroup(step.joinWhen) && fields.length > 0) {
-    // `stepId.outcome` is readable here and is not in GetFields, so unknown
-    // names are expected rather than wrong.
     for (const problem of validateFilterGroup(step.joinWhen, fields, { allowUnknownFields: true })) {
       errors.push(`${where}: ${problem}`);
     }
@@ -42,14 +38,7 @@ export function checkParallel(step, { where, fields, errors }) {
 }
 
 /**
- * Step types that cannot appear anywhere inside a parallel branch.
- *
- * Each parks the run using something the run keeps exactly one of — one wake-up
- * time, one set of branch cursors, one retry slot — so two branches doing it at
- * once would be sharing a single slot. The check recurses, because a `delay`
- * nested three levels down a branch is just as fatal as one at the top.
- *
- * @returns {string[]} human descriptions of what was found
+ * @returns {string[]}
  */
 function findForbiddenInBranch(steps) {
   const found = [];
@@ -59,14 +48,6 @@ function findForbiddenInBranch(steps) {
       if (TYPES_FORBIDDEN_IN_BRANCH.includes(step.type)) {
         found.push(`a "${step.title || step.id}" ${STEP_TYPE_INFO[step.type]?.label.toLowerCase() ?? step.type} step`);
       }
-      /*
-       * `?? DEFAULT_AUTOMATED_MODE` is load-bearing, not defensive.
-       *
-       * Retrying is now what a step means when it says nothing, so an automated
-       * step dropped into a branch with no mode chosen is refused at save with
-       * WF-008 — even though nothing in it mentions retrying. Reading the
-       * default here is what makes the builder catch that instead of the server.
-       */
       if (step.type === STEP_TYPE.AUTOMATED
         && (step.mode ?? DEFAULT_AUTOMATED_MODE) === AUTOMATED_MODE.QUEUE_AND_RETRY) {
         found.push(

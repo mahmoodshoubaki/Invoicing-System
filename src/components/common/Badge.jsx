@@ -21,21 +21,17 @@ const SIZES = {
 };
 
 const STATUS_VARIANT_MAP = {
-  // BOQ statuses
   Draft: 'default',
   'Pending Verification': 'warning',
   'Pending Request': 'info',
   Invoiced: 'success',
   Delayed: 'danger',
-  // Invoice statuses
   Submitted: 'info',
   'Under Review': 'warning',
   Rejected: 'danger',
-  // Project statuses
   'In Progress': 'success',
   'On Hold': 'warning',
   Completed: 'info',
-  // Workflow statuses
   Inactive: 'default',
   Approved: 'success',
   // General
@@ -46,7 +42,6 @@ export function getBadgeVariant(status) {
   return STATUS_VARIANT_MAP[status] || 'default';
 }
 
-/** Converts a "#rgb" or "#rrggbb" hex string to an "r, g, b" triplet for use in rgba(). */
 function hexToRgbTriplet(hex) {
   const clean = hex.replace('#', '');
   const full = clean.length === 3 ? clean.split('').map((c) => c + c).join('') : clean;

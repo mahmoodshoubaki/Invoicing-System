@@ -9,22 +9,6 @@ import { withAlpha } from '@/utils/color';
 import { describeVersions, versionsWithRunsToMove } from '@/lib/publishImpact';
 import BlockedRunsNote from './BlockedRunsNote';
 
-/**
- * Confirming a publish, with what it will actually do to work in flight.
- *
- * Shared by the builder and the workflow list on purpose. Publishing is one act
- * with one set of consequences, and two dialogs describing it in two sets of
- * words is how they drift — somebody reads the reassuring one, acts on the
- * other screen, and is surprised.
- *
- * **It is not a destructive act**, and the dialog should not imply it is: it
- * either succeeds whole or is refused whole, and publishing an older version is
- * how you go back — subject to the same rule. What it IS, is an act with
- * consequences somebody cannot see from the button, which is the whole reason
- * for the impact section below. See `lib/publishImpact.js` for the rule.
- */
-
-/** One consequence, only rendered when it is actually true of this publish. */
 function Impact({ tone, children }) {
   return (
     <li
@@ -37,16 +21,15 @@ function Impact({ tone, children }) {
 }
 
 /**
- * @param {Object}   props
- * @param {boolean}  props.open
- * @param {string}   [props.workflowName]
- * @param {Object}   props.version      the version row being made live — or, publishing the
- *                                      draft, `{ version: N }` for the number it will take
- * @param {boolean}  [props.fromDraft]  publishing the draft (2026-10-11) rather than an existing version
- * @param {Object}   [props.liveVersion] the row that is live now, if any
- * @param {Object[]} [props.versions]   every version row — runs on ANY of them move
- * @param {Array}    [props.blockedRuns] the runs that refused the last try (409 WF-024)
- * @param {boolean}  [props.busy]
+ * @param {Object} props
+ * @param {boolean} props.open
+ * @param {string} [props.workflowName]
+ * @param {Object} props.version
+ * @param {boolean} [props.fromDraft]
+ * @param {Object} [props.liveVersion]
+ * @param {Object[]} [props.versions]
+ * @param {Array} [props.blockedRuns]
+ * @param {boolean} [props.busy]
  * @param {Function} props.onClose
  * @param {Function} props.onConfirm
  */
@@ -58,21 +41,9 @@ export default function PublishDialog({
 
   const going = liveVersion && liveVersion.version !== version.version ? liveVersion : null;
 
-  /*
-   * Workflows running on ANY version, not just the live one.
-   *
-   * A successful publish moves every running workflow onto this version,
-   * wherever each one is. This used to read only the live version's flag, so
-   * workflows running on any other version — or on a workflow with nothing live
-   * yet — never raised the warning, and the dialog said nothing at all about
-   * them.
-   */
   const moving = versionsWithRunsToMove(versions, version);
   const runsWillMove = moving.length > 0;
 
-  // Going back to an older version is a rollback, and it follows the same rule
-  // — so it can be refused too, which is worth saying rather than implying that
-  // going back is always safe.
   const rollingBack = Boolean(going && version.version < going.version);
 
   return (
@@ -111,11 +82,6 @@ export default function PublishDialog({
           </Impact>
         )}
 
-        {/*
-          Always said, one way or the other. A dialog that is silent about
-          running workflows reads as "nothing to worry about" whether or not
-          that is true, so the no-runs case gets its own sentence too.
-        */}
         {runsWillMove ? (
           <>
             <Impact tone={STATUS.warning}>

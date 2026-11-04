@@ -44,15 +44,10 @@ export default function UsersPage() {
   const [deactivateModal, setDeactivateModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [editRoleIds, setEditRoleIds] = useState([]);
-  // 'Notify the user about this change' — ticked each time a dialog opens.
   const [notifyUser, setNotifyUser] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    // GetAuthorizedUsers returns active users by default. This screen is where
-    // a user gets reactivated, so it has to ask for the inactive ones too —
-    // without this a deactivated account disappears from the only page that
-    // could bring it back.
     dispatch(fetchAuthorizedUsers({ includeInactive: true }));
     dispatch(fetchAllRoles());
   }, [dispatch]);
@@ -91,10 +86,6 @@ export default function UsersPage() {
     });
   }, [users, search, roleFilter]);
 
-  // Stable references — AddUserModal is memoized, and without useCallback
-  // here it would get a brand-new function on every UsersPage render (e.g.
-  // typing in the search box below while the modal happens to be open),
-  // which defeats that memo just as surely as not memoizing at all.
   const closeAddModal = useCallback(() => setAddModal(false), []);
   const handleUserCreated = useCallback(() => { dispatch(fetchAuthorizedUsers({ includeInactive: true })); }, [dispatch]);
 
@@ -251,7 +242,6 @@ export default function UsersPage() {
         </Card>
       </div>
 
-      {/* Role counts row */}
       <div className="flex flex-wrap gap-2 mb-5">
         {roles.map((role) => (
           <div key={role.id} className="flex items-center gap-1.5 text-xs px-2.5 py-1 bg-white border border-gray-100 rounded-lg shadow-sm">
@@ -302,7 +292,6 @@ export default function UsersPage() {
         onCreated={handleUserCreated}
       />
 
-      {/* Edit Roles Modal */}
       <Modal
         open={editModal}
         onClose={closeEdit}

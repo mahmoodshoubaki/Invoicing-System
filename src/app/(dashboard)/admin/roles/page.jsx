@@ -54,7 +54,6 @@ export default function RolesPage() {
     dispatch(fetchAllRoles());
   }, [dispatch]);
 
-  // Seed the local editable copy once real roles arrive.
   useEffect(() => {
     if (fetchedRoles.length === 0) return;
     const state = {};
@@ -202,7 +201,6 @@ export default function RolesPage() {
         <div className="flex-1">
           {currentRole ? (
             <Card className="h-full">
-              {/* Role header */}
               <div className="flex items-start justify-between mb-5">
                 <div>
                   <h2 className="text-lg font-bold text-gray-800 mb-1">{selectedRole}</h2>
@@ -229,7 +227,6 @@ export default function RolesPage() {
                 )}
               </div>
 
-              {/* Permission Matrix */}
               {permissionsLoading ? (
                 <div className="flex items-center justify-center py-10">
                   <LoadingSpinner />
@@ -295,7 +292,6 @@ export default function RolesPage() {
         confirmVariant="danger"
       />
 
-      {/* Create Role Modal */}
       <Modal
         open={createModal}
         onClose={() => setCreateModal(false)}

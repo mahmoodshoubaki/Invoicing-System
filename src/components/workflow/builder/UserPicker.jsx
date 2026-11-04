@@ -8,53 +8,15 @@ import { withAlpha } from '@/utils/color';
 import { useDebounce } from '@/hooks/useDebounce';
 import { identityRepository } from '@/repositories/identityRepository';
 
-/** Enough to scan without scrolling; narrowing further is what typing is for. */
 const TAKE = 20;
 
-/** Stable identity for "no directory cache supplied". */
 const NO_USERS = {};
 
-/**
- * Picks people for a `humanTask`'s `assignToUserIds`.
- *
- * A **server-side typeahead**, not a filter over a preloaded list. The
- * directory is not something to pull into the browser wholesale, and
- * `GetAuthorizedUsers` takes `search` and `take` precisely so it does not have
- * to be.
- *
- * Two different lookups are in play, and the distinction matters:
- *
- * - **Suggestions** come from `?search=&take=`, which returns *active* users —
- *   you should not be able to newly assign work to a deactivated account.
- * - **The chips** are resolved by the parent through `?ids=`, which returns
- *   people *whether or not they are still active* — a workflow saved last year
- *   may name somebody who has since left, and their name is more useful than
- *   their GUID.
- *
- * So a person can appear as a chip who could not be found by searching. That is
- * correct, not a bug.
- *
- * `single` is the person-variable case — a start-form field, a variable's
- * starting value, a condition's value — where exactly one person is held. The
- * search box gives way to the chip once somebody is picked, and removing the
- * chip brings it back.
- *
- * `resolvedById` is optional: whoever is picked from the suggestions is
- * remembered here, so a screen with no directory cache of its own (the start
- * form) still shows a name rather than a guid.
- *
- * `onChange(ids, user)` — the second argument (2026-10-20) is the person just
- * picked, for a caller that saves their username rather than their id.
- */
 function UserPicker({
   selectedIds, resolvedById = NO_USERS, onChange, single = false, placeholder = 'Search people by name or username…',
 }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
-  // Results carry the query they answer, so "still searching" is derived rather
-  // than tracked. A separate `searching` flag would have to be raised
-  // synchronously in the effect body, which cascades a render for something
-  // already knowable from the data.
   const [results, setResults] = useState({ query: null, users: [] });
   const [picked, setPicked] = useState({});
   const ref = useRef(null);
@@ -106,7 +68,6 @@ function UserPicker({
     if (single) setOpen(false);
   };
 
-  // One person held: the chip is the whole control until it is removed.
   const searchable = !single || selectedIds.length === 0;
 
   return (
@@ -132,8 +93,6 @@ function UserPicker({
                         : user.username
                   }
                 >
-                  {/* A definition can name somebody who has since left or been
-                      deactivated. Say so rather than dropping them silently. */}
                   {user.displayName ?? `Unknown (${String(user.id).slice(0, 8)}…)`}
                   {inactive && ' · inactive'}
                   <button

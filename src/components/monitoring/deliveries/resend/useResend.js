@@ -11,15 +11,7 @@ const NO_ERRORS = { to: null, cc: null, channels: null, other: [] };
 const NOT_ADDED = 'Not added yet — press Add (or Enter), or clear the box.';
 
 /**
- * The resend dialog's state (2026-10-13): who it goes to — the person it was
- * for, and To / CC addresses added one at a time — which channels, and each
- * channel's text, edited from what was sent. Checked as the server would
- * before it is sent; a refusal is put back under the part it is about.
- *
- * Each line keeps its addresses as a list, and what is still in its box apart:
- * an address typed but not added is pointed at, never sent or dropped quietly.
- *
- * @param {Object} details  the notification, from GetNotificationDetails
+ * @param {Object} details
  * @param {(result: { notificationId: string|null, notificationIds: string[] }) => void} onDone
  */
 export function useResend(details, onDone) {
@@ -50,7 +42,6 @@ export function useResend(details, onDone) {
     toEmail: details.toEmail, ccEmail: details.ccEmail, recipientEmail: details.recipientEmail, typed: [...to, ...cc],
   });
 
-  // An edit answers the refusal about that part.
   const clear = (part) => setServerErrors((prev) => (prev[part] ? { ...prev, [part]: null } : prev));
 
   const setBox = (line, text) => {
@@ -58,7 +49,6 @@ export function useResend(details, onDone) {
     setBoxProblems((prev) => ({ ...prev, [line]: null }));
   };
 
-  /** Adds what is in a line's box — or, from a suggestion, one address — to that line. */
   const add = (line, text = boxes[line]) => {
     const result = addAddresses(lines[line], text);
     setLines((prev) => ({ ...prev, [line]: result.list }));

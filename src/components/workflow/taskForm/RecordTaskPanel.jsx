@@ -14,16 +14,7 @@ import { withAlpha } from '@/utils/color';
 import { formatDateTime } from '@/utils/formatters';
 
 /**
- * The tasks a record's runs are waiting on, when they are the signed-in
- * person's to answer (2026-10-11) — the same form as My Tasks, on the record
- * itself. Everyone else sees the record read-only. Shared by the invoice page
- * and, since 2026-10-13, the BOQ item page.
- *
- * @param {{
- *   instanceIds: string|string[]|null,
- *   context?: Object|null,  what the form knows of the record (see TaskForm)
- *   onAnswered?: () => void, reloads the record — the task's fields are now on it
- * }} props
+ * @param {{ instanceIds: string|string[]|null, context?: Object|null, what the form knows of the record (see TaskForm) onAnswered?: () => void, reloads the record — the task's fields are now on it }} props
  */
 export default function RecordTaskPanel({ instanceIds, context = null, onAnswered }) {
   const { can } = usePermission();

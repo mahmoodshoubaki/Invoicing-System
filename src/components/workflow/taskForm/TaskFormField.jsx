@@ -6,17 +6,10 @@ import InvoicingPlanTaskField from './InvoicingPlanTaskField';
 import TaskFilesField from './TaskFilesField';
 import TaskListField from './TaskListField';
 
-/** The types drawn across both columns of the form. */
 const WIDE = new Set([INVOICING_PLAN_TYPE, FILES_TYPE, LIST_TYPE]);
 
 /**
- * One field of a task's form, drawn for its type: a BOQ item's invoicing plan,
- * an invoice's attachments, a read-only list (its lines), or a single box.
- *
- * @param {{
- *   field: Object, form: ReturnType<import('./useTaskForm').useTaskForm>,
- *   disabled: boolean, context: Object|null, options?: Array|null,
- * }} props
+ * @param {{ field: Object, form: ReturnType<import('./useTaskForm').useTaskForm>, disabled: boolean, context: Object|null, options?: Array|null, }} props
  */
 export default function TaskFormField({ field, form, disabled, context, options = null }) {
   const common = {

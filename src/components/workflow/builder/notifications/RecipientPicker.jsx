@@ -10,11 +10,6 @@ import EmailListInput from '@/components/workflow/builder/EmailListInput';
 import { ExpressionAssignees } from '@/components/workflow/builder/HumanTaskEditor';
 
 /**
- * One line of a Send notification step — To or CC — picked the way a human
- * task's assignees are: roles, people, a person held by the record or a
- * variable, plus typed addresses that are not users. CC takes exactly the
- * same as To (2026-10-08); the fields only differ by their prefix.
- *
  * @param {{ line: 'to'|'cc', step: Object, ctx: Object, onChange: (patch: Object) => void }} props
  */
 function RecipientPicker({ line, step, ctx, onChange }) {

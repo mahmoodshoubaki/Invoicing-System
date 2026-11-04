@@ -25,30 +25,7 @@ const EMPTY = {
 const NO_FILES = { existing: [], deleteIds: [], added: [] };
 
 /**
- * A change request being written (2026-10-18; sent to the API 2026-10-19): one
- * draft — the reasons, the additional details, each sub-project's changes and
- * each item's — and what is wrong with it.
- *
- * Adding an item loads its invoicing plan, which is also how the form learns
- * whether the item has an invoice (and so cannot be in a request). Changing an
- * item's billing frequency or updated expected invoicing date rebuilds its
- * plan, exactly as the BOQ item form does — inside the contract dates the
- * request leaves, so setting a contract duration makes a plan rebuildable on a
- * project that has none.
- *
- * Submit runs every check first; then `onSubmit(body)` sends it. A refusal is
- * put back under the box it is about.
- *
- * A workflow task (2026-10-20) asks for only some of the parts (`asks`): the
- * rest stay as the request has them — not editable here, and their problems
- * not shown. The task sends its own answer, through `check` and
- * `showServerErrors` rather than `submit`.
- *
- * @param {{
- *   boqItems: Array, statusNameOf: (statusId) => string|null, subProjects: Array,
- *   initial?: Object|null, onSubmit?: (body: Object) => Promise<void>,
- *   asks?: typeof ALL_PARTS,
- * }} options
+ * @param {{ boqItems: Array, statusNameOf: (statusId) => string|null, subProjects: Array, initial?: Object|null, onSubmit?: (body: Object) => Promise<void>, asks?: typeof ALL_PARTS, }} options
  */
 export function useChangeRequestForm({ boqItems, statusNameOf, subProjects, initial = null, onSubmit, asks = ALL_PARTS }) {
   const start = initial ?? EMPTY;
@@ -65,14 +42,11 @@ export function useChangeRequestForm({ boqItems, statusNameOf, subProjects, init
   const [attempted, setAttempted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [serverErrors, setServerErrors] = useState(NO_SERVER_ERRORS);
-  // Ticks each time Submit is refused — by the checks or by the server — so the form can show the first problem.
   const [refusedCount, setRefusedCount] = useState(0);
-  // Only the newest plan rebuild of an item lands — an older answer arriving late is dropped.
   const rebuildSeq = useRef({});
 
   const proposed = useMemo(() => proposedSubProjects(subProjects, projectEdits), [subProjects, projectEdits]);
   const window = useMemo(() => contractWindow(proposed), [proposed]);
-  // An edit answers the server's last refusal.
   const edited = () => setServerErrors(NO_SERVER_ERRORS);
   const newItemsPart = useNewItems({ initial: start.newItems ?? [], window, canEdit: asks.newItems, onEdit: edited });
   const filesPart = useRequestFiles(asks.files ? start.files ?? NO_FILES : null, edited);
@@ -121,7 +95,6 @@ export function useChangeRequestForm({ boqItems, statusNameOf, subProjects, init
     edited();
   };
 
-  /** As the BOQ item form: the plan regenerated from the frequency and the updated date, committed cycles kept. */
   const rebuildPlan = useCallback(async (itemId, values) => {
     if (!values.expectedInvoicingDate || !values.billingFrequencyId || !window.start || !window.end) return;
     const mine = (rebuildSeq.current[itemId] ?? 0) + 1;
@@ -174,7 +147,6 @@ export function useChangeRequestForm({ boqItems, statusNameOf, subProjects, init
     if (!current || !asks.fieldChanges) return;
     const values = { ...current.values, [key]: value };
     setItems((prev) => prev.map((d) => (d.itemId === itemId ? { ...d, values } : d)));
-    // A plan the task does not ask for is the request's — not rebuilt here.
     if (PLAN_ANCHORS.includes(key) && asks.cycleChanges) rebuildPlan(itemId, values);
     edited();
   };
@@ -185,7 +157,6 @@ export function useChangeRequestForm({ boqItems, statusNameOf, subProjects, init
     edited();
   };
 
-  /** Every check, shown from now on; whether the request may go. */
   const check = () => {
     setAttempted(true);
     if (problems.count === 0) return true;
@@ -193,7 +164,6 @@ export function useChangeRequestForm({ boqItems, statusNameOf, subProjects, init
     return false;
   };
 
-  /** A refusal, mapped by mapServerErrors, under the boxes it is about. */
   const showServerErrors = (placed) => {
     setServerErrors({ ...NO_SERVER_ERRORS, ...placed });
     setRefusedCount((n) => n + 1);
@@ -208,7 +178,6 @@ export function useChangeRequestForm({ boqItems, statusNameOf, subProjects, init
       await onSubmit(body, { added: files?.added ?? [], deleteIds: files?.deleteIds ?? [] });
     } catch (err) {
       const placed = mapServerErrors(err?.errors, { fieldIndex, cycleIndex, newItemIndex });
-      // A refusal with nothing to place (BOQ-017 a request already open, BOQ-019 a locked item, PRJ-002 EPM) is said whole.
       const anyPlaced = placed.reasons || placed.typeKeys || placed.otherTypeText || placed.projectEffectKey
         || placed.details || placed.files || placed.general.length
         || Object.keys(placed.project).length || Object.keys(placed.items).length || Object.keys(placed.newItems).length;
@@ -219,7 +188,6 @@ export function useChangeRequestForm({ boqItems, statusNameOf, subProjects, init
     }
   };
 
-  // Problems show once Submit has been pressed — not on a fresh form; the server's always.
   const local = attempted ? problems : null;
   const shownProblems = {
     reasons: serverErrors.reasons ?? local?.reasons ?? null,
@@ -238,7 +206,6 @@ export function useChangeRequestForm({ boqItems, statusNameOf, subProjects, init
     + Object.values(shownProblems.project).reduce((n, p) => n + Object.keys(p).length, 0)
     + Object.values(shownProblems.items).reduce((n, p) => n + Object.keys(p).length, 0)
     + Object.values(shownProblems.newItems).reduce((n, p) => n + Object.keys(p).length, 0)
-    // Counted as the problems panel shows them: a run of late cycles on one item is one.
     + groupProblems(shownProblems.general).count;
 
   return {

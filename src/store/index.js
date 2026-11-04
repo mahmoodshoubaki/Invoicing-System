@@ -33,13 +33,6 @@ export const store = configureStore({
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      // Allow non-serializable values in actions if required (e.g., Date objects
-      // in payloads). Tighten this list for production.
-      // `meta.arg.attachments`/`meta.arg.attachmentsToAdd` carry raw File
-      // objects for the invoice attachments upload (createInvoice's and
-      // updateInvoice's thunk args) — genuinely non-serializable, and fine
-      // since they're only ever read, never persisted through Redux
-      // DevTools time-travel or similar.
       serializableCheck: {
         ignoredActionPaths: [
           'payload.createdAt',
@@ -52,14 +45,6 @@ export const store = configureStore({
   devTools: process.env.NODE_ENV !== 'production',
 });
 
-/**
- * Typed useSelector bound to the store's RootState shape.
- * Usage: const user = useAppSelector(selectCurrentUser);
- */
 export const useAppSelector = useSelector;
 
-/**
- * Typed useDispatch bound to the store's AppDispatch type.
- * Usage: const dispatch = useAppDispatch();
- */
 export const useAppDispatch = () => useDispatch();

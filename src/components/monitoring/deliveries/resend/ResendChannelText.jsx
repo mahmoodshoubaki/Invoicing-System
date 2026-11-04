@@ -15,9 +15,6 @@ const TEXTS = [
 ];
 
 /**
- * One channel of a resend: whether it is sent again, and its four texts,
- * edited from what went out.
- *
  * @param {{ row: Object, onChange: (change: Object) => void }} props
  */
 function ResendChannelText({ row, onChange }) {

@@ -4,12 +4,6 @@ import { useEffect, useState } from 'react';
 
 import { notificationRepository } from '@/repositories/notificationRepository';
 
-/**
- * The notifications lookups (channels, priorities, statuses…), fetched once
- * per page load and shared — they never change while somebody is using the
- * screen, and every row's badge needs them. A failed fetch is not cached, so
- * the next screen to ask tries again.
- */
 const FETCHERS = {
   channels: () => notificationRepository.getChannels(),
   priorities: () => notificationRepository.getPriorities(),
@@ -37,7 +31,7 @@ const EMPTY = { list: [], byKey: {} };
 
 /**
  * @param {keyof FETCHERS} name
- * @param {boolean} [enabled] false when the person may not read it — nothing is asked
+ * @param {boolean} [enabled]
  * @returns {{ list: Array, byKey: Record<number, Object> }}
  */
 export function useNotificationLookup(name, enabled = true) {

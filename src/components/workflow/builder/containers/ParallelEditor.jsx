@@ -1,7 +1,5 @@
 'use client';
 
-/** A parallel step's settings — edited in the side panel. Its branches stay on the canvas (ParallelBranches). */
-
 import { memo } from 'react';
 import { AlertTriangle } from 'lucide-react';
 
@@ -11,7 +9,6 @@ import { CHROME, STATUS } from '@/theme/vizPalette';
 
 import { Note } from './shared';
 
-/** Branches that all run at the same time — and when to stop waiting for the rest. */
 export const ParallelEditor = memo(function ParallelEditor({ step, fields, onChange }) {
   const joinWhenSet = step.joinWhen != null;
   const count = (step.branches ?? []).length;

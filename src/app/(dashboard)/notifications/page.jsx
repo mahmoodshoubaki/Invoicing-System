@@ -33,7 +33,6 @@ const PRIORITY_OPTIONS = [
 
 const EMPTY = { items: [], total: 0, unreadCount: 0 };
 
-/** "Today", "Yesterday", or the date — the headings a long list is read by. */
 function dayLabel(value, now) {
   const d = new Date(value);
   const today = new Date(now);
@@ -46,13 +45,6 @@ function dayLabel(value, now) {
   });
 }
 
-/**
- * Everything in the person's bell, a page at a time.
- *
- * Same rows as the bell panel, given room: full text instead of two lines,
- * grouped by day, filterable. Arriving here counts as opening the bell, so it
- * marks everything seen and the badge empties.
- */
 export default function NotificationsPage() {
   const dispatch = useDispatch();
   const language = useSelector((s) => s.ui.language);
@@ -60,7 +52,6 @@ export default function NotificationsPage() {
 
   const [filters, setFilters] = useState({ tab: 'all', priorityKey: '', fromDate: '', toDate: '' });
   const [skip, setSkip] = useState(0);
-  // Rows a page, as the reader chooses (2026-10-21) — PAGE_SIZE to start with.
   const [take, setTake] = useState(PAGE_SIZE);
   const [data, setData] = useState(EMPTY);
   const [loading, setLoading] = useState(true);
@@ -127,7 +118,6 @@ export default function NotificationsPage() {
     }
   };
 
-  // Rows under their day, in the order the server sent them (newest first).
   const groups = useMemo(() => {
     const out = [];
     for (const n of data.items) {

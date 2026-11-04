@@ -8,10 +8,6 @@ import { TARGET_TYPE } from '@/constants/workflow';
 import { changeRequestSteps } from '@/lib/changeRequest/progress';
 
 /**
- * Where a change request is, and what comes next (2026-10-21) — raised, the
- * stages of the workflow deciding it, the decision — and who it waits on.
- * While it is being written (no `changeRequest`), that is the step it is on.
- *
  * @param {{ changeRequest: Object|null }} props
  */
 export default function ChangeRequestStepper({ changeRequest }) {
@@ -21,8 +17,6 @@ export default function ChangeRequestStepper({ changeRequest }) {
     [changeRequest, progress.run, progress.history, progress.graph]
   );
 
-  // Raised, but no run and nobody holding a to-do on it: nothing to step through (2026-10-21).
-  // One still being written keeps its own steps.
   const noRun = Boolean(changeRequest) && progress.ready && !progress.run && !changeRequest.waitingOn?.length;
 
   return (

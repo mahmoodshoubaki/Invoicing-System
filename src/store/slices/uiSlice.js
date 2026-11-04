@@ -1,9 +1,10 @@
 import { createSlice } from '@reduxjs/toolkit';
+import { DEFAULT_CURRENCY, DEFAULT_LANGUAGE } from '@/constants/appConfig';
 
 const initialState = {
   sidebarOpen: true,
-  language: 'en',       // 'en' | 'ar'
-  currency: 'SAR',      // 'SAR' | 'USD'
+  language: DEFAULT_LANGUAGE, // 'en' | 'ar'
+  currency: DEFAULT_CURRENCY,
   currencySymbol: '\u{0024}', // Default symbol for USD
   theme: 'light',       // 'light' | 'dark'
   activeModal: null,    // string modal ID or null
@@ -24,36 +25,20 @@ const uiSlice = createSlice({
       state.sidebarOpen = action.payload;
     },
 
-    /**
-     * Payload: 'en' | 'ar'
-     */
     setLanguage(state, action) {
       state.language = action.payload;
     },
-    /**
-     * Payload: 'sar' | 'usd'
-     */
     setCurrency(state, action) {
       state.currency = action.payload;
     },
-    /**
-     * Payload: '0024' USD | '20C1' SAR
-     */
     setCurrencySymbol(state, action) {
       state.currencySymbol = action.payload;
     },
 
-    /**
-     * Payload: 'light' | 'dark'
-     */
     setTheme(state, action) {
       state.theme = action.payload;
     },
 
-    /**
-     * Open a modal by ID.
-     * Payload: string
-     */
     openModal(state, action) {
       state.activeModal = action.payload;
     },
@@ -62,10 +47,6 @@ const uiSlice = createSlice({
       state.activeModal = null;
     },
 
-    /**
-     * Add a toast notification.
-     * Payload: { type?: 'success'|'error'|'warning'|'info', title?: string, message: string, duration?: number }
-     */
     addToast(state, action) {
       const toast = {
         id: `toast-${toastIdCounter++}`,
@@ -77,10 +58,6 @@ const uiSlice = createSlice({
       state.toasts.push(toast);
     },
 
-    /**
-     * Remove a toast by ID.
-     * Payload: string (toast id)
-     */
     removeToast(state, action) {
       state.toasts = state.toasts.filter((t) => t.id !== action.payload);
     },

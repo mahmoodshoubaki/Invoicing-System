@@ -9,13 +9,6 @@ import PlaceholderValues from './PlaceholderValues';
 import { sendStepTokens } from './notificationTokens';
 
 /**
- * A Send notification step's Message tab: which type to send, values for its
- * words, and the task it is about.
- *
- * Pointing it at a human task lets the words use that task's details — the
- * escalation stage of an approval saying "Approve INV-0042 was due Monday and
- * Sara did not answer".
- *
  * @param {{ step: Object, ctx: Object, onChange: (patch: Object) => void }} props
  */
 function SendMessageFields({ step, ctx, onChange }) {

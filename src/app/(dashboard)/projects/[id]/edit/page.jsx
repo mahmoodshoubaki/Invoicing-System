@@ -32,7 +32,6 @@ const BUSINESS_UNITS = [
 
 const INVOICING_PLATFORMS = ['Etimad', 'Other'];
 
-// TODO: replace with real users API when available
 const pmUsers = [];
 const bdmUsers = [];
 const buHeadUsers = [];
@@ -48,7 +47,6 @@ function calcDuration(start, end) {
 }
 
 export default function EditProjectPage() {
-  // See projects/[id]/boq/page.jsx for why this is decoded defensively.
   const { id: rawId } = useParams();
   const projectCode = decodeURIComponent(rawId);
   const router    = useRouter();
@@ -67,9 +65,6 @@ export default function EditProjectPage() {
     dispatch(fetchMainProjectDetails(projectCode));
   }, [dispatch, projectCode]);
 
-  // GetMainProjectDetails currently only returns contractName — everything
-  // below besides that and the route's own projectCode has no backing
-  // endpoint yet, so those fields start blank rather than guessed/faked.
   useEffect(() => {
     if (!project) return;
     setForm({
@@ -131,7 +126,6 @@ export default function EditProjectPage() {
       return;
     }
     setSaving(true);
-    // TODO: dispatch updateProjectById thunk when endpoint is available
     setTimeout(() => {
       setSaving(false);
       setShowToast(true);
@@ -188,7 +182,6 @@ export default function EditProjectPage() {
 
       <form onSubmit={handleSubmit}>
        <Reveal className="flex flex-col gap-5">
-        {/* Section 1: Contract Info */}
         <FormSection title="Contract Information" icon={FileSignature}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
@@ -219,7 +212,6 @@ export default function EditProjectPage() {
           </div>
         </FormSection>
 
-        {/* Section 2: Project Details */}
         <FormSection title="Project Details" icon={FolderKanban}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
@@ -249,7 +241,6 @@ export default function EditProjectPage() {
           </div>
         </FormSection>
 
-        {/* Section 3: Team */}
         <FormSection title="Project Team" icon={Users}>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <Select
@@ -346,7 +337,6 @@ export default function EditProjectPage() {
           </div>
         </FormSection>
 
-        {/* Section 6: Revenue Breakdown */}
         <FormSection title={`Revenue Breakdown (${currency})`} icon={Layers}>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Input

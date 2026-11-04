@@ -9,10 +9,6 @@ import { NEW_ITEM_PLAN_ANCHORS, emptyNewItem } from '@/lib/changeRequest/newItem
 const NONE = [];
 
 /**
- * The new BOQ items of a change request. A new item's plan is generated from
- * its baseline date and billing frequency, inside the contract dates the
- * request leaves (`window`), the same as the BOQ item create form.
- *
  * @param {{ initial?: Array, window: { start: string, end: string }, canEdit: boolean, onEdit: () => void }} options
  */
 export function useNewItems({ initial = NONE, window, canEdit, onEdit }) {

@@ -20,14 +20,6 @@ const VIEWS = [
   { key: 'code', label: 'HTML', icon: Code2 },
 ];
 
-/**
- * An HTML body: written visually by default, or as HTML code.
- *
- * Both edit the same string, so switching is free — except that the visual
- * editor cannot hold everything HTML can (layout blocks, classes, loops between
- * table rows…). A body using any of that opens as code, says what the visual
- * editor would drop, and asks before switching.
- */
 export default function HtmlBodyField({ label, value, onChange, dir = 'ltr', readOnly, valueNames }) {
   const [mode, setMode] = useState(() => (visualEditorProblem(value) ? 'code' : 'visual'));
   const problem = mode === 'code' ? visualEditorProblem(value) : null;

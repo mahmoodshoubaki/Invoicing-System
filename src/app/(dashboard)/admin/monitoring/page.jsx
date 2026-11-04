@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { usePermission } from '@/hooks/usePermission';
 import { canOpenTab, MONITORING_TABS } from '@/components/monitoring/monitoringTabs';
 
-/** The area's landing route: on to the first page this person may read. */
 export default function MonitoringLanding() {
   const router = useRouter();
   const { can } = usePermission();

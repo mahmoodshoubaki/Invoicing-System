@@ -6,9 +6,7 @@ import { useServerPage } from '@/hooks/useServerPage';
 import { invoiceRepository } from '@/repositories/invoiceRepository';
 
 /**
- * Every invoice the user can see, newest first, a page at a time.
- *
- * @param {number|null} statusId  null for every status
+ * @param {number|null} statusId
  */
 export function useAllInvoices(statusId) {
   const fetchPage = useCallback(async ({ skip, take }) => {

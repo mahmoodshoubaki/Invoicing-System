@@ -14,22 +14,6 @@ import {
 } from '../references';
 import { moveInArray, replaceStage } from './shared';
 
-/**
- * Edits to steps. Each takes an optional `container` path — see getStepContainer.
- */
-
-/**
- * Strips assignees who can no longer answer a task, and records what was
- * removed so it can be reported.
- *
- * A deactivated or departed person left sitting in `assignToUserIds` is not
- * a cosmetic problem: the engine would create a to-do that lands in nobody's
- * list, and the run waits forever on somebody who cannot answer. Showing the
- * chip greyed out would leave a workflow that looks assigned and is not, so
- * the assignment is cleared and the author is told to choose again.
- *
- * `action.invalid` is a Map of id → { displayName, reason }.
- */
 function pruneAssignees(state, action) {
   const invalid = action.invalid;
   const removed = [];
@@ -48,8 +32,6 @@ function pruneAssignees(state, action) {
             userId: id,
             displayName: invalid.get(id).displayName,
             reason: invalid.get(id).reason,
-            // Whether the step still has somebody decides whether this is a
-            // blocking problem or just a change the author should know about.
             stillAssigned: kept.length + (step.assignToRoleIds?.length ?? 0) + (step.assignToGroupIds?.length ?? 0) > 0,
           });
         }
@@ -72,29 +54,18 @@ function pruneAssignees(state, action) {
   return {
     ...state,
     graph: { ...state.graph, stages },
-    // Deliberately NOT baselined: this is a real change to the definition,
-    // so the builder is dirty and the fix has to be saved to take effect.
     removedAssignees: [...(state.removedAssignees ?? []), ...removed],
   };
 }
 
 function addStep(state, action) {
   const container = action.container ?? [];
-  // Numbered when the step arrives without a title — the palette never
-  // gives one. See nextStepTitle.
   const title = action.step.title?.trim() ? action.step.title : nextStepTitle(state.graph);
-  // Uniqueness is definition-wide, so the id is minted against every id in
-  // the graph rather than against the list it is being added to.
   const id = uniqueSlug(title, collectIds(state.graph), 'step');
 
   return replaceStage(state, action.stageId, (stage) => {
     const list = getStepContainer(stage, container);
-    // Spread first, then overwrite — `type` is already the first key on the
-    // object the builder produced, and `title` and `id` keep their places.
     const step = { ...action.step, title, id };
-    // A query's results are referenced by a forEach; the name is derived from
-    // the title so it is one less identifier for anyone to invent — and kept
-    // apart from every other query's, so two never fill one list.
     if (step.type === STEP_TYPE.QUERY) {
       step.into = uniqueVariableName(variableNameFrom(step.title) || 'results', queryListNames(state.graph));
     }
@@ -102,7 +73,6 @@ function addStep(state, action) {
   });
 }
 
-/** Same as UPDATE_STAGE: titles are live, ids are recomputed on commit. */
 function updateStep(state, action) {
   const container = action.container ?? [];
   return replaceStage(state, action.stageId, (stage) => {
@@ -115,11 +85,6 @@ function updateStep(state, action) {
   });
 }
 
-/**
- * Blur on a step title: realign its id, and carry everything that points at
- * it — conditions reading `<id>.outcome`, and for a query, the list name a
- * `forEach` may be walking.
- */
 function commitStepTitle(state, action) {
   const container = action.container ?? [];
   const stage = state.graph.stages.find((s) => s.id === action.stageId);
@@ -141,13 +106,9 @@ function commitStepTitle(state, action) {
   }
 
   if (current.type === STEP_TYPE.QUERY) {
-    // Unique against the OTHER queries: renaming onto a name another query
-    // already writes would merge the two lists and every loop reading them.
     const nextInto = uniqueVariableName(variableNameFrom(current.title ?? ''), queryListNames(graph, stepId));
     if (current.into && nextInto && nextInto !== current.into) {
       graph = renameListEverywhere(graph, current.into, nextInto);
-      // Look the step up by its NEW id — the rename above may already have
-      // changed it, and searching by the old one would find nothing.
       graph = mapStepById(graph, stepId, (s) => ({ ...s, into: nextInto }));
     }
   }

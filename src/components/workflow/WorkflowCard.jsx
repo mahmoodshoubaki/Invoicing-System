@@ -27,20 +27,9 @@ function Meta({ icon: Icon, children }) {
   );
 }
 
-/**
- * One workflow on the definitions list — a workflow, not a version.
- *
- * The publish state is the thing this card exists to communicate, and it has
- * three cases rather than two: never published, published and current, or
- * published with newer versions sitting behind it. That last one is the
- * interesting one — somebody saved changes that are not live — and it is
- * invisible if you only show "active v2".
- */
 function WorkflowCard({ workflow, canManage, canRun, onOpenVersions, onStart, onDuplicate }) {
   const TriggerIcon = TRIGGER_ICONS[workflow.triggerTypeKey] ?? GitBranch;
 
-  // Since drafts (2026-10-11) a workflow is live, has a draft, both, or — only
-  // ever saved — a draft and nothing else.
   const publishState = !workflow.isPublished
     ? workflow.hasDraft
       ? { label: 'Draft — not published', color: STATUS.warning, tint: withAlpha(STATUS.warning, 0.12) }
@@ -97,9 +86,6 @@ function WorkflowCard({ workflow, canManage, canRun, onOpenVersions, onStart, on
             {versionsLabel}
           </button>
 
-          {/* Only a published workflow can be started — an unpublished one has
-              no live version for a run to follow — and not one on a schedule,
-              whose own scan picks its records (WF-021). */}
           {canRun && workflow.isPublished && canStartByHand(workflow.triggerTypeKey) && (
             <button
               type="button"

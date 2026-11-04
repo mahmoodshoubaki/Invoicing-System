@@ -7,26 +7,10 @@ import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 import { useProjectSearch } from './useProjectSearch';
 
-/** Enough to scan without scrolling; typing narrows the rest. */
 const SHOWN = 20;
 
 /**
- * Picks the projects a project workflow runs on, by name — the code is what
- * is sent.
- *
- * A project's id is its CODE, and the backend does not check that a code
- * exists: a misspelled one still starts a run, just with no project behind it.
- * So the codes are chosen from the real project list rather than typed.
- *
- * Typing searches `GetProjectsList` on the server. If it cannot be read — no
- * permission, say — `onUnavailable` hands the job back to the caller's plain
- * text box, rather than leaving somebody unable to start the run at all.
- *
- * @param {{
- *   selectedCodes: string[],
- *   onChange: (codes: string[]) => void,
- *   onUnavailable: () => void,
- * }} props
+ * @param {{ selectedCodes: string[], onChange: (codes: string[]) => void, onUnavailable: () => void, }} props
  */
 function ProjectPicker({ selectedCodes, onChange, onUnavailable }) {
   const [query, setQuery] = useState('');

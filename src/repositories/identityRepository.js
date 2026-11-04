@@ -8,9 +8,6 @@ const api = createApiClient('/api/Identity');
 
 export const identityRepository = {
   /**
-   * Return the current user's profile and capabilities in one call — the
-   * only way to know who's logged in now that the access token is an
-   * httpOnly cookie the frontend can't read or decode.
    * @returns {Promise<{ user: object, capabilities: object }>}
    */
   async getMe() {
@@ -22,10 +19,6 @@ export const identityRepository = {
   },
 
   /**
-   * Return the full catalog of permissions that exist in the system —
-   * used to build the role-permission editor. Not the same as capabilities:
-   * this is every permission that *could* be granted, not what the current
-   * user actually holds.
    * @returns {Promise<object[]>}
    */
   async getAllPermissions() {
@@ -34,8 +27,6 @@ export const identityRepository = {
   },
 
   /**
-   * Return every role defined in the system, each with the permission
-   * codes it currently grants.
    * @returns {Promise<object[]>}
    */
   async getAllRoles() {
@@ -44,8 +35,7 @@ export const identityRepository = {
   },
 
   /**
-   * Update a role's description and the set of permissions it grants.
-   * @param {object} data  { name, description, permissionCodes }
+   * @param {object} data
    * @returns {Promise<boolean>}
    */
   async updateRole(data) {
@@ -54,9 +44,8 @@ export const identityRepository = {
   },
 
   /**
-   * Create a new role with an initial set of permissions.
-   * @param {object} data  { name, description, permissionCodes }
-   * @returns {Promise<string>} the new role's id
+   * @param {object} data
+   * @returns {Promise<string>}
    */
   async createRole(data) {
     const response = await api.post('/CreateRole', createRolePayload(data));
@@ -68,7 +57,7 @@ export const identityRepository = {
     return (data ?? []).map(mapGroup);
   },
 
-  /** @returns {Promise<string|null>} the new group's id */
+  /** @returns {Promise<string|null>} */
   async createGroup(data) {
     const response = await api.post('/CreateGroup', createGroupPayload(data));
     return response?.groupId ?? response?.GroupId ?? null;
@@ -85,7 +74,6 @@ export const identityRepository = {
   },
 
   /**
-   * Delete a role by id.
    * @param {string} roleId
    * @returns {Promise<boolean>}
    */
@@ -95,31 +83,10 @@ export const identityRepository = {
   },
 
   /**
-   * Users authorized to access the system, with the role ids assigned to each.
-   *
-   * **Active users only unless you ask otherwise.** Four shapes, and the
-   * difference matters:
-   *
-   *   getAuthorizedUsers()                        active users
-   *   getAuthorizedUsers({ includeInactive: true })  everyone — the admin screen,
-   *                                               which has to show a deactivated
-   *                                               user in order to reactivate them
-   *   getAuthorizedUsers({ search: 'sar', take: 20 })  typeahead
-   *   getAuthorizedUsers({ ids: [...] })          just those people, **active or
-   *                                               not** — for resolving ids that
-   *                                               were saved earlier, where the
-   *                                               person may since have left
-   *
-   * `ids` is serialised as repeated `?ids=a&ids=b`, which is why the params are
-   * built as pairs rather than an object — an object would comma-join them.
-   *
-   * Guarded by `User.View` OR `Workflow.Manage`, so a workflow author reaches it
-   * without being a user administrator.
-   *
    * @param {Object} [options]
    * @param {boolean} [options.includeInactive]
-   * @param {string}  [options.search]
-   * @param {number}  [options.take]
+   * @param {string} [options.search]
+   * @param {number} [options.take]
    * @param {string[]} [options.ids]
    * @returns {Promise<object[]>}
    */
@@ -135,10 +102,7 @@ export const identityRepository = {
   },
 
   /**
-   * Update a user's active status and role assignments. Also used for
-   * activating/deactivating a user — send the full user with just
-   * isActive flipped.
-   * @param {object} data  { displayName, isActive, roleIds }
+   * @param {object} data
    * @returns {Promise<boolean>}
    */
   async updateUser(data) {
@@ -147,8 +111,7 @@ export const identityRepository = {
   },
 
   /**
-   * Create a new user with an initial set of roles.
-   * @param {object} data  { displayName, roleIds }
+   * @param {object} data
    * @returns {Promise<boolean>}
    */
   async createUser(data) {
@@ -157,9 +120,6 @@ export const identityRepository = {
   },
 
   /**
-   * AD users not yet registered, matching `search` (part of a username,
-   * display name or email); `total` counts every match.
-   *
    * @param {{ search?: string, skip?: number, take: number }} query
    * @returns {Promise<{ users: object[], total: number }>}
    */

@@ -14,12 +14,6 @@ import { fieldSettingColumns } from './fieldSettingColumns';
 import { useFieldSettings } from './useFieldSettings';
 
 /**
- * One kind of thing's fields, editable (2026-10-13), drawn and paged like the
- * app's other tables. Mounted per kind — the page keys it — so edits to
- * invoice fields never ride along to BOQ items. Save sends only the rows that
- * changed, on every page; without Workflows.ManageSettings there is no Save at
- * all, and every control is read-only.
- *
  * @param {{ targetTypeKey: number, targetLabel: string, canEdit: boolean }} props
  */
 export default function FieldSettingsTable({ targetTypeKey, targetLabel, canEdit }) {
@@ -33,7 +27,6 @@ export default function FieldSettingsTable({ targetTypeKey, targetLabel, canEdit
 
   const problemOf = (name) => page.serverErrors.byName[name] ?? page.problems[name] ?? null;
 
-  // Problems on rows not on this page: a changed row elsewhere, or a refusal for one.
   const shown = new Set(page.rows.map((r) => r.name));
   const labels = new Map(page.changed.map((r) => [r.name, r.label]));
   const offPage = [...new Set([...page.changed.map((r) => r.name), ...Object.keys(page.serverErrors.byName)])]

@@ -10,27 +10,11 @@ import { Table, TableCell, TableHeader, TableRow } from '@tiptap/extension-table
 
 import { CELL_STYLE, HEADER_CELL_STYLE, TABLE_STYLE } from '@/lib/richText';
 
-/**
- * What the template body editor can do — kept apart from the component so the
- * same set parses and writes HTML in tests exactly as it does on screen.
- */
-
-/**
- * A button for emails: a styled link. The backend recognises this shape —
- * a link drawn with `display:inline-block` — and points one that has no
- * address at the notification's own link.
- *
- * No font-weight here: the editor would read that as bold and add a tag on the
- * next load. The button's text is made bold instead.
- */
 export const BUTTON_STYLE = 'display:inline-block;padding:10px 20px;background-color:#f8485e;color:#ffffff;border-radius:8px;text-decoration:none';
 
-/** Addresses a link or button may point at: web, mail, or a value such as {{ ActionUrl }}. */
 export const LINK_TARGET = /^(https?:\/\/\S+|mailto:\S+|\{\{[^{}]+\}\})$/i;
-/** An image comes from a web address (emails cannot carry uploads here). */
 export const IMAGE_SOURCE = /^(https?:\/\/\S+|\{\{[^{}]+\}\})$/i;
 
-/** `{{ … }}` shown as a value chip while editing (display only — the saved text is unchanged). */
 const ValueChips = Extension.create({
   name: 'valueChips',
   addProseMirrorPlugins() {
@@ -53,7 +37,6 @@ const ValueChips = Extension.create({
   },
 });
 
-/** A link that keeps its own style — that is what a button is. */
 const EmailLink = Link.extend({
   addAttributes() {
     return {
@@ -67,11 +50,6 @@ const EmailLink = Link.extend({
   },
 });
 
-/**
- * A column width dragged in the editor is kept as `colwidth` (what the editor
- * reads back) and also written as `width` — the one width every mail client,
- * Outlook included, respects on a cell.
- */
 const withEmailWidth = (Cell) => Cell.extend({
   addAttributes() {
     const parent = this.parent?.() ?? {};
@@ -91,9 +69,6 @@ const withEmailWidth = (Cell) => Cell.extend({
 
 export const RICH_TEXT_EXTENSIONS = [
   StarterKit.configure({ link: false, code: false, codeBlock: false }),
-  // Not autolink: an autolinked mark grows as you type after it, which a button must not.
-  // No target/rel added to every link: mail clients open links in a new window
-  // anyway, and the 40 characters each would come out of the 2,000 allowed.
   EmailLink.configure({
     openOnClick: false,
     autolink: false,

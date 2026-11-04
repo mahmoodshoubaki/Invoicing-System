@@ -5,18 +5,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { pageParams } from '@/lib/fetchAllPages';
 
 /**
- * One page of a list the server pages. A new `key` (a filter, a record id)
- * goes back to page 1. `fetchPage` should be stable (useCallback) and change
- * with the key. While a page loads, `rows` is empty; `total` keeps the last
- * count so a footer can stay in place. Anything else `fetchPage` returns
- * besides rows and total comes back as `meta`, kept the same way.
- *
  * @param {(query: { skip: number, take: number }) => Promise<{ rows: Array, total: number }>} fetchPage
  * @param {{ key?: string, initialPageSize?: number, enabled?: boolean }} [options]
- * @returns {{
- *   rows: Array, total: number, meta: Object, page: number, pageSize: number, loading: boolean, error: Error|null,
- *   setPage: (page: number) => void, setPageSize: (size: number) => void, reload: () => void,
- * }}
+ * @returns {{ rows: Array, total: number, meta: Object, page: number, pageSize: number, loading: boolean, error: Error|null, setPage: (page: number) => void, setPageSize: (size: number) => void, reload: () => void, }}
  */
 export function useServerPage(fetchPage, { key = '', initialPageSize = 25, enabled = true } = {}) {
   const [paging, setPaging] = useState({ key, page: 1, pageSize: initialPageSize });

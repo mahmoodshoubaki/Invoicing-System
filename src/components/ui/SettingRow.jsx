@@ -8,15 +8,7 @@ import SettingValueControls from './SettingValueControls';
 import { useSettingDraft } from './useSettingDraft';
 
 /**
- * One setting: its key, what it means, and a control drawn from its `type` —
- * never from its key, so a future row of a new type gets the right box. The box
- * and its Save live in SettingValueControls, shared with the engine limits
- * table (2026-10-13).
- *
- * @param {{
- *   setting: { key: string, value: string, type: string, description?: string, isKnown?: boolean },
- *   canEdit: boolean, saving: boolean, onSave: (key: string, value: string) => void,
- * }} props
+ * @param {{ setting: { key: string, value: string, type: string, description?: string, isKnown?: boolean }, canEdit: boolean, saving: boolean, onSave: (key: string, value: string) => void, }} props
  */
 function SettingRow({ setting, canEdit, saving, onSave }) {
   const draft = useSettingDraft(setting, canEdit);
@@ -35,9 +27,6 @@ function SettingRow({ setting, canEdit, saving, onSave }) {
 export default memo(SettingRow);
 
 /**
- * A setting's key, its notes, and its description — the row's own words; a
- * local copy of what a key means would drift the moment the backend rewords it.
- *
  * @param {{ setting: Object, retired: boolean }} props
  */
 export function SettingName({ setting, retired }) {

@@ -40,3 +40,60 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 *.md
+
+# ===================================================================
+# Local, generated and sensitive files
+# ===================================================================
+
+# environment files: only the shared, secret-free .env is committed
+!.env
+.env.*
+.env*.local
+
+# certificates and keys
+*.pem
+*.key
+*.crt
+*.cer
+*.pfx
+*.p12
+
+# data files (migration workbooks can hold real business data)
+*.xlsx
+*.xls
+*.csv
+
+# office documents and their lock files
+*.docx
+*.doc
+*.pptx
+~$*
+
+# editors and IDEs
+.vscode/
+.idea/
+*.swp
+*~
+
+# operating system
+Thumbs.db
+ehthumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# logs and caches
+*.log
+logs/
+.eslintcache
+.cache/
+.turbo/
+
+# build and deployment output
+/.next/
+/out/
+/build
+/dist
+*.tgz
+
+# AI assistant local settings
+.claude/settings.local.json

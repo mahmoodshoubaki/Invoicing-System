@@ -12,7 +12,6 @@ import { draftRowOf } from '@/lib/workflowDrafts';
 
 const DRAFT = 'draft';
 
-/** What the open document is: the draft, the live version, or an older one. */
 function Badge({ state, isActive }) {
   const look = state.isDraft || !state.code
     ? { label: 'Draft', icon: PencilLine, color: STATUS.warning }
@@ -32,13 +31,7 @@ function Badge({ state, isActive }) {
 }
 
 /**
- * Which draft or version is open, whether it is live, how to switch, and what
- * a save will do from here (2026-10-11).
- *
- * @param {{
- *   state: Object, versions: Array, isActive: boolean, isDirty: boolean, nextVersion: number,
- *   canDiscard: boolean, onDiscard: () => void,
- * }} props
+ * @param {{ state: Object, versions: Array, isActive: boolean, isDirty: boolean, nextVersion: number, canDiscard: boolean, onDiscard: () => void, }} props
  */
 export default function BuilderVersionBar({ state, versions, isActive, isDirty, nextVersion, canDiscard, onDiscard }) {
   const router = useRouter();

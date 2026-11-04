@@ -9,7 +9,6 @@ const LABELS = [
   ['invoiceFiles', 'Invoice files'],
 ];
 
-/** What a check found, or an import saved. @param {{ counts: Object<string, number> }} props */
 export default function MigrationCounts({ counts }) {
   return (
     <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">

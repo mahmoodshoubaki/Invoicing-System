@@ -6,12 +6,6 @@ import { CHROME } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 
 /**
- * A status, priority or channel, in the colour the API gives it.
- *
- * The colour sits behind the text at a low alpha and the dot carries it at
- * full strength — readable whatever hex the backend chose, and quiet enough
- * that a page of them does not shout.
- *
  * @param {{ label: string, colorHex?: string|null, title?: string, size?: 'xs'|'sm' }} props
  */
 function LookupBadge({ label, colorHex, title, size = 'xs' }) {

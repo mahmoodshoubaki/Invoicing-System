@@ -2,11 +2,6 @@
 
 import { useEditorState } from '@tiptap/react';
 
-/**
- * What the toolbar shows as on, off or unavailable, read from the editor —
- * re-read on every change of selection or content, so a button reflects where
- * the cursor is. Null until the editor exists.
- */
 export function useToolbarState(editor) {
   return useEditorState({
     editor,

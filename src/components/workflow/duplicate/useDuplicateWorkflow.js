@@ -8,14 +8,9 @@ import { useToast } from '@/hooks/useToast';
 import { duplicatePayload } from '@/lib/workflowDuplicate';
 import { workflowRepository } from '@/repositories/workflowRepository';
 
-/**
- * Copying a workflow as a new draft: read it (one version, or its draft, live
- * or newest), save it without a code, then open the copy in the builder.
- */
 export function useDuplicateWorkflow() {
   const router = useRouter();
   const toast = useToast();
-  // { workflow, version } — version null copies the draft, else live, else newest.
   const [target, setTarget] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);

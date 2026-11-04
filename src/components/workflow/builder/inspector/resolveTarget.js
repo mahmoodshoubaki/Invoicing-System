@@ -1,23 +1,6 @@
-/**
- * Finding what the side panel has open, in the definition as it is NOW.
- *
- * The panel names a stage or step by id, but ids move: committing a title
- * re-derives the id from it, and undo can put the old one back. So the panel
- * also remembers WHERE its item last was (`at`), and when the id is no longer
- * found it looks there — accepting what it finds only if the list around it is
- * the same size and, for a step, of the same type. A rename passes that test;
- * a delete does not, and the panel closes instead of jumping to a neighbour.
- *
- * The same rule opens something just added: a new step has no id until the
- * reducer gives it one, so it is opened by position — the end of its list.
- *
- * Pure, so the rule can be tested without a screen.
- */
-
 import { getStepContainer } from '@/lib/workflowBuilderState';
 import { locateStep } from '@/lib/workflowClipboard';
 
-/** The container steps a step sits inside, outermost first. */
 function ancestorsAt(stage, container) {
   const found = [];
   let list = stage.steps ?? [];
@@ -82,14 +65,13 @@ function resolveStep(graph, target) {
 /**
  * @param {Object} graph
  * @param {{ kind: 'stage'|'step', id: string|null, at: Object|null }|null} target
- * @returns {Object|null} the item and where it is, or null when it is gone
+ * @returns {Object|null}
  */
 export function resolveTarget(graph, target) {
   if (!target) return null;
   return target.kind === 'stage' ? resolveStage(graph, target) : resolveStep(graph, target);
 }
 
-/** Whether two remembered positions are the same place. */
 export function samePlace(a, b) {
   return JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 }

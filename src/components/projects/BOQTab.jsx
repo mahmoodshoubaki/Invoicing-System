@@ -18,8 +18,6 @@ function BOQTab({
   projectCode, boqItems, currentBOQ, billingFrequenciesMap, boqItemStatusesMap, boqItemStatusColorsMap, currency,
 }) {
   const { can } = usePermission();
-  // Owned here rather than lifted to the page — opening/closing this modal
-  // now only re-renders this tab, not the stat cards or tab nav above it.
   const [historyItemId, setHistoryItemId] = useState(null);
   const money = (v) => formatCurrency(v, currency);
   const encoded = encodeURIComponent(projectCode);
@@ -60,7 +58,6 @@ function BOQTab({
       label: 'Item',
       render: (val, row) => (
         <div>
-          {/* Opens the item, read-only — the same link the BOQ list gives. */}
           <Link
             href={ROUTES.PROJECT_BOQ_ITEM(encoded, row.id)}
             onClick={(e) => e.stopPropagation()}

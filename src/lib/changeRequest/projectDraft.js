@@ -1,29 +1,12 @@
-/**
- * The project's part of a change request (2026-10-19): each EPM sub-project's
- * value, contract start date and contract duration (months), as they are and
- * as the request would leave them. A sub-project is named by its projectUID.
- *
- * Only what the user types is kept (`edits[uid][field]`); the rest reads from
- * the sub-project as loaded. Typing a value back to what it was removes the
- * edit, so "changed" always means different.
- *
- * The finish date follows the server: a typed one is kept as typed, otherwise
- * a changed start or duration gives start + whole months. The project's
- * contract dates are the main project's (a code like "23/116"), or else the
- * earliest start to the latest finish of them all.
- */
-
 const day = (value) => (value ? String(value).slice(0, 10) : '');
 const MAIN_PROJECT_CODE = /^\d+\/\d+$/;
 
-/** The project fields a request can change — on the main project only. The value is read-only. */
 export const PROJECT_FIELDS = [
   { key: 'contractStartDate', label: 'Contract start date', date: true },
   { key: 'contractFinishDate', label: 'Contract finish date', date: true },
   { key: 'contractDuration', label: 'Contract duration (months)', number: true },
 ];
 
-/** The sub-projects as the form shows them (text), with their finish date as stored. */
 export function subProjectOriginals(subProjects) {
   return (subProjects ?? [])
     .filter((sp) => sp.projectUID)
@@ -42,10 +25,8 @@ export function subProjectOriginals(subProjects) {
     }));
 }
 
-/** Whether these sub-projects (as loaded) have a main project — without one no change request can be raised. */
 export const hasMainProject = (rawSubProjects) => subProjectOriginals(rawSubProjects).some((p) => p.isMain);
 
-/** The main project, which holds the contract dates — or null. */
 export const mainProjectOf = (subProjects) => (subProjects ?? []).find((p) => p.isMain) ?? null;
 
 const blank = (value) => String(value ?? '').trim() === '';
@@ -55,7 +36,6 @@ function same(field, a, b) {
   return String(a ?? '') === String(b ?? '');
 }
 
-/** Sets one sub-project field, dropping the edit when it is back to what it was. */
 export function applyProjectEdit(edits, originals, uid, key, value) {
   const original = originals.find((o) => o.uid === uid);
   const field = PROJECT_FIELDS.find((f) => f.key === key);
@@ -69,7 +49,6 @@ export function applyProjectEdit(edits, originals, uid, key, value) {
   return next;
 }
 
-/** The start plus whole months, as the server adds them: 31 January + 1 month is 28 February. */
 export function finishDateOf(start, months) {
   if (!start || blank(months) || !Number.isFinite(Number(months))) return '';
   const [y, m, d] = start.split('-').map(Number);
@@ -81,7 +60,6 @@ export function finishDateOf(start, months) {
 
 const dayValue = (day) => Date.parse(`${day}T00:00:00Z`);
 
-/** The whole months from `start` whose finish lands nearest `end`. '' without both. */
 export function monthsToReach(start, end) {
   if (!start || !end) return '';
   const [y1, m1] = start.split('-').map(Number);
@@ -100,7 +78,6 @@ export function monthsToReach(start, end) {
   return String(best);
 }
 
-/** The finish date the server would store for these edits of one sub-project. */
 export function proposedFinish(original, mine) {
   if (!mine) return original.contractFinishDate;
   if (mine.contractFinishDate) return mine.contractFinishDate;
@@ -108,7 +85,6 @@ export function proposedFinish(original, mine) {
   return finishDateOf(values.contractStartDate, values.contractDuration) || original.contractFinishDate;
 }
 
-/** Each sub-project as the request would leave it. */
 export function proposedSubProjects(originals, edits) {
   return originals.map((o) => {
     const mine = edits[o.uid];
@@ -118,12 +94,6 @@ export function proposedSubProjects(originals, edits) {
   });
 }
 
-/**
- * One contract date typed on the main project, with the other two kept in
- * step: an end date sets the duration to the nearest whole months, a duration
- * drops a typed end date (it follows start + duration), and a new start
- * re-measures the duration to a typed end date.
- */
 export function editContractDate(edits, originals, uid, key, value) {
   const original = originals.find((o) => o.uid === uid);
   if (!original?.isMain) return edits;
@@ -140,7 +110,6 @@ export function editContractDate(edits, originals, uid, key, value) {
   return next;
 }
 
-/** The project's contract dates from its sub-projects. Blank when none says. */
 export function contractWindow(subProjects) {
   const main = subProjects.filter((p) => p.isMain ?? MAIN_PROJECT_CODE.test(String(p.code).trim()));
   const dated = main.length ? main : subProjects;
@@ -149,13 +118,10 @@ export function contractWindow(subProjects) {
   return { start: starts[0] ?? '', end: ends.at(-1) ?? '' };
 }
 
-/** The project value: the sub-projects' values added up. */
 export const projectValueTotal = (subProjects) => subProjects.reduce((sum, p) => sum + (Number(p.values.projectValue) || 0), 0);
 
-/** Whether any sub-project has a value at all — without one there is nothing to hold the items to. */
 export const hasProjectValue = (subProjects) => subProjects.some((p) => !blank(p.values.projectValue));
 
-/** The sub-project fields this request changes: `{ uid, name, key, label, from, to }` each. */
 export function changedProjectFields(originals, edits) {
   return originals.flatMap((o) => PROJECT_FIELDS
     .filter((field) => edits[o.uid] && field.key in edits[o.uid])

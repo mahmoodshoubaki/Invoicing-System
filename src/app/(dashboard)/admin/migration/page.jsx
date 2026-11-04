@@ -8,7 +8,6 @@ import TemplateNote from '@/components/admin/migration/TemplateNote';
 import { useMigrationFolder } from '@/components/admin/migration/useMigrationFolder';
 import { useMigrationRun } from '@/components/admin/migration/useMigrationRun';
 
-/** Historical data migration: pick the folder, check it, import it (System.Administrator). */
 export default function DataMigrationPage() {
   const folder = useMigrationFolder();
   const run = useMigrationRun(folder);

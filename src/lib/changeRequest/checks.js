@@ -1,10 +1,3 @@
-/**
- * What stops a change request, by the part of the form it is about. Mirrors the
- * server's ChangeRequestContentBuilder and ChangeRequestRuleValidator; the
- * server also checks the plans of items the request does not touch against new
- * contract dates, which the form cannot see.
- */
-
 import { CR_DETAILS_MAX } from '@/constants/changeRequests';
 import { filesAfterSave, isStillAdding } from '@/lib/taskFileValue';
 import { changedItemFields, cycleChangesOf, itemChanges, itemTotal } from './itemDraft';
@@ -43,7 +36,6 @@ function itemProblems(draft, window, windowChanged) {
   return problems;
 }
 
-/** The main project's contract dates as the request would leave them. */
 function projectProblems(originals, edits) {
   const main = mainProjectOf(originals);
   if (!main) return {};
@@ -62,7 +54,6 @@ function projectProblems(originals, edits) {
   return Object.keys(found).length ? { [main.uid]: found } : {};
 }
 
-/** Files are required when raising a request, and at least one must stay when editing one. */
 function filesProblem(files) {
   if (!files) return null;
   if (isStillAdding(files)) return 'A file is still being added — a moment.';
@@ -70,10 +61,8 @@ function filesProblem(files) {
 }
 
 /**
- * Everything wrong with a request, or nothing.
- *
  * @param {{ reasons: number[], details: string, projectEdits: Object, items: Array, newItems?: Array, files?: Object|null }} draft
- * @param {{ subProjects: Array, allItems: Array, types?: Array }} context  the sub-projects as loaded, every item of the BOQ, and the type lookup
+ * @param {{ subProjects: Array, allItems: Array, types?: Array }} context
  */
 export function changeRequestProblems(draft, { subProjects, allItems, types = [] }) {
   const newDrafts = draft.newItems ?? [];
@@ -126,7 +115,6 @@ export function changeRequestProblems(draft, { subProjects, allItems, types = []
 
 const fieldCount = (byKey) => Object.values(byKey ?? {}).reduce((n, p) => n + Object.keys(p).length, 0);
 
-/** The problems, with how many there are. */
 function withCount(problems) {
   const count = (problems.reasons ? 1 : 0) + (problems.details ? 1 : 0) + (problems.files ? 1 : 0)
     + (problems.typeKeys ? 1 : 0) + (problems.otherTypeText ? 1 : 0) + (problems.projectEffectKey ? 1 : 0)
@@ -134,17 +122,13 @@ function withCount(problems) {
   return { ...problems, newItems: problems.newItems ?? {}, files: problems.files ?? null, count };
 }
 
-/** Every part of a request — what the create and edit pages ask for. */
 export const ALL_PARTS = Object.freeze({
   reasons: true, types: true, typeText: true, effect: true, details: true, detailsRequired: false,
   fieldChanges: true, cycleChanges: true, newItems: true, files: true,
 });
 
 /**
- * Only the problems a workflow task can fix: the parts it asks for. A task may
- * also make the details required.
- *
- * @param {Object} problems  changeRequestProblems'
+ * @param {Object} problems
  * @param {typeof ALL_PARTS} asks
  * @param {{ details: string }} draft
  */
@@ -165,17 +149,11 @@ export function problemsAskedFor(problems, asks, draft) {
   });
 }
 
-/** Whether the request changes a quantity or a unit cost, or adds an item. */
 export function movesMoney(draft) {
   return (draft.newItems ?? []).length > 0
     || draft.items.some((item) => changedItemFields(item).some((c) => c.key === 'quantity' || c.key === 'unitCost'));
 }
 
-/**
- * The BOQ's items added up as the request would leave them — each item in the
- * request at its new total, the rest as they are, plus the new items — beside
- * the project value.
- */
 export function boqTotals(draft, { subProjects, allItems }) {
   const edited = new Map(draft.items.map((d) => [String(d.itemId), d]));
   const itemsTotal = (allItems ?? []).reduce((sum, item) => {

@@ -7,12 +7,6 @@ import { CHROME } from '@/theme/vizPalette';
 import { usePermission } from '@/hooks/usePermission';
 import { canOpenTab, MONITORING_TABS } from '@/components/monitoring/monitoringTabs';
 
-/**
- * Admin › Monitoring: one tab bar over every page, showing only the pages this
- * person may open. Each page still checks its own permission (the route guard
- * does too) — the bar only decides what is offered. A run or a delivery opened
- * from a list keeps its list's tab lit.
- */
 export default function MonitoringLayout({ children }) {
   const pathname = usePathname();
   const { can } = usePermission();

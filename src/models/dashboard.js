@@ -1,6 +1,5 @@
 const num = (value) => (value == null ? null : Number(value));
 
-/** GetFinancialSummary: one month's money across the projects the user can see. */
 export function mapFinancialSummary(raw) {
   return {
     projectCount: num(raw?.projectCount) ?? 0,
@@ -14,7 +13,6 @@ export function mapFinancialSummary(raw) {
   };
 }
 
-/** GetInvoiceSummary: every invoice the user can see, all time. */
 export function mapInvoiceSummary(raw) {
   const inProgress = raw?.inProgress ?? {};
   return {
@@ -29,21 +27,18 @@ export function mapInvoiceSummary(raw) {
         projectName: inv.projectName ?? null,
         totalAmount: num(inv.totalAmount) ?? 0,
         submissionDate: inv.submissionDate ?? null,
-        // The invoice page reads the status from the invoice itself; these are all in progress.
         statusId: 2,
       })),
     },
   };
 }
 
-/** "2026-10" → "Oct 2026". */
 export function monthLabel(key) {
   const [year, month] = String(key ?? '').split('-').map(Number);
   if (!year || !month) return String(key ?? '');
   return new Date(year, month - 1, 1).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
 }
 
-/** GetMonthlyTrend: one row per month, oldest first. */
 export function mapMonthlyTrend(raw) {
   return (raw?.months ?? []).map((row) => ({
     key: row.month,
@@ -54,7 +49,6 @@ export function mapMonthlyTrend(raw) {
   }));
 }
 
-/** GetDelayedCycles: one page, the most late first. */
 export function mapDelayedCycles(raw) {
   return {
     total: num(raw?.total) ?? 0,
@@ -72,7 +66,6 @@ export function mapDelayedCycles(raw) {
   };
 }
 
-/** GetSlaViolations: one page, the most late first. */
 export function mapSlaViolations(raw) {
   return {
     total: num(raw?.total) ?? 0,
@@ -90,7 +83,6 @@ export function mapSlaViolations(raw) {
   };
 }
 
-/** GetPendingApprovals: one page of open requests, newest first; byType counts every kind the user may see. */
 export function mapPendingApprovals(raw) {
   return {
     total: num(raw?.total) ?? 0,

@@ -26,7 +26,6 @@ import { CHANNEL, NOTIFICATION_PERMISSIONS } from '@/constants/notifications';
 import { ROUTES } from '@/constants/routes';
 import { notificationRepository } from '@/repositories/notificationRepository';
 
-/** What a type does today, in one word — the column people scan. */
 function stateOf(type) {
   if (type.isPaused) return 'paused';
   if (type.liveChannelKeys.length === 0) return 'silent';
@@ -114,10 +113,6 @@ const TypeRow = memo(function TypeRow({ type, priority, onOpen, onDuplicate }) {
   );
 });
 
-/**
- * Every kind of message the system can send. Reading is `Notifications.View`;
- * adding one is `Manage`. The words live on each type's own page.
- */
 export default function NotificationTypesPage() {
   const router = useRouter();
   const toast = useToast();
@@ -148,7 +143,6 @@ export default function NotificationTypesPage() {
 
   useLoadOnChange(load);
 
-  // The sender list for the form — Manage can read it; without it the form says so.
   useEffect(() => {
     if (!adding || !canManage || senders) return;
     notificationRepository.getEmailSenders().then(setSenders).catch(() => setSenders(null));

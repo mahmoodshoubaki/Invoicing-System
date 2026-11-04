@@ -12,15 +12,7 @@ import { sourceNote } from './sourceNote';
 import { TREND_MONTHS } from './useDashboard';
 
 /**
- * Everything the picked month drives, boxed with its picker: the month's money,
- * its collection rate, and the months leading up to it.
- *
- * @param {{
- *   filters: ReturnType<import('./useDashboard').useDashboardFilters>,
- *   financial: { status: string, data: Object|null, error: Error|null, reload: () => void },
- *   trend: { status: string, data: Array|null, error: Error|null, reload: () => void },
- *   money: (v: number) => string,
- * }} props
+ * @param {{ filters: ReturnType<import('./useDashboard').useDashboardFilters>, financial: { status: string, data: Object|null, error: Error|null, reload: () => void }, trend: { status: string, data: Array|null, error: Error|null, reload: () => void }, money: (v: number) => string, }} props
  */
 export default function MonthlyFigures({ filters, financial, trend, money }) {
   const fin = financial.data;

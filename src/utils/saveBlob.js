@@ -1,4 +1,3 @@
-/** Triggers a browser save-as for an already-fetched Blob. */
 export function saveBlob(blob, fileName) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

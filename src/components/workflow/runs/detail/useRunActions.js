@@ -11,12 +11,6 @@ import {
 } from '@/store/slices/workflowRunsSlice';
 
 /**
- * What can be done to a run from its page — advance, pause, stop, resume, and
- * hand a pending to-do on — with the dialog each one opens.
- *
- * Every action reloads the run afterwards, success or not: the run's status,
- * its tasks and the history row the action just wrote all move together.
- *
  * @param {{ instanceId: string, run: Object|null, load: () => void }} options
  */
 export function useRunActions({ instanceId, run, load }) {
@@ -24,9 +18,7 @@ export function useRunActions({ instanceId, run, load }) {
   const toast = useToast();
 
   const [resuming, setResuming] = useState(false);
-  /** 'pause' or 'cancel' while the stop dialog is open; null when it is not. */
   const [stopping, setStopping] = useState(null);
-  /** The to-do being handed on, while the dialog is open. */
   const [handingOn, setHandingOn] = useState(null);
   const [reassigning, setReassigning] = useState(false);
 
@@ -39,8 +31,6 @@ export function useRunActions({ instanceId, run, load }) {
       return;
     }
 
-    // A 200 is not proof of movement: on a run that has given up, Advance
-    // returns quietly having done nothing at all.
     if (didAdvance(before, result.payload)) toast.success('Run advanced');
     else toast.info('Nothing moved', 'It is waiting on something — a person, a delay, or a deadline.');
 
@@ -53,9 +43,6 @@ export function useRunActions({ instanceId, run, load }) {
     const result = await dispatch(thunk({ instanceId, reason }));
 
     if (thunk.rejected.match(result)) {
-      // WF-001 lands here — the run stopped being Running between the screen
-      // rendering the button and somebody pressing it. A 400 lands here too if
-      // the reason were ever empty, which the dialog prevents.
       toast.error(pausing ? 'Could not pause this run' : 'Could not stop this run', result.payload);
       return;
     }
@@ -66,17 +53,9 @@ export function useRunActions({ instanceId, run, load }) {
     } else {
       toast.success('Run stopped', 'Any to-dos it was asking have been withdrawn.');
     }
-    // Reloads all three: the run's status, its tasks, and the history row
-    // carrying the reason that was just written.
     load();
   }, [dispatch, instanceId, load, stopping, toast]);
 
-  /*
-   * Resolves to `{ errors }` when a corrected value was refused (WF-058) —
-   * nothing saved, the run where it was — so the dialog stays open with each
-   * complaint under its value. A resumed run is read again: a value can still
-   * be wrong, and the step faults on it again (2026-10-21).
-   */
   const handleResume = useCallback(async ({ notes, resetStepCount, variableChanges }) => {
     const result = await dispatch(resumeInstance({ instanceId, notes, resetStepCount, variableChanges }));
 
@@ -93,13 +72,6 @@ export function useRunActions({ instanceId, run, load }) {
     return null;
   }, [dispatch, instanceId, load, toast]);
 
-  /*
-   * Straight to the repository rather than through the My Tasks slice: that
-   * slice's reassign records its failures as the My Tasks screen's own error,
-   * and a refusal here has nothing to do with that list. The run is reloaded
-   * either way — the handover creates a new to-do with a new id, and a refusal
-   * (WF-005) usually means somebody answered it first.
-   */
   const handleReassign = useCallback(async ({ toUserIds, toRoleIds, toGroupIds }) => {
     setReassigning(true);
     try {

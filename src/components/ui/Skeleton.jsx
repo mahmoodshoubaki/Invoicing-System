@@ -3,10 +3,6 @@
 import { memo } from 'react';
 
 /**
- * Placeholder rows while the first page loads — the page keeps its shape, so
- * nothing jumps when the data lands, and it reads as "almost there" rather
- * than a spinner's "wait".
- *
  * @param {{ rows?: number, height?: number }} props
  */
 function Skeleton({ rows = 5, height = 44 }) {

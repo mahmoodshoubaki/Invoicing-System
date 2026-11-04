@@ -17,7 +17,6 @@ import { pageInfo } from '@/lib/pageInfo';
 
 const BREADCRUMBS = [{ label: 'Dashboard', href: ROUTES.DASHBOARD }, { label: 'Delayed BOQ cycles' }];
 
-/** Every invoicing cycle past its planned date with no invoice, the most late first. */
 export default function DelayedCyclesPage() {
   const router = useRouter();
   const [projectStatus, setProjectStatus] = useUrlParam('projectStatus');

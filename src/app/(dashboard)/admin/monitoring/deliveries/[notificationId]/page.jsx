@@ -38,7 +38,6 @@ function Fact({ label, children }) {
   );
 }
 
-/** One moment in a delivery's life, shown only if it happened. */
 function Moment({ label, value, approx = false }) {
   if (!value) return null;
   return (
@@ -49,7 +48,6 @@ function Moment({ label, value, approx = false }) {
   );
 }
 
-/** The text as it went out: the combined message, or each language. */
 const SentText = memo(function SentText({ delivery }) {
   const [view, setView] = useState('sent');
   const text = view === 'en'
@@ -69,7 +67,6 @@ const SentText = memo(function SentText({ delivery }) {
       </div>
       <p dir={text.dir} className="text-sm font-semibold" style={{ color: CHROME.textPrimary }}>{text.subject || '—'}</p>
       {delivery.isHtml ? (
-        // Sandboxed with nothing allowed: shows what was sent, runs nothing.
         <iframe title="Sent email" sandbox="" srcDoc={text.body} className="mt-2 h-72 w-full rounded-lg border border-[#eceae4] bg-white" />
       ) : (
         <p dir={text.dir} className="mt-1 whitespace-pre-line text-xs leading-relaxed" style={{ color: CHROME.textSecondary }}>{text.body || '—'}</p>
@@ -78,10 +75,6 @@ const SentText = memo(function SentText({ delivery }) {
   );
 });
 
-/**
- * One notification, in full — what it was, who it was for, and what happened
- * on each channel. `Notifications.ManageSettings`.
- */
 export default function NotificationDetailsPage() {
   const { notificationId } = useParams();
   const router = useRouter();
@@ -249,7 +242,6 @@ export default function NotificationDetailsPage() {
           <Card>
             <div className="flex flex-col gap-3">
               <Fact label="Type">{details.typeName} <code className="font-mono text-[11px]" style={{ color: CHROME.textMuted }}>{details.typeCode} · {details.typeKey}</code></Fact>
-              {/* The one person this copy went to — the email itself may have named a whole group. */}
               <Fact label="Delivered to">
                 {details.recipientName ?? '—'}
                 {details.recipientEmail && <span className="block text-[11px]" style={{ color: CHROME.textMuted }}>{details.recipientEmail}</span>}

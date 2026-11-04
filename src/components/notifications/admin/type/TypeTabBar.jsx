@@ -3,7 +3,6 @@
 import { CHROME, STATUS } from '@/theme/vizPalette';
 import { TYPE_TABS } from './typeTabs';
 
-/** A small count on a tab: something there needs fixing before the save goes through. */
 function IssueCount({ count }) {
   if (!count) return null;
   return (
@@ -18,10 +17,7 @@ function IssueCount({ count }) {
 }
 
 /**
- * @param {{
- *   value: string, onChange: (key: string) => void,
- *   status: { placeholderIssues: number, bodyIssues: number },  the channel on screen
- * }} props
+ * @param {{ value: string, onChange: (key: string) => void, status: { placeholderIssues: number, bodyIssues: number }, the channel on screen }} props
  */
 export default function TypeTabBar({ value, onChange, status }) {
   return (

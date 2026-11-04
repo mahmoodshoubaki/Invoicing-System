@@ -8,7 +8,6 @@ import {
   selectBoqItemStatusColorsMap, selectBoqItemStatusesMap, selectInvoiceStatusColorsMap, selectInvoiceStatusesMap,
 } from '@/store/slices/lookupsSlice';
 
-/** A pending record's status, from its own kind's status lookup. */
 export default function PendingStatusBadge({ type, statusId }) {
   const invoiceLabels = useSelector(selectInvoiceStatusesMap);
   const invoiceColors = useSelector(selectInvoiceStatusColorsMap);

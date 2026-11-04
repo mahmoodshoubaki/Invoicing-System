@@ -6,9 +6,6 @@ import { controlClass } from '@/components/ui/kit';
 import { CHROME } from '@/theme/vizPalette';
 
 /**
- * The project status a list keeps to. A value from the address shows even
- * before the status list has loaded.
- *
  * @param {{ value: string, onChange: (value: string) => void, statuses: string[] }} props
  */
 export default function ProjectStatusSelect({ value, onChange, statuses }) {

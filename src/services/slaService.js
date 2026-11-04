@@ -5,19 +5,8 @@ import {
 } from '@/constants/sla';
 import { BOQ_STATUS } from '@/constants/statuses';
 
-/**
- * slaService — SLA monitoring and escalation engine for BOQ items.
- *
- * Operates on the expectedInvoicingDate field of BOQ items.
- * Items with status Invoiced or Draft are excluded from violation checks.
- */
 export const slaService = {
   /**
-   * Check all BOQ items for SLA violations and return violation records.
-   *
-   * A "violation" means the item is overdue (daysOverdue > 0).
-   * Items in Draft or Invoiced status are excluded.
-   *
    * @param {object[]} boqItems
    * @returns {{ boqItem: object, daysOverdue: number, level: object|null }[]}
    */
@@ -38,7 +27,7 @@ export const slaService = {
       .map((item) => {
         const due = new Date(item.expectedInvoicingDate);
         due.setHours(0, 0, 0, 0);
-        const diffMs = today - due;                     // Positive = overdue
+        const diffMs = today - due;
         const daysOverdue = Math.floor(diffMs / (1000 * 60 * 60 * 24));
         return { boqItem: item, daysOverdue };
       })
@@ -51,9 +40,6 @@ export const slaService = {
   },
 
   /**
-   * Return the SLA escalation level object for a given number of days overdue.
-   * Returns null if not overdue or no matching level.
-   *
    * @param {number} daysOverdue
    * @returns {{ level: number, daysOverdue: number, label: string, description: string } | null}
    */
@@ -69,8 +55,6 @@ export const slaService = {
   },
 
   /**
-   * Generate a structured escalation record from a violation.
-   *
    * @param {{ boqItem: object, daysOverdue: number, level: object|null }} violation
    * @returns {object}
    */
@@ -92,17 +76,8 @@ export const slaService = {
   },
 
   /**
-   * Build a summary object suitable for an SLA dashboard widget.
-   *
-   * @param {object[]} boqItems  All BOQ items (across all projects or filtered).
-   * @returns {{
-   *   openViolations: number,
-   *   byLevel: { 1: number, 2: number, 3: number },
-   *   totalOverdue: number,
-   *   warnings: number,
-   *   violations: object[],
-   *   upcomingDue: object[],
-   * }}
+   * @param {object[]} boqItems
+   * @returns {{ openViolations: number, byLevel: { 1: number, 2: number, 3: number }, totalOverdue: number, warnings: number, violations: object[], upcomingDue: object[], }}
    */
   getSLADashboardData(boqItems) {
     if (!Array.isArray(boqItems) || boqItems.length === 0) {
@@ -128,7 +103,6 @@ export const slaService = {
       }
     });
 
-    // Items with a warning (within WARNING_DAYS but not yet overdue)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const excludedStatuses = [BOQ_STATUS.DRAFT, BOQ_STATUS.INVOICED];
@@ -156,9 +130,6 @@ export const slaService = {
   },
 
   /**
-   * Return the SLA status string for a single BOQ item.
-   * Delegates to getSlaStatus from constants/sla.js.
-   *
    * @param {object} boqItem
    * @returns {'overdue'|'critical'|'warning'|'normal'|'unknown'}
    */

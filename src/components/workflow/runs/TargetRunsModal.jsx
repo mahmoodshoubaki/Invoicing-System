@@ -20,31 +20,10 @@ import { withAlpha } from '@/utils/color';
 import { formatDateTime } from '@/utils/formatters';
 import { fetchDefinitions, selectDefinitions } from '@/store/slices/workflowSlice';
 
-/** Runs per request. The server caps `take` at 200; a record rarely has this many. */
 const PAGE_SIZE = 50;
 
 /**
- * Every workflow run on one record — an invoice, a BOQ item — to pick one to open.
- *
- * It replaced a button that opened only the record's LATEST run. A record can
- * be in several workflows at once, and has usually been through some of them
- * before, so "the" run was a guess: an invoice being approved in WF-0001 while
- * WF-0002 chases its payment has two current runs, and the button showed one.
- *
- * So the runs are grouped per workflow, each group leading with the one that
- * matters — the run still going, or else the latest — and the rest listed under
- * it as history. See `groupRunsByWorkflow`.
- *
- * Its own fetch rather than the runs slice: that slice holds the monitoring
- * page's list, and filling it with one record's runs would change what the
- * monitoring page shows. Fetched on open, never before, so viewing a record
- * costs nothing until somebody asks.
- *
- * @param {{
- *   open: boolean, onClose: () => void,
- *   targetTypeKey: number, targetId: string|number,
- *   recordLabel?: string,
- * }} props
+ * @param {{ open: boolean, onClose: () => void, targetTypeKey: number, targetId: string|number, recordLabel?: string, }} props
  */
 export default function TargetRunsModal({ open, onClose, targetTypeKey, targetId, recordLabel = 'this record' }) {
   const dispatch = useDispatch();
@@ -53,14 +32,6 @@ export default function TargetRunsModal({ open, onClose, targetTypeKey, targetId
   const [state, setState] = useState({ runs: [], total: 0, loading: false, error: null, loaded: false });
   const [loadingMore, setLoadingMore] = useState(false);
 
-  /*
-   * Starting a run from here — "Run again" on a workflow, or a workflow that has
-   * never run on this record. `Workflows.Run`, the same permission as the Start
-   * button on a workflow's card.
-   *
-   * While the start dialog is up, this list steps aside rather than stacking a
-   * modal on a modal; it comes back refreshed, with the new run at the top.
-   */
   const canRun = allow(can, WORKFLOW_PERMISSIONS.RUN);
   const [startFor, setStartFor] = useState(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -69,11 +40,6 @@ export default function TargetRunsModal({ open, onClose, targetTypeKey, targetId
     setReloadKey((k) => k + 1);
   };
 
-  /*
-   * Workflow NAMES, when this person may see them. Runs carry only a code, and
-   * "WF-0001" tells a reader far less than "Invoice approval". Without
-   * `Workflows.View` the code is shown and nothing breaks.
-   */
   const canViewDefinitions = allow(can, WORKFLOW_PERMISSIONS.VIEW);
   const definitions = useSelector(selectDefinitions);
   useEffect(() => {
@@ -92,8 +58,6 @@ export default function TargetRunsModal({ open, onClose, targetTypeKey, targetId
     return map;
   }, [definitions]);
 
-  // The first page, each time it opens — runs move, and a list from the last
-  // opening could show a finished run as still going.
   useEffect(() => {
     if (!open || targetId == null) return undefined;
 
@@ -111,11 +75,8 @@ export default function TargetRunsModal({ open, onClose, targetTypeKey, targetId
       });
 
     return () => { cancelled = true; };
-    // `reloadKey` moves when the start dialog closes, so a run just started is
-    // on the list when it comes back.
   }, [open, targetTypeKey, targetId, reloadKey]);
 
-  /** The next page of older runs, added to what is already shown. */
   const loadMore = async () => {
     setLoadingMore(true);
     try {
@@ -123,8 +84,6 @@ export default function TargetRunsModal({ open, onClose, targetTypeKey, targetId
         targetTypeKey, targetId, skip: state.runs.length, take: PAGE_SIZE,
       });
       setState((s) => {
-        // A run started between the two pages shifts every row down by one, so
-        // the new page can repeat the last row of the old. Dropped by id.
         const seen = new Set(s.runs.map((r) => r.instanceId));
         return { ...s, runs: [...s.runs, ...items.filter((r) => !seen.has(r.instanceId))], total };
       });
@@ -138,11 +97,6 @@ export default function TargetRunsModal({ open, onClose, targetTypeKey, targetId
   const groups = useMemo(() => groupRunsByWorkflow(state.runs), [state.runs]);
   const more = state.total - state.runs.length;
 
-  /*
-   * Published workflows for this kind of record that have not run on it at all
-   * — the ones "Run again" cannot reach because there is no group to put it on.
-   * Needs the definitions list, so it needs `Workflows.View` too.
-   */
   const neverRun = useMemo(() => {
     if (!canRun || !state.loaded) return [];
     const seen = new Set(groups.map((g) => g.code));
@@ -241,7 +195,6 @@ export default function TargetRunsModal({ open, onClose, targetTypeKey, targetId
             </section>
           )}
 
-          {/* `total` counts every run on the record; this is how many are not loaded yet. */}
           {more > 0 && (
             <div className="flex justify-center">
               <Button variant="outline" size="sm" onClick={loadMore} loading={loadingMore}>
@@ -256,15 +209,12 @@ export default function TargetRunsModal({ open, onClose, targetTypeKey, targetId
       )}
     </Modal>
 
-    {/* Mounted per start, so its answers never carry from one workflow to the next. */}
     {startFor && (
       <StartRunModal
         key={startFor.code}
         workflow={startFor}
         open
         onClose={closeStart}
-        // Leaving for the new run's page closes everything, rather than the
-        // list reappearing — and refetching — for the moment before it goes.
         onOpenRun={() => { setStartFor(null); onClose(); }}
         presetTargetIds={[String(targetId)]}
         presetTargetTypeKey={targetTypeKey}
@@ -275,16 +225,6 @@ export default function TargetRunsModal({ open, onClose, targetTypeKey, targetId
   );
 }
 
-/**
- * What can be done about a workflow on this record — start it again, or why
- * not yet.
- *
- * The backend allows one CURRENT run per workflow per record: Running, Paused
- * and Faulted all still hold it, and starting another is refused (WF-016). So
- * the button is only offered when the latest run is over. Otherwise the reason
- * is said, with what to do instead — a button that can only fail teaches
- * nobody anything.
- */
 function RunAgain({ group, definition, recordLabel, onStart }) {
   if (group.isCurrent) {
     const faulted = group.headline.statusKey === INSTANCE_STATUS.FAULTED;
@@ -298,9 +238,6 @@ function RunAgain({ group, definition, recordLabel, onStart }) {
     );
   }
 
-  // Known to be unpublished, or on a schedule — nothing to start by hand. When
-  // the list of workflows is not available (no Workflows.View), the server
-  // decides instead.
   const unpublished = definition != null && !definition.isPublished;
   const scheduled = definition != null && !canStartByHand(definition.triggerTypeKey);
 
@@ -329,10 +266,6 @@ function RunAgain({ group, definition, recordLabel, onStart }) {
   );
 }
 
-/**
- * One run, as a link to it. The status says where it got to; a run still going
- * also says which stage it is in, and a faulted one says why.
- */
 function RunRow({ run, tag = null, prominent = false, onOpen }) {
   const color = INSTANCE_STATUS_COLORS[run.statusKey] ?? CHROME.textMuted;
   const live = isLiveRun(run);

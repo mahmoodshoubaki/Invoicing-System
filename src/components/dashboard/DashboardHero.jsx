@@ -17,13 +17,7 @@ function greeting() {
 }
 
 /**
- * The page's header: who, when, the projects, what is waiting, and the project status the whole page keeps to.
- *
- * @param {{
- *   financial: { status: string, data: Object|null }, invoices: { status: string, data: Object|null },
- *   pending: { status: string, data: Object|null },
- *   filters: ReturnType<import('./useDashboard').useDashboardFilters>,
- * }} props
+ * @param {{ financial: { status: string, data: Object|null }, invoices: { status: string, data: Object|null }, pending: { status: string, data: Object|null }, filters: ReturnType<import('./useDashboard').useDashboardFilters>, }} props
  */
 export default function DashboardHero({ financial, invoices, pending, filters }) {
   const fin = financial.data;

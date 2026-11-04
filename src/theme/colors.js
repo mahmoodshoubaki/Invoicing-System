@@ -1,30 +1,17 @@
-/**
- * Devoteam Middle East brand color palette.
- */
 export const colors = {
-  /** Primary brand red */
   primary: '#f8485e',
 
-  /** Accent gold/amber */
   accent: '#fcc354',
 
-  /** Secondary soft pink */
   secondary: '#fca2ae',
 
-  /** Dark grey for text and surfaces */
   darkGrey: '#3c3c3a',
 
-  /** Page background */
   background: '#efeeee',
 
-  /** Pure white */
   white: '#ffffff',
 };
 
-/**
- * Extended color shades derived from the brand palette.
- * Useful for hover states, borders, and disabled variants.
- */
 export const colorShades = {
   primary: {
     50: '#fff1f3',
@@ -67,9 +54,6 @@ export const colorShades = {
   },
 };
 
-/**
- * Semantic color mappings for consistent usage across the UI.
- */
 export const semanticColors = {
   success: '#22c55e',
   warning: '#f59e0b',

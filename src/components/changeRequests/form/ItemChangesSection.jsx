@@ -13,13 +13,7 @@ import ItemChangeCard from './ItemChangeCard';
 import NewItemCard from './NewItemCard';
 
 /**
- * The BOQ changes of a request: approved items it changes, picked from the
- * BOQ, and new items it adds. Each in its own card.
- *
- * @param {{
- *   form: ReturnType<import('./useChangeRequestForm').useChangeRequestForm>,
- *   boqItems: Array, statusNameOf: (statusId) => string|null,
- * }} props
+ * @param {{ form: ReturnType<import('./useChangeRequestForm').useChangeRequestForm>, boqItems: Array, statusNameOf: (statusId) => string|null, }} props
  */
 export default function ItemChangesSection({ form, boqItems, statusNameOf }) {
   const inRequest = useMemo(() => new Set(form.items.map((d) => String(d.itemId))), [form.items]);

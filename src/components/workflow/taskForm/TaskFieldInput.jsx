@@ -6,18 +6,7 @@ import { controlClass, labelClass } from '@/components/ui/kit';
 import { CHROME, STATUS } from '@/theme/vizPalette';
 
 /**
- * One box of a task's form, drawn for its type: text, a number (a dot for
- * decimals, which is how it is sent), a date (the browser's picker gives
- * 2026-11-30, which is how it is sent), or yes / no.
- *
- * `options` turns any of them into a choice from a list — a BOQ item's billing
- * frequency (2026-10-13) is a number on the wire and "Quarterly" on screen.
- *
- * @param {{
- *   field: { name: string, label: string, typeKey: string, required: boolean },
- *   value: string, onChange: (value: string) => void, error?: string|null, disabled?: boolean,
- *   options?: Array<{ value: string, label: string }>|null,
- * }} props
+ * @param {{ field: { name: string, label: string, typeKey: string, required: boolean }, value: string, onChange: (value: string) => void, error?: string|null, disabled?: boolean, options?: Array<{ value: string, label: string }>|null, }} props
  */
 function TaskFieldInput({ field, value, onChange, error = null, disabled = false, options = null }) {
   const id = useId();

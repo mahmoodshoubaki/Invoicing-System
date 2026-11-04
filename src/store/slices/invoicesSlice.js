@@ -1,21 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { invoiceRepository } from '@/repositories/invoiceRepository';
 
-// ---------------------------------------------------------------------------
-// Async thunks
-// ---------------------------------------------------------------------------
-
-export const fetchInvoices = createAsyncThunk(
-  'invoices/fetchInvoices',
-  async (filters = {}, { rejectWithValue }) => {
-    try {
-      return await invoiceRepository.getInvoices(filters);
-    } catch (err) {
-      return rejectWithValue(err.message || 'Failed to fetch invoices.');
-    }
-  }
-);
-
 export const fetchInvoicesByProjectCode = createAsyncThunk(
   'invoices/fetchInvoicesByProjectCode',
   async (projectCode, { rejectWithValue }) => {
@@ -34,39 +19,6 @@ export const fetchInvoiceById = createAsyncThunk(
       return await invoiceRepository.getInvoiceById(id);
     } catch (err) {
       return rejectWithValue(err.message || 'Failed to fetch invoice.');
-    }
-  }
-);
-
-export const submitInvoice = createAsyncThunk(
-  'invoices/submitInvoice',
-  async (id, { rejectWithValue }) => {
-    try {
-      return await invoiceRepository.submitInvoice(id);
-    } catch (err) {
-      return rejectWithValue(err.message || 'Failed to submit invoice.');
-    }
-  }
-);
-
-export const approveInvoice = createAsyncThunk(
-  'invoices/approveInvoice',
-  async ({ id, userId }, { rejectWithValue }) => {
-    try {
-      return await invoiceRepository.approveInvoice(id, userId);
-    } catch (err) {
-      return rejectWithValue(err.message || 'Failed to approve invoice.');
-    }
-  }
-);
-
-export const rejectInvoice = createAsyncThunk(
-  'invoices/rejectInvoice',
-  async ({ id, userId, reason }, { rejectWithValue }) => {
-    try {
-      return await invoiceRepository.rejectInvoice(id, userId, reason);
-    } catch (err) {
-      return rejectWithValue(err.message || 'Failed to reject invoice.');
     }
   }
 );
@@ -114,10 +66,6 @@ export const fetchInvoiceHistory = createAsyncThunk(
     }
   }
 );
-
-// ---------------------------------------------------------------------------
-// Slice
-// ---------------------------------------------------------------------------
 
 const initialState = {
   items: [],
@@ -189,22 +137,6 @@ const invoicesSlice = createSlice({
   },
 
   extraReducers: (builder) => {
-    // fetchInvoices
-    builder
-      .addCase(fetchInvoices.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(fetchInvoices.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.items = action.payload;
-      })
-      .addCase(fetchInvoices.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload;
-      });
-
-    // fetchInvoicesByProjectCode
     builder
       .addCase(fetchInvoicesByProjectCode.pending, (state) => {
         state.isLoading = true;
@@ -219,7 +151,6 @@ const invoicesSlice = createSlice({
         state.error = action.payload;
       });
 
-    // fetchInvoiceById
     builder
       .addCase(fetchInvoiceById.pending, (state) => {
         state.isLoading = true;
@@ -235,17 +166,11 @@ const invoicesSlice = createSlice({
         state.error = action.payload;
       });
 
-    // createInvoice
     builder
       .addCase(createInvoice.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
-      // Same reasoning as updateInvoice below: CreateInvoice's response is the
-      // raw POST result, not a mapped invoice — it may even be an empty body,
-      // which apiClient turns into `null`. Unshifting that put a non-invoice
-      // (or literal null) into the list every component renders from, which
-      // throws on the first `row.id` read. The caller re-fetches instead.
       .addCase(createInvoice.fulfilled, (state) => {
         state.isLoading = false;
       })
@@ -254,9 +179,6 @@ const invoicesSlice = createSlice({
         state.error = action.payload;
       });
 
-    // updateInvoice — response shape isn't a full mapped invoice, so the
-    // caller re-fetches via fetchInvoiceById after a successful update
-    // instead of this trying to merge an unknown shape into state.
     builder
       .addCase(updateInvoice.pending, (state) => {
         state.isLoading = true;
@@ -270,7 +192,6 @@ const invoicesSlice = createSlice({
         state.error = action.payload;
       });
 
-    // fetchInvoiceHistory
     builder
       .addCase(fetchInvoiceHistory.pending, (state) => {
         state.history.isLoading = true;
@@ -285,7 +206,6 @@ const invoicesSlice = createSlice({
         state.history.error = action.payload;
       });
 
-    // fetchInvoiceableBOQItems
     builder
       .addCase(fetchInvoiceableBOQItems.pending, (state) => {
         state.invoiceableItems.isLoading = true;
@@ -298,69 +218,6 @@ const invoicesSlice = createSlice({
       .addCase(fetchInvoiceableBOQItems.rejected, (state, action) => {
         state.invoiceableItems.isLoading = false;
         state.invoiceableItems.error = action.payload;
-      });
-
-    // submitInvoice
-    builder
-      .addCase(submitInvoice.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(submitInvoice.fulfilled, (state, action) => {
-        state.isLoading = false;
-        const idx = state.items.findIndex((inv) => inv.id === action.payload.id);
-        if (idx !== -1) {
-          state.items[idx] = action.payload;
-        }
-        if (state.selectedInvoice?.id === action.payload.id) {
-          state.selectedInvoice = action.payload;
-        }
-      })
-      .addCase(submitInvoice.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload;
-      });
-
-    // approveInvoice
-    builder
-      .addCase(approveInvoice.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(approveInvoice.fulfilled, (state, action) => {
-        state.isLoading = false;
-        const idx = state.items.findIndex((inv) => inv.id === action.payload.id);
-        if (idx !== -1) {
-          state.items[idx] = action.payload;
-        }
-        if (state.selectedInvoice?.id === action.payload.id) {
-          state.selectedInvoice = action.payload;
-        }
-      })
-      .addCase(approveInvoice.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload;
-      });
-
-    // rejectInvoice
-    builder
-      .addCase(rejectInvoice.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(rejectInvoice.fulfilled, (state, action) => {
-        state.isLoading = false;
-        const idx = state.items.findIndex((inv) => inv.id === action.payload.id);
-        if (idx !== -1) {
-          state.items[idx] = action.payload;
-        }
-        if (state.selectedInvoice?.id === action.payload.id) {
-          state.selectedInvoice = action.payload;
-        }
-      })
-      .addCase(rejectInvoice.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload;
       });
   },
 });

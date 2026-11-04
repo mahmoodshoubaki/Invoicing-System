@@ -31,7 +31,6 @@ function Panel({ title, icon: Icon, subtitle, children, className = '' }) {
   );
 }
 
-/** Percent of the contract window elapsed, or null when a bound is missing. */
 function contractProgress(startDate, finishDate) {
   if (!startDate || !finishDate) return null;
   const start = new Date(startDate).getTime();
@@ -41,8 +40,6 @@ function contractProgress(startDate, finishDate) {
 }
 
 function OverviewTab({ project, projectCode, subProjects, totals, currency }) {
-  // Every sub-project shares the same contract dates — any one is a valid
-  // source, same convention as the BOQ invoicing tracker.
   const contract = subProjects[0];
   const money = (v) => formatCurrency(v, currency);
   const progress = contractProgress(contract?.contractStartDate, contract?.contractFinishDate);
@@ -55,7 +52,6 @@ function OverviewTab({ project, projectCode, subProjects, totals, currency }) {
     { label: 'External Sub-Contractors', value: totals.revenueExternalSubs },
   ];
 
-  // Cash position, as a share of everything invoiced so far.
   const invoiced = totals.totalInvoicesValue || 0;
   const segments = [
     { label: 'Collected', value: totals.collectedValue, color: SERIES[2] },
@@ -64,7 +60,6 @@ function OverviewTab({ project, projectCode, subProjects, totals, currency }) {
 
   return (
     <Reveal className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-      {/* ---------------- Contract identity ---------------- */}
       <div className="flex flex-col gap-5">
         <Panel title="Contract Information" icon={FileSignature}>
           <div className="grid grid-cols-2 gap-4">
@@ -115,10 +110,7 @@ function OverviewTab({ project, projectCode, subProjects, totals, currency }) {
         </Panel>
       </div>
 
-      {/* ---------------- Money ---------------- */}
       <div className="flex flex-col gap-5">
-        {/* Not purely a sub-project roll-up any more: the cash figures below,
-            and WIP with them, are counted from this project's invoices. */}
         <Panel title="Financial Summary" icon={Wallet} subtitle="Across this project and its sub-projects">
           <div className="grid grid-cols-2 gap-4">
             <InfoRow label="Project Value" value={money(totals.projectValue)} />
@@ -127,8 +119,6 @@ function OverviewTab({ project, projectCode, subProjects, totals, currency }) {
             <InfoRow label="Work in Progress" value={money(totals.wip)} />
           </div>
 
-          {/* Cash position — a stacked bar with a 2px surface gap between
-              fills so the segments read as separate without needing borders. */}
           {invoiced > 0 && segments.length > 0 && (
             <div className="mt-5 border-t border-[#f1f0ee] pt-4">
               <div className="mb-2 flex items-baseline justify-between">

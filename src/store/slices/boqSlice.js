@@ -1,10 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { boqRepository } from '@/repositories/boqRepository';
 
-// ---------------------------------------------------------------------------
-// Async thunks
-// ---------------------------------------------------------------------------
-
 export const fetchBOQByProjectCode = createAsyncThunk(
   'boq/fetchBOQByProjectCode',
   async (projectCode, { rejectWithValue }) => {
@@ -106,10 +102,6 @@ export const approveBOQItem = createAsyncThunk(
   }
 );
 
-// ---------------------------------------------------------------------------
-// Slice
-// ---------------------------------------------------------------------------
-
 const initialState = {
   currentBOQ: null,
   isLoading: false,
@@ -153,9 +145,6 @@ const boqSlice = createSlice({
       state.isLoading = false;
     },
 
-    /**
-     * Payload: Partial<{ projectId: string|null, status: string }>
-     */
     setFilters(state, action) {
       state.filters = { ...state.filters, ...action.payload };
     },
@@ -170,7 +159,6 @@ const boqSlice = createSlice({
   },
 
   extraReducers: (builder) => {
-    // fetchBOQByProjectCode
     builder
       .addCase(fetchBOQByProjectCode.pending, (state) => {
         state.isLoading = true;
@@ -202,7 +190,6 @@ const boqSlice = createSlice({
         state.error = action.payload;
       });
 
-    // addBOQItem
     builder
       .addCase(addBOQItem.pending, (state) => {
         state.isLoading = true;
@@ -216,7 +203,6 @@ const boqSlice = createSlice({
         state.error = action.payload;
       });
 
-    // updateBOQItem
     builder
       .addCase(updateBOQItem.pending, (state) => {
         state.isLoading = true;
@@ -230,7 +216,6 @@ const boqSlice = createSlice({
         state.error = action.payload;
       });
 
-    // removeBOQItem
     builder
       .addCase(removeBOQItem.pending, (state) => {
         state.isLoading = true;
@@ -247,7 +232,6 @@ const boqSlice = createSlice({
         state.error = action.payload;
       });
     
-    // bulkRemoveBOQItems
     builder
       .addCase(bulkRemoveBOQItems.pending, (state) => {
         state.isLoading = true;
@@ -281,7 +265,6 @@ const boqSlice = createSlice({
         state.history.error = action.payload;
       });
 
-    // fetchTrackerCycles
     builder
       .addCase(fetchTrackerCycles.pending, (state) => {
         state.trackerCycles.isLoading = true;
@@ -296,7 +279,6 @@ const boqSlice = createSlice({
         state.trackerCycles.error = action.payload;
       });
 
-    // approveBOQItem
     builder
       .addCase(approveBOQItem.pending, (state) => {
         state.isLoading = true;
@@ -332,7 +314,6 @@ export const selectTrackerCycles         = (state) => state.boq.trackerCycles.it
 export const selectTrackerCyclesLoading  = (state) => state.boq.trackerCycles.isLoading;
 export const selectTrackerCyclesError    = (state) => state.boq.trackerCycles.error;
 
-/** BOQ items filtered by current filter state. */
 export const selectFilteredBOQ = (state) => {
   const items   = selectBOQItems(state);
   const filters = state.boq.filters;

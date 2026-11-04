@@ -1,7 +1,5 @@
 'use client';
 
-/** One email sender, with what can be done to it. */
-
 import { memo } from 'react';
 import { Mail, Pencil, Send, Server, Star, StarOff, Trash2 } from 'lucide-react';
 

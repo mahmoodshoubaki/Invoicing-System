@@ -6,19 +6,14 @@ import { useDispatch } from 'react-redux';
 
 import { useToast } from '@/hooks/useToast';
 import { createInvoice } from '@/store/slices/invoicesSlice';
+import { VAT_RATE } from '@/constants/appConfig';
 
 const INITIAL_FORM = {
-  // boqLineItems: { [boqItemId]: { quantity: '' } }
   boqLineItems: {},
-  vat: '0.15',
-  // No invoice number, baseline date, financial claim reference or receipt
-  // issue date: workflow tasks fill them in — see InvoiceDetailsSection.
+  vat: String(VAT_RATE),
 };
 
 /**
- * The new invoice request being filled in: which BOQ items, how many of each,
- * its attachments — checked, confirmed, then submitted.
- *
  * @param {{ projectCode: string, boqItems: Array, projectFinancials: Object }} options
  */
 export function useNewInvoiceForm({ projectCode, boqItems, projectFinancials }) {
@@ -85,9 +80,6 @@ export function useNewInvoiceForm({ projectCode, boqItems, projectFinancials }) 
       });
     }
 
-    // if (form.vat === '' || isNaN(Number(form.vat)) || Number(form.vat) < 0) {
-    //   e.vat = 'Valid VAT rate is required';
-    // }
     return e;
   };
 
@@ -123,13 +115,7 @@ export function useNewInvoiceForm({ projectCode, boqItems, projectFinancials }) 
         projectCode,
         wip: projectFinancials.wip,
         revenue: projectFinancials.totalRevenue,
-        // Who submitted it is the backend's to record, from the signed-in user.
         lines,
-        // Anything still uploading is already blocked by the disabled
-        // submit button, so every entry here is ready to send.
-        // `file` (a raw File object) is genuinely non-serializable — the
-        // store is configured to allow that specifically for this field,
-        // see store/index.js.
         attachments,
       })).unwrap();
 

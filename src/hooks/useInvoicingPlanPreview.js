@@ -4,16 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import { boqRepository } from '@/repositories/boqRepository';
 
 /**
- * Debounced wrapper around boqRepository.previewInvoicingPlan. Automatically
- * re-fetches whenever anchorDate/billingFrequencyId/contractStartDate/
- * contractFinishDate change, replacing the cycle list wholesale.
- *
- * Used by the Add BOQ Item page only — `anchorDate` there is always the
- * Baseline Invoicing Date, which can only be set at creation. The Edit page
- * has its own preview logic (see boq/[itemId]/edit/page.jsx) since it needs
- * to seed from the item's existing plan first and only preview once the
- * user actually changes something, which this always-on hook doesn't do.
- *
  * @param {object} params
  * @param {string} params.anchorDate
  * @param {number|string} params.billingFrequencyId

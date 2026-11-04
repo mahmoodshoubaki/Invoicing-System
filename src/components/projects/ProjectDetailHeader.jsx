@@ -5,11 +5,6 @@ import Link from 'next/link';
 import { motion } from 'motion/react';
 import { ChevronLeft, ChevronRight, FileText, LayoutList } from 'lucide-react';
 
-/**
- * Hero panel for the project detail page. Memoised, and deliberately given
- * only the two props it needs — switching tabs or opening a modal below must
- * not repaint it.
- */
 function ProjectDetailHeader({ project, projectCode }) {
   const encoded = encodeURIComponent(projectCode);
 
@@ -20,9 +15,6 @@ function ProjectDetailHeader({ project, projectCode }) {
       transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
       className="relative isolate mb-6 overflow-hidden rounded-3xl bg-[#17161c] px-6 py-7 sm:px-8"
     >
-      {/* Ambient colour fields. Held still (2026-10-08): drifting them forever
-          made the browser re-blur two 90px glows on every frame, scrolling
-          included. Still, they are painted once. */}
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
         <div className="absolute -left-20 -top-24 h-64 w-64 rounded-full bg-[#f8485e] opacity-40 blur-[90px]" />
         <div className="absolute -bottom-24 right-4 h-64 w-64 rounded-full bg-[#4a3aa7] opacity-35 blur-[95px]" />

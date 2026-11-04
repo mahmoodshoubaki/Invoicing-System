@@ -5,10 +5,6 @@ import { useCallback, useState } from 'react';
 import { toggleRemoval } from '@/lib/taskFileValue';
 
 /**
- * A change request's files: the ones it has (`existing`), the ones marked to
- * go (`deleteIds`) and the new ones (`added`, the uploader's entries). Null
- * when the form has no files part.
- *
  * @param {{ existing: Array, deleteIds: string[], added: Array }|null} initial
  * @param {() => void} onEdit
  */

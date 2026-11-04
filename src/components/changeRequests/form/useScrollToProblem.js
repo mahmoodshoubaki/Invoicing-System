@@ -3,11 +3,6 @@
 import { useEffect } from 'react';
 
 /**
- * After a refused Submit (2026-10-20): scroll to the first problem inside
- * `rootRef` and put the cursor in its box. `refusedCount` ticks on each
- * refusal; the effect runs after the render that opened any folded item with
- * a problem.
- *
  * @param {{ current: HTMLElement|null }} rootRef
  * @param {number} refusedCount
  */

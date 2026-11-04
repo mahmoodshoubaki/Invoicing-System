@@ -3,27 +3,7 @@ import { slugify } from '@/utils/slug';
 
 import { eachStep } from './graph';
 
-/**
- * Ids and names are derived from titles and never shown, so renaming something
- * has to carry every reference to it — these do the carrying.
- */
-
-/**
- * Rewrites every reference to `fromId` after a stage is renamed.
- *
- * A stage id is pointed at from three places, and missing any one of them
- * leaves a definition that saves cleanly and then dead-ends at runtime:
- * `graph.startStageId`, each transition's `toStageId`, and a stage deadline's
- * `toStageId`. `toStageId: null` is meaningful — it ends the run — so only
- * exact matches are touched.
- */
 export function retargetStageId(graph, fromId, toId) {
-  /**
-   * A human task's `overdue.toStageId` is a fourth place a stage is pointed at,
-   * and it is buried inside the step tree rather than on the stage. Missing it
-   * would leave an escalation aimed at a stage that no longer exists — saved
-   * happily, and discovered only when somebody failed to answer in time.
-   */
   const retargetSteps = (steps) =>
     (steps ?? []).map((step) => {
       const next = { ...step };
@@ -41,7 +21,6 @@ export function retargetStageId(graph, fromId, toId) {
     });
 
   return {
-    // Keeps everything else the graph carries — the run-level notifications.
     ...graph,
     startStageId: graph.startStageId === fromId ? toId : graph.startStageId,
     stages: graph.stages.map((stage) => ({
@@ -57,12 +36,6 @@ export function retargetStageId(graph, fromId, toId) {
   };
 }
 
-/**
- * A variable name from a human title: "Find overdue invoices" → "findOverdueInvoices".
- *
- * Variable names are referenced inside `{{placeholders}}` and by a `forEach`,
- * so they cannot carry hyphens the way a stage or step id does.
- */
 export function variableNameFrom(title) {
   const parts = slugify(title).split('-').filter(Boolean);
   if (parts.length === 0) return '';
@@ -70,13 +43,7 @@ export function variableNameFrom(title) {
 }
 
 /**
- * `name`, or `name2`, `name3`, … — whichever no other list is using.
- *
- * Two `query` steps writing the same name would fill ONE list, and retitling
- * either one would then rename the loops reading the other. Pasting makes
- * same-titled queries ordinary rather than rare, so names are kept apart here.
- *
- * @param {string} name empty stays empty
+ * @param {string} name
  * @param {Set<string>} taken
  */
 export function uniqueVariableName(name, taken) {
@@ -86,11 +53,6 @@ export function uniqueVariableName(name, taken) {
   return `${name}${n}`;
 }
 
-/**
- * Every list name a `query` writes into, except the one step named — plus the
- * engine's own `targets`, so a step titled "Targets" is named `targets2`
- * rather than having its results overwritten on a hand-started run.
- */
 export function queryListNames(graph, exceptStepId) {
   const names = new Set([PICKED_TARGETS_LIST]);
   eachStep(graph, (step) => {
@@ -99,7 +61,6 @@ export function queryListNames(graph, exceptStepId) {
   return names;
 }
 
-/** Applies `fn` to one step wherever it sits in the tree. */
 export function mapStepById(graph, id, fn) {
   const walk = (steps) =>
     (steps ?? []).map((step) => {
@@ -114,7 +75,6 @@ export function mapStepById(graph, id, fn) {
   return { ...graph, stages: (graph.stages ?? []).map((s) => ({ ...s, steps: walk(s.steps) })) };
 }
 
-/** Applies `fn` to every condition in a definition, wherever one can appear. */
 function mapConditions(graph, fn) {
   const mapSteps = (steps) =>
     (steps ?? []).map((step) => {
@@ -143,7 +103,6 @@ function mapConditions(graph, fn) {
   };
 }
 
-/** Rewrites one field name inside a FilterGroup, at any depth. */
 function renameFieldInGroup(group, fromField, toField) {
   if (!group) return group;
   return {
@@ -155,15 +114,6 @@ function renameFieldInGroup(group, fromField, toField) {
   };
 }
 
-/**
- * Renames a step and every reference to it.
- *
- * A step id is not private any more: a condition reads a human task's answer as
- * `approve.outcome`. Since ids are derived from titles and never shown, editing
- * a title renames the id — so without this, retitling "Approve" would silently
- * break every condition that branched on its answer, and the workflow would save
- * clean and behave wrongly.
- */
 export function renameStepEverywhere(graph, fromId, toId) {
   const renamed = mapConditions(graph, (group) =>
     renameFieldInGroup(group, `${fromId}${OUTCOME_FIELD_SUFFIX}`, `${toId}${OUTCOME_FIELD_SUFFIX}`)
@@ -172,7 +122,6 @@ export function renameStepEverywhere(graph, fromId, toId) {
   const setId = (steps) =>
     (steps ?? []).map((step) => {
       const next = step.id === fromId ? { ...step, id: toId } : { ...step };
-      // A Send notification step reading this task's details follows it.
       if (step.taskStepId === fromId) next.taskStepId = toId;
       if (step.whenTrue) next.whenTrue = setId(step.whenTrue);
       if (step.whenFalse) next.whenFalse = setId(step.whenFalse);
@@ -184,12 +133,6 @@ export function renameStepEverywhere(graph, fromId, toId) {
   return { ...renamed, stages: renamed.stages.map((s) => ({ ...s, steps: setId(s.steps) })) };
 }
 
-/**
- * Renames the variable a `query` writes into, and every `forEach` reading it.
- *
- * `into` is derived from the step's title and never shown, so retitling a query
- * would otherwise orphan the loop walking its results.
- */
 export function renameListEverywhere(graph, fromName, toName) {
   const retarget = (steps) =>
     (steps ?? []).map((step) => {

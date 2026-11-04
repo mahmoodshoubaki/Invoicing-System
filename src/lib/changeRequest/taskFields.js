@@ -1,22 +1,3 @@
-/**
- * A change request's content asked for by a workflow task (2026-10-20) — the
- * request back with its requester, or an approver adjusting it. Four fields,
- * any of them:
- *
- *   reasonKeys         [1, 5]
- *   typeKeys           [1, 3], asked with otherTypeText (text)
- *   projectEffectKey   number
- *   additionalDetails  text
- *   fieldChanges       [{ targetTypeKey, targetId, fieldName, oldValue, newValue }]
- *   cycleChanges       [{ boqItemId, cycleId, oldPlannedDate, newPlannedDate }]
- *
- * The lists come as JSON text. The form is the create form, filled from them;
- * what goes back is the create request's shape (old values are ignored, so
- * none are sent). A list sent replaces the request's whole list, so every row
- * goes, changed or not; a field the task does not ask for keeps what the
- * request has — so a part not asked for is shown locked, and never sent.
- */
-
 import { CR_TARGET } from '@/constants/changeRequests';
 import {
   CR_CYCLE_CHANGES_TYPE, CR_FIELD_CHANGES_TYPE, CR_NEW_ITEMS_TYPE, CR_REASONS_TYPE, CR_TYPES_TYPE, TARGET_TYPE,
@@ -31,11 +12,7 @@ export const CR_OTHER_TYPE_FIELD = 'otherTypeText';
 export const CR_EFFECT_FIELD = 'projectEffectKey';
 
 /**
- * Which of the request's parts a task asks for — each the task's field, or
- * null. The details are a plain text field, so they count only on a task
- * about a change request.
- *
- * @param {Object} task  a GetMyTasks row
+ * @param {Object} task
  */
 export function changeRequestTaskParts(task) {
   const fields = task?.fields ?? [];
@@ -54,16 +31,12 @@ export function changeRequestTaskParts(task) {
   };
 }
 
-/** Whether a task asks for any of a change request's parts. */
 export const asksForChangeRequest = (parts) => Object.values(parts).some(Boolean);
 
-/** Whether it asks for the request's changes — and so needs the BOQ to draw them. */
 export const asksForChanges = (parts) => Boolean(parts.fieldChanges || parts.cycleChanges || parts.newItems);
 
-/** The names of the task's fields the request's editor draws and sends. */
 export const changeRequestFieldNames = (parts) => new Set(Object.values(parts).filter(Boolean).map((f) => f.name));
 
-/** What the form's hook is told to ask for — see problemsAskedFor. */
 export function partsAsked(parts) {
   return {
     reasons: Boolean(parts.reasons),
@@ -79,7 +52,6 @@ export function partsAsked(parts) {
   };
 }
 
-/** A JSON list from a task's value; empty for none, null when the text is not a list. */
 export function parseList(text) {
   if (text == null || String(text).trim() === '') return [];
   try {
@@ -106,13 +78,8 @@ const cycleRow = (r) => ({
 });
 
 /**
- * The request as the task has it — the task's own values for the parts it
- * asks for, the request as loaded for the rest — in the shape
- * draftFromChangeRequest reads. The labels of the parts whose text is not a
- * list are returned in `unreadable`: nothing is drawn (or sent) from them.
- *
  * @param {ReturnType<typeof changeRequestTaskParts>} parts
- * @param {Object|null} changeRequest  mapChangeRequest's, when it could be loaded
+ * @param {Object|null} changeRequest
  * @returns {{ changeRequest: Object, unreadable: string[] }}
  */
 export function changeRequestFromTask(parts, changeRequest) {
@@ -151,12 +118,8 @@ export function changeRequestFromTask(parts, changeRequest) {
 }
 
 /**
- * The rows the form cannot draw — an item no longer on the BOQ, a sub-project
- * EPM no longer lists, a field the form does not know. They go back as they
- * are, so answering the task never drops one.
- *
  * @param {{ fieldChanges: Array, cycleChanges: Array }} changeRequest
- * @param {{ boqItems: Array, subProjects: Array }} context  the BOQ's items, and subProjectOriginals'
+ * @param {{ boqItems: Array, subProjects: Array }} context
  */
 export function rowsKeptAsIs(changeRequest, { boqItems, subProjects }) {
   const itemIds = new Set(boqItems.map((i) => String(i.id)));
@@ -167,7 +130,6 @@ export function rowsKeptAsIs(changeRequest, { boqItems, subProjects }) {
     || (c.targetTypeKey === CR_TARGET.PROJECT && uids.has(c.targetId) && projectKeys.has(c.fieldName));
   return {
     fieldChanges: changeRequest.fieldChanges
-      // The server refuses a project value change, so one is dropped rather than sent back.
       .filter((c) => !drawn(c) && c.fieldName !== 'projectValue')
       .map(({ targetTypeKey, targetId, fieldName, newValue }) => ({ targetTypeKey, targetId, fieldName, newValue })),
     cycleChanges: changeRequest.cycleChanges
@@ -179,13 +141,8 @@ export function rowsKeptAsIs(changeRequest, { boqItems, subProjects }) {
 const NOTHING_KEPT = { fieldChanges: [], cycleChanges: [] };
 
 /**
- * What the task sends for the parts it asks for — the create request's shape,
- * each as text — and the indexes that tie a refusal's `fieldChanges[i]` back
- * to its box. A list part not asked for is not sent; a refusal about it is
- * about the request's own rows, in its own order, so it is said whole.
- *
  * @param {ReturnType<typeof changeRequestTaskParts>} parts
- * @param {Object} draft  the form's
+ * @param {Object} draft
  * @param {{ subProjects: Array, kept?: ReturnType<typeof rowsKeptAsIs> }} context
  */
 export function changeRequestTaskValues(parts, draft, { subProjects, kept = NOTHING_KEPT }) {
@@ -210,11 +167,6 @@ export function changeRequestTaskValues(parts, draft, { subProjects, kept = NOTH
 const REQUEST_KEY = /^(fieldChanges|cycleChanges|newItems|reasonKeys|typeKeys|otherTypeText|projectEffectKey|additionalDetails|changes)\b/i;
 
 /**
- * A refusal's errors split (2026-10-20): the request's own — its keys are the
- * create request's, like `fieldChanges[2]` — put where the create form puts
- * them, and the rest left for the task's other fields. A `Values.` wrapping is
- * taken off either way.
- *
  * @returns {{ placed: ReturnType<typeof mapServerErrors>, rest: Object }}
  */
 export function splitChangeRequestErrors(errors, { fieldIndex, cycleIndex, newItemIndex = [] }) {
@@ -228,11 +180,6 @@ export function splitChangeRequestErrors(errors, { fieldIndex, cycleIndex, newIt
   return { placed: mapServerErrors(mine, { fieldIndex, cycleIndex, newItemIndex }), rest };
 }
 
-/**
- * Whether an item can be taken out of the request by a task: only when the
- * task may change everything the item changes — taking it out drops its field
- * changes and its plan changes both.
- */
 export function canTakeOut(item, asks) {
   if (!asks.fieldChanges && changedItemFields(item).length > 0) return false;
   if (!asks.cycleChanges && planChanged(item)) return false;

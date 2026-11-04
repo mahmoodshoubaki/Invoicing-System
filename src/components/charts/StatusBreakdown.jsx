@@ -4,13 +4,6 @@ import { motion } from 'motion/react';
 import { CHROME } from '@/theme/vizPalette';
 
 /**
- * Ranked horizontal bars for a status distribution.
- *
- * A 6-slice donut was the obvious move here and the wrong one: angles are far
- * harder to compare than aligned bar lengths, and small slices can't hold a
- * label. Ranked bars compare exactly, direct-label every row, and pair each
- * status with an icon + text so meaning never rides on hue alone.
- *
  * @param {{data: Array<{name: string, value: number, color: string, icon: Function, detail?: string}>}} props
  */
 export default function StatusBreakdown({ data = [] }) {
@@ -28,13 +21,9 @@ export default function StatusBreakdown({ data = [] }) {
 
   return (
     <motion.ul
-      // Motion drives these rows' opacity/transform — opt out of the global
-      // `ul > li` CSS entrance animation so the two don't fight.
       data-motion
       className="flex flex-col gap-3.5"
       initial="hidden"
-      // `animate`, not a one-shot `whileInView` — a row added after the
-      // container has played would otherwise inherit `hidden` and stay invisible.
       animate="show"
       variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}
     >
@@ -57,8 +46,6 @@ export default function StatusBreakdown({ data = [] }) {
                 {item.name}
                 {item.detail && <span className="ml-1.5 font-normal tabular-nums" style={{ color: CHROME.textMuted }}>{item.detail}</span>}
               </span>
-              {/* Direct label — every row, since there are few enough rows to
-                  label them all without the plot turning into a wall of digits. */}
               <span className="text-xs font-bold tabular-nums" style={{ color: CHROME.textPrimary }}>
                 {item.value}
               </span>

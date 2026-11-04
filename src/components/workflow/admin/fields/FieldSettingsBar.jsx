@@ -7,14 +7,7 @@ import { controlClass } from '@/components/ui/kit';
 import { CHROME, STATUS } from '@/theme/vizPalette';
 
 /**
- * Above the Workflow fields table: the search (by name or label, on the
- * server), how many fields match, how many are changed, and — for whoever may
- * change them — Undo and Save.
- *
- * @param {{
- *   total: number, changedCount: number, query: string, onQuery: (text: string) => void,
- *   canEdit: boolean, saving: boolean, canSave: boolean, onDiscard: () => void, onSave: () => void,
- * }} props
+ * @param {{ total: number, changedCount: number, query: string, onQuery: (text: string) => void, canEdit: boolean, saving: boolean, canSave: boolean, onDiscard: () => void, onSave: () => void, }} props
  */
 export default function FieldSettingsBar({
   total, changedCount, query, onQuery, canEdit, saving, canSave, onDiscard, onSave,

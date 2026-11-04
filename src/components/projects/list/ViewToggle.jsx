@@ -8,7 +8,6 @@ const OPTIONS = [
   { id: 'table', label: 'Table', icon: Rows3 },
 ];
 
-/** Cards or table. @param {{ view: 'grid'|'table', onChange: (view: string) => void }} props */
 export default function ViewToggle({ view, onChange }) {
   return (
     <div className="flex items-center gap-0.5 rounded-xl bg-[#f4f3f1] p-1">

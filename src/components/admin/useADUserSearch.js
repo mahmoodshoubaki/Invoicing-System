@@ -6,9 +6,6 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { identityRepository } from '@/repositories/identityRepository';
 
 /**
- * The first `take` unregistered AD users matching `query`, searched by the
- * server while `enabled`. `total` counts every match.
- *
  * @returns {{ users: Object[], total: number, loading: boolean, error: Error|null }}
  */
 export function useADUserSearch(query, enabled, take) {

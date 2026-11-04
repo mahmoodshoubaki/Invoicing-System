@@ -7,11 +7,6 @@ import { StatusBadge } from '@/components/common/Badge';
 import { CHROME, STATUS } from '@/theme/vizPalette';
 import { formatDate } from '@/utils/formatters';
 
-/**
- * How far through the contract window today sits, as a percentage.
- * Returns null when either bound is missing so the caller can hide the meter
- * rather than render a misleading empty track.
- */
 function contractProgress(startDate, finishDate) {
   if (!startDate || !finishDate) return null;
   const start = new Date(startDate).getTime();
@@ -32,8 +27,6 @@ function ProjectCard({ project }) {
   ].filter((m) => m.value);
 
   return (
-    // No animation (2026-10-08): no spring lift, no wipe, no growing bar.
-    // Hover shows the brand rail, a deeper shadow and the arrow, instantly.
     <div>
       <Link
         href={`/projects/${encodeURIComponent(project.projectCode)}`}
@@ -74,7 +67,6 @@ function ProjectCard({ project }) {
           ))}
         </ul>
 
-        {/* Contract timeline — only when both bounds exist */}
         {progress !== null && (
           <div className="mt-auto pt-4">
             <div className="mb-1.5 flex items-center justify-between text-[11px]" style={{ color: CHROME.textMuted }}>

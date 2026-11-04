@@ -4,20 +4,6 @@ import { reasonsListProblems } from '@/lib/taskReasons';
 
 import { unknownTypeErrors } from '../notificationTypes';
 
-/** A human task's rules: who answers, what they can answer, when it is due, and what happens if nobody does. */
-
-/**
- * The fields a task asks its holder to fill (2026-10-11) — the server's WF-055,
- * checked here first: none may be listed twice, a listed field must be one a
- * task can fill, fields that go together must be asked together, and some
- * button must save them.
- *
- * A name the list does not have is NOT a problem (2026-10-13): an admin can
- * switch a field Off in Workflow fields, and a workflow already asking for it
- * still runs and publishes. `taskFields` is the record's whole list (an
- * invoicing plan included); without it, the condition catalog's record fields
- * stand in.
- */
 function checkTaskFields(step, { where, fields, taskFields, errors }) {
   const asked = step.fields ?? [];
   if (asked.length === 0) return;
@@ -51,14 +37,6 @@ export function checkHumanTask(step, { where, fields, taskFields, stageIds, noti
     (step.assignToUserIds?.length ?? 0) + (step.assignToRoleIds?.length ?? 0) + (step.assignToGroupIds?.length ?? 0) + expressions.length;
   if (assignees === 0) errors.push(`${where} is not assigned to anyone, so nobody could ever answer it.`);
 
-  /*
-   * An expression naming a field must name one that holds a person — WF-038.
-   *
-   * A name the catalog does NOT know is left alone on purpose: it is a
-   * workflow variable or a loop item, and whether it holds a user can only
-   * be answered while the run is going. Refusing it here would block the
-   * legitimate case of stashing a guid in a variable.
-   */
   for (const expression of expressions) {
     const parsed = readPlaceholder(expression);
 
@@ -95,12 +73,8 @@ export function checkHumanTask(step, { where, fields, taskFields, stageIds, noti
 
   checkTaskFields(step, { where, fields, taskFields, errors });
 
-  // The due date is optional — a task with none simply never becomes
-  // overdue — so only the negative and excluded-day rules apply here.
   errors.push(...validateDuration(step, 'dueIn', where, { required: false }));
 
-  // The notification checkboxes (2026-10-07). A reminder counts back from
-  // the due date, so it needs one, and a repeating one needs a period.
   const reminder = step.notifications?.reminder;
   if (reminder) {
     if (isDurationEmpty(readDuration(step, 'dueIn'))) {
@@ -123,9 +97,6 @@ export function checkHumanTask(step, { where, fields, taskFields, stageIds, noti
     if (!step.overdue?.toStageId) {
       errors.push(`${where} escalates when nobody answers, but has nowhere to escalate to.`);
     } else if (stageIds.size > 0 && !stageIds.has(step.overdue.toStageId)) {
-      // Only checkable when the caller knows the stages. A step editor
-      // validating one step in isolation passes an empty set, and must not
-      // report every escalation as dangling for want of the list.
       errors.push(`${where} escalates to a stage that no longer exists.`);
     }
   }

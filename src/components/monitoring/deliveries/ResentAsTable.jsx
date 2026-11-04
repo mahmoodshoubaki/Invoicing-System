@@ -9,11 +9,6 @@ import { formatDateTime } from '@/utils/formatters';
 import { ROUTES } from '@/constants/routes';
 
 /**
- * Every copy a notification was resent as (2026-10-13), oldest first — one per
- * person — each row opening that copy. A typed address has no name, so its
- * email stands in. Each copy is also its own row in the delivery monitor,
- * where it can be found by address.
- *
  * @param {{ copies: Array, statuses: { byKey: Object } }} props
  */
 export default function ResentAsTable({ copies, statuses }) {

@@ -6,7 +6,6 @@ import { AlertCircle, FolderKanban } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/utils';
 import { colors } from '@/theme';
 
-/** A value EPM does not have, or that could not be read — said, never left blank. */
 function Flag({ children }) {
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-medium text-white">
@@ -16,7 +15,6 @@ function Flag({ children }) {
   );
 }
 
-/** One fact: its label, and its value or why there is none. */
 function Fact({ label, value, missing = 'Not set in EPM', loading = false, failed = false }) {
   let shown;
   if (loading) shown = <span className="text-sm text-white/80">Loading…</span>;
@@ -32,10 +30,7 @@ function Fact({ label, value, missing = 'Not set in EPM', loading = false, faile
 }
 
 /**
- * The project a page is about, at a glance, from GetProjectHeader.
- *
  * @param {{ projectCode: string, header: Object|null, status: 'loading'|'ready'|'error' }} props
- *   header: mapProjectHeader's
  */
 export default function ProjectSummaryCard({ projectCode, header, status }) {
   const currency = useSelector((s) => s.ui.currency);

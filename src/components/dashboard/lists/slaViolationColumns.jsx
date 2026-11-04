@@ -5,10 +5,8 @@ import LateBadge from '../LateBadge';
 import ProjectCell from './ProjectCell';
 import ViewLink from './ViewLink';
 
-/** Where a past-due task opens: its workflow run. */
 export const slaViolationHref = (row) => ROUTES.MONITORING_RUN(row.instanceId);
 
-/** The columns of the SLA violations table. */
 export function slaViolationColumns() {
   return [
     {

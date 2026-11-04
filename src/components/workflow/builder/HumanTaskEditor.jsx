@@ -17,7 +17,6 @@ import ButtonReasonsEditor from './ButtonReasonsEditor';
 const controlClass =
   'rounded-md border border-gray-200 bg-white px-2 py-1.5 text-xs outline-none focus:border-primary';
 
-/** Sensible starting colours for outcome buttons — green to go, red to stop. */
 const OUTCOME_SWATCHES = ['#16A34A', '#DC2626', '#2563EB', '#D97706', '#6B7280'];
 
 function Label({ children, hint }) {
@@ -29,36 +28,12 @@ function Label({ children, hint }) {
   );
 }
 
-/**
- * A step that stops and waits for a person.
- *
- * The outcomes edited here are literally the buttons My Tasks renders — key,
- * label, colour and whether a comment is mandatory all travel to that screen
- * untouched. So this editor is a preview as much as a form.
- */
-/** Where a person-holding name comes from, for the picker's groups. */
 const PERSON_SOURCE_LABELS = {
   record: 'On the record',
   item: 'On the loop item',
   variable: 'Person variables',
 };
 
-/**
- * Assignees named by the run rather than chosen up front.
- *
- * Two kinds of name hold a person: a record field whose `GetFields` row says
- * `isUser` (`submittedBy` on invoices and, since 2026-10-01, BOQ items), and a
- * variable of the person type — `{{approver}}`. Only those are offered: naming
- * anything else is refused at save as WF-038, and a picker that let somebody
- * assign a to-do to `totalAmount` would be handing them a save error instead of
- * a form. Projects have person fields since 2026-10-20 — `bdmUsername`,
- * `crpUsername`, `buHeadUsername`, holding usernames — and a BOQ or invoice
- * workflow reaches them by finding its project with a query step and looping
- * over it: `{{project.bdmUsername}}` is then offered as a loop item's field.
- *
- * A name the catalog does not know is kept and flagged rather than dropped —
- * a definition saved before a variable was renamed, say.
- */
 export const ExpressionAssignees = memo(function ExpressionAssignees({ expressions, fields, onChange }) {
   const userFields = (fields ?? []).filter((f) => f.isUser);
   const chosen = expressions.map((e) => readPlaceholder(e).name ?? '');
@@ -148,10 +123,6 @@ export const ExpressionAssignees = memo(function ExpressionAssignees({ expressio
   );
 });
 
-/**
- * The task itself — who answers, by when, and with which buttons. Who hears
- * about it is the Notifications tab (TaskNotificationsPanel), beside this one.
- */
 function HumanTaskEditor({ step, stageId, stages, roles, rolesLoading, groups = [], groupsLoading = false, resolvedById, fields, onChange }) {
   const outcomes = step.outcomes ?? [];
   const assignedRoles = step.assignToRoleIds ?? [];
@@ -192,11 +163,6 @@ function HumanTaskEditor({ step, stageId, stages, roles, rolesLoading, groups = 
         />
       </div>
 
-      {/*
-        The third assignee source, and the only one that is not decided when the
-        workflow is drawn: it names a field, and whoever that field holds on the
-        particular record gets the to-do.
-      */}
       <div>
         <Label hint="— decided when the task is created">
           Assign to a person on the record or in a variable
@@ -214,8 +180,6 @@ function HumanTaskEditor({ step, stageId, stages, roles, rolesLoading, groups = 
           style={{ backgroundColor: '#fbfaf9', color: CHROME.textMuted }}
         >
           <Info size={11} className="mt-0.5 shrink-0" aria-hidden="true" />
-          {/* Settled engine behaviour, not a limitation — two approvals that are
-              both genuinely required are two steps, which `parallel` writes. */}
           The assignee list is who <em>may</em> answer, not a set of answers to collect. Whoever
           responds first completes the step.
         </p>
@@ -325,11 +289,6 @@ function HumanTaskEditor({ step, stageId, stages, roles, rolesLoading, groups = 
                   <input
                     value={outcome.label ?? ''}
                     onChange={(e) => {
-                      // The key is what the engine stores, and it is derived
-                      // rather than shown: an author naming a button should not
-                      // also have to invent an identifier for it. Kept unique
-                      // within the step, since two outcomes sharing a key is a
-                      // save error nobody could act on if they never saw them.
                       const label = e.target.value;
                       const taken = outcomes.filter((_, i) => i !== index).map((o) => o.key);
                       patchOutcome(index, { label, key: uniqueSlug(label, taken, `outcome-${index + 1}`) });
@@ -368,7 +327,6 @@ function HumanTaskEditor({ step, stageId, stages, roles, rolesLoading, groups = 
                     Requires a comment
                   </label>
 
-                  {/* Only once the task asks for fields (its Fields tab). */}
                   {(step.fields?.length ?? 0) > 0 && (
                     <label className="flex items-center gap-1.5 text-[11px]" style={{ color: CHROME.textMuted }}>
                       <input
@@ -380,7 +338,6 @@ function HumanTaskEditor({ step, stageId, stages, roles, rolesLoading, groups = 
                     </label>
                   )}
 
-                  {/* Exactly how My Tasks will draw it. */}
                   <span
                     className="rounded-lg px-2.5 py-1 text-[11px] font-semibold"
                     style={{

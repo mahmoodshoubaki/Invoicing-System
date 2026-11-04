@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { ROUTES } from '@/constants/routes';
 import { CHROME } from '@/theme/vizPalette';
 
-/** A table cell: the project code (opening the project) over its name. */
 export default function ProjectCell({ code, name }) {
   if (!code) return <span className="text-xs" style={{ color: CHROME.textMuted }}>No project</span>;
   return (

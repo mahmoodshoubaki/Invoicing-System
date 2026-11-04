@@ -12,19 +12,11 @@ const DAY = /^\d{4}-\d{2}-\d{2}$/;
 const EMPTY = [];
 
 /**
- * The box for one of a run's values, drawn for its type: a person from the
- * directory (their id is saved; the server takes a username too), yes / no, a
- * date, a list written as JSON, a number, or text.
- *
- * @param {{
- *   row: { name: string, type: string|null }, text: string, onChange: (text: string) => void,
- *   people: Object, invalid?: boolean, disabled?: boolean,
- * }} props
+ * @param {{ row: { name: string, type: string|null }, text: string, onChange: (text: string) => void, people: Object, invalid?: boolean, disabled?: boolean, }} props
  */
 function RunVariableInput({ row, text, onChange, people, invalid = false, disabled = false }) {
   const style = invalid ? { borderColor: STATUS.critical } : undefined;
   const label = `New value for ${row.name}`;
-  // Only a name already known: somebody just picked is named by the picker itself.
   const resolved = useMemo(() => {
     const person = text ? people[text] : null;
     return person ? { [text]: { id: text, displayName: person.displayName ?? person.username ?? text } } : undefined;

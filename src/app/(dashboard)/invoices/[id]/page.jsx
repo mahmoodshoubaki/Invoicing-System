@@ -66,10 +66,6 @@ function InvoiceDetailContent() {
   const [addingFiles, setAddingFiles] = useState(false);
   const router = useRouter();
 
-  // The invoice itself carries its project code once loaded — prefer that
-  // over the query param so this page (and the links it builds, including
-  // Edit) works regardless of how it was navigated to, not only when a
-  // caller happened to pass ?projectCode=.
   const projectCode = invoice?.projectCode ?? queryProjectCode;
 
   useEffect(() => {
@@ -132,13 +128,11 @@ function InvoiceDetailContent() {
           onClose={() => setDeleteOpen(false)}
           onDeleted={() => {
             toast.success('Invoice deleted', 'Any workflow running on it was cancelled.');
-            // The invoice no longer exists anywhere, so there is nothing to stay on.
             router.replace(backHref);
           }}
         />
       )}
 
-      {/* Rendered only for someone who may see runs, so it never asks for them otherwise. */}
       {canViewRuns && (
         <TargetRunsModal
           open={runsOpen}
@@ -172,21 +166,6 @@ function InvoiceDetailContent() {
             <Button variant="ghost" icon={History} size="sm" onClick={() => setHistoryOpen(true)}>
               History
             </Button>
-            {/*
-              Every workflow run on this invoice, to choose one to open.
-
-              It used to open `workflowInstanceId` — the ONE run the invoice
-              last pointed at. An invoice can be in two workflows at once, and
-              has usually been through some before, so that was a guess; the
-              modal groups them per workflow instead. See TargetRunsModal.
-
-              Shown whether or not `workflowInstanceId` is set: an invoice whose
-              runs have all finished still has a history worth reading.
-
-              Hidden without WorkflowInstances.View: GetInstances and the run
-              page both refuse anybody without it, and a button that leads
-              straight to "you do not have permission" is worse than no button.
-            */}
             {canViewRuns && (
               <Button variant="outline" icon={Workflow} size="sm" onClick={() => setRunsOpen(true)}>
                 Workflow runs
@@ -197,9 +176,6 @@ function InvoiceDetailContent() {
                 <Button variant="outline" icon={Edit2} size="sm">Edit</Button>
               </Link>
             )}
-            {/* Only Rejected or Cancelled — an In Progress invoice still has its
-                workflow running (cancel it first), and an Invoiced or Collected
-                one is money billed or received. */}
             {can('Invoices', 'Delete') && DELETABLE_INVOICE_STATUS_IDS.includes(invoice.statusId) && (
               <Button variant="outline" icon={Trash2} size="sm" onClick={() => setDeleteOpen(true)}>
                 Delete
@@ -212,18 +188,13 @@ function InvoiceDetailContent() {
         }
       />
 
-      {/* Where it is in its workflow and what comes next (2026-10-21), and who it
-          is waiting on — anyone who can see the invoice sees that part. */}
       <InvoiceStepper invoice={invoice} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Main Content */}
         <div className="lg:col-span-2 flex flex-col gap-5">
-          {/* The task waiting on it, when it is this person's to answer. Its
-              fields land on the invoice, so the invoice is read again after. */}
           <InvoiceTaskPanel invoice={invoice} onAnswered={() => dispatch(fetchInvoiceById(id))} />
 
-          {/* Invoice Info */}
           <Card>
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
               <h3 className="text-sm font-semibold text-gray-700">Invoice Information</h3>
@@ -248,7 +219,6 @@ function InvoiceDetailContent() {
             </div>
           </Card>
 
-          {/* BOQ Line Items */}
           <Card>
             <h3 className="text-sm font-semibold text-gray-700 mb-4 pb-3 border-b border-gray-100">
               BOQ Line Items ({invoice.lines.length})
@@ -298,7 +268,6 @@ function InvoiceDetailContent() {
               <h3 className="text-sm font-semibold text-gray-700">
                 Attachments ({invoice.attachments.length})
               </h3>
-              {/* At any stage while it is open (2026-10-11) — not once Collected or Cancelled. */}
               {can('Invoices', 'Add Attachments')
                 && ![INVOICE_STATUS_ID.COLLECTED, INVOICE_STATUS_ID.CANCELLED].includes(invoice.statusId) && (
                 <Button variant="outline" size="xs" icon={Paperclip} onClick={() => setAddingFiles(true)}>
@@ -340,7 +309,6 @@ function InvoiceDetailContent() {
           </Card>
         </div>
 
-        {/* Project reference */}
         <div>
           <Card>
             <h3 className="text-sm font-semibold text-gray-700 mb-4 pb-3 border-b border-gray-100">

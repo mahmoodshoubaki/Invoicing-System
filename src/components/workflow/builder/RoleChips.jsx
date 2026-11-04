@@ -6,13 +6,6 @@ import CheckboxDropdown from '@/components/ui/CheckboxDropdown';
 import { CHROME } from '@/theme/vizPalette';
 
 /**
- * Picking roles — who a task is assigned to, or who a notification goes to.
- * Same control in both places, so picking roles feels the same.
- *
- * A dropdown of checkboxes since 2026-10-20: a row of chips, one per role,
- * wrapped onto several lines once there were many roles. Closed, it is one
- * line ("Finance, Admin +3 more").
- *
  * @param {{ roles: Array<{ id: string, name: string }>, loading?: boolean, selectedIds: string[], onChange: (ids: string[]) => void }} props
  */
 function RoleChips({ roles, loading = false, selectedIds, onChange }) {

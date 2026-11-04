@@ -16,12 +16,6 @@ import { allow } from '@/constants/workflowPermissions';
 import { NOTIFICATION_PERMISSIONS } from '@/constants/notifications';
 import { notificationRepository } from '@/repositories/notificationRepository';
 
-/**
- * How notifications behave everywhere: the links' address, email retries,
- * tracking, how long things are kept. Reading is `Notifications.Manage`;
- * changing is `Manage Settings`. Values travel as strings and each row's
- * control comes from its type.
- */
 export default function NotificationSettingsPage() {
   const toast = useToast();
   const { can } = usePermission();
@@ -53,7 +47,6 @@ export default function NotificationSettingsPage() {
       setSettings((prev) => prev.map((s) => (s.key === key ? saved : s)));
       toast.success('Saved', `${key} is now ${saved.value}.`);
     } catch (err) {
-      // NTF-027 among others — the message says what to change, so it is shown in full.
       setSaveError(err);
     } finally {
       setSavingKey(null);

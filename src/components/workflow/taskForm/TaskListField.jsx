@@ -5,13 +5,11 @@ import { memo, useMemo } from 'react';
 import { labelClass } from '@/components/ui/kit';
 import { CHROME } from '@/theme/vizPalette';
 
-/** A column's heading from its key: `billedUnitPrice` → "Billed unit price". */
 function headingOf(key) {
   const words = String(key).replace(/([a-z0-9])([A-Z])/g, '$1 $2').toLowerCase();
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
-/** The rows of a list value. Unreadable text is no rows. */
 function parseRows(text) {
   if (!text) return [];
   try {
@@ -23,11 +21,6 @@ function parseRows(text) {
 }
 
 /**
- * A `list` field on a task — an invoice's lines (2026-10-13) — shown, never
- * edited: a task can read a list, as the invoice's Update form does, but never
- * changes it. The task row carries no description of the columns, so they are
- * the rows' own keys.
- *
  * @param {{ field: Object, value: string }} props
  */
 function TaskListField({ field, value }) {

@@ -19,8 +19,6 @@ export default function DashboardLayout({ children }) {
       <LookupsSync />
       <AuthProvider>
         <AuthGuard>
-          {/* Inside AuthGuard: it reads capabilities, which only exist once
-              Identity/me has resolved. */}
           <WorkflowTasksSync />
           <NotificationsSync />
           <CapabilityGuard>

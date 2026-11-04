@@ -16,13 +16,11 @@ import {
   selectInvoiceStatuses, selectInvoiceStatusesMap, selectInvoiceStatusColorsMap,
 } from '@/store/slices/lookupsSlice';
 
-/** `?status=<id>` as a status id, or null for every status. */
 function statusFromUrl(value) {
   const id = Number(value);
   return Number.isInteger(id) && id > 0 ? id : null;
 }
 
-/** Every invoice the user can see, across projects, newest first. The open tab lives in the address. */
 export default function InvoicesPage() {
   const router = useRouter();
   const currency = useSelector((s) => s.ui.currency);

@@ -1,10 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { identityRepository } from '@/repositories/identityRepository';
 
-// ---------------------------------------------------------------------------
-// Async thunks
-// ---------------------------------------------------------------------------
-
 export const fetchAllPermissions = createAsyncThunk(
   'roles/fetchAllPermissions',
   async (_, { rejectWithValue }) => {
@@ -59,10 +55,6 @@ export const deleteRole = createAsyncThunk(
     }
   }
 );
-
-// ---------------------------------------------------------------------------
-// Slice
-// ---------------------------------------------------------------------------
 
 const initialState = {
   permissions: [],
@@ -124,20 +116,11 @@ const rolesSlice = createSlice({
   },
 });
 
-// ---------------------------------------------------------------------------
-// Selectors
-// ---------------------------------------------------------------------------
-
 export const selectPermissions = (state) => state.roles.permissions;
 export const selectPermissionsLoading = (state) => state.roles.permissionsLoading;
 export const selectRoles = (state) => state.roles.roles;
 export const selectRolesLoading = (state) => state.roles.rolesLoading;
 
-/**
- * Permissions grouped by their module, in the order they arrive from the
- * API — no fixed module list on the frontend.
- * Usage: const grouped = useSelector(selectPermissionsByModule);
- */
 export const selectPermissionsByModule = (state) => {
   const groups = {};
   state.roles.permissions.forEach((perm) => {

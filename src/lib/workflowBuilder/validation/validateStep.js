@@ -8,8 +8,6 @@ import { checkQuery } from './steps/query';
 import { checkSendNotification } from './steps/sendNotification';
 import { checkSetVariable } from './steps/setVariable';
 
-/** One step's rules, by type — each type's live in ./steps/. */
-
 const CHECKS = {
   [STEP_TYPE.HUMAN_TASK]: checkHumanTask,
   [STEP_TYPE.AUTOMATED]: checkAutomated,
@@ -24,27 +22,16 @@ const CHECKS = {
 };
 
 /**
- * One step's own rules. Split out so the step editors can show the same
- * problems inline, rather than an author having to find their step from a
- * message in a list at the top of the page.
- *
  * @param {Object} step
- * @param {string} where  human description of the step's location
+ * @param {string} where
  * @param {Array} [fields]
  * @param {Set} [stageIds]
  * @param {boolean} [allowUnknownFields]
- * @param {Object} [catalog] what the step is checked against beyond its own shape
- * @param {Set} [catalog.declaredNames] variables and manual-trigger inputs a
- *   `setVariable` may write to. Empty means "not known here" — the same guard
- *   `stageIds` uses, so a step validated in isolation does not report every
- *   name as undeclared.
- * @param {Array} [catalog.actions] from GetActions, each with its declared
- *   `inputs`. Empty means the catalog has not loaded, and no action is judged.
- * @param {Array} [catalog.taskFields] the tracked record's whole field list, invoicing plan
- *   included — what a human task may ask to have filled (2026-10-13).
- * @param {Object} [catalog.fieldsByTargetType] GetFields per target type. A
- *   `query` searches its OWN type, which need not be what the workflow
- *   tracks, so its filter is checked against that type's catalog, not `fields`.
+ * @param {Object} [catalog]
+ * @param {Set} [catalog.declaredNames]
+ * @param {Array} [catalog.actions]
+ * @param {Array} [catalog.taskFields]
+ * @param {Object} [catalog.fieldsByTargetType]
  * @returns {{errors: string[], warnings: string[]}}
  */
 export function validateStep(

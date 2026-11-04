@@ -11,14 +11,7 @@ import ResendRecipients from './ResendRecipients';
 import { useResend } from './useResend';
 
 /**
- * Resending with edited text: NEW notifications made from this one, words
- * changed first — to the person it was for, to typed To and CC addresses, or
- * both (2026-10-13). The old one and the template stay as they were.
- *
- * @param {{
- *   details: Object, onClose: () => void,
- *   onDone: (result: { notificationId: string|null, notificationIds: string[] }) => void,
- * }} props
+ * @param {{ details: Object, onClose: () => void, onDone: (result: { notificationId: string|null, notificationIds: string[] }) => void, }} props
  */
 export default function ResendDialog({ details, onClose, onDone }) {
   const resend = useResend(details, onDone);

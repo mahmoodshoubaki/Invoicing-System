@@ -39,7 +39,6 @@ function toDateInput(iso) {
 }
 
 export default function EditBOQItemPage() {
-  // See boq/page.jsx for why this is decoded defensively.
   const { id: rawId, itemId } = useParams();
   const projectCode = decodeURIComponent(rawId);
   const router = useRouter();
@@ -85,9 +84,6 @@ export default function EditBOQItemPage() {
     }
   }, [item, form]);
 
-  // Every sub-project under the same main project shares the same contract
-  // start/finish date — any one of them is a valid source, so the first is
-  // fine. These bound the tracker's editable dates but are never user-entered.
   const contractStartDate  = subProjects[0]?.contractStartDate  ?? null;
   const contractFinishDate = subProjects[0]?.contractFinishDate ?? null;
   const missingContractDates = !subProjectsLoading && subProjects.length > 0
@@ -97,8 +93,6 @@ export default function EditBOQItemPage() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError]     = useState(null);
 
-  // Seed the tracker from the item's existing plan (GetTrackerCycles) once
-  // on mount — this is independent of the preview logic below entirely.
   useEffect(() => {
     let cancelled = false;
     dispatch(fetchTrackerCycles(itemId)).unwrap()
@@ -111,11 +105,6 @@ export default function EditBOQItemPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, itemId]);
 
-  // The exact values the item loaded with — captured once, the first time
-  // `form` exists. Comparing the live form against this (rather than any
-  // "first ready" timing trick) is what decides whether the user has
-  // actually touched the schedule: unambiguous and doesn't depend on the
-  // order async fetches happen to resolve in.
   const originalScheduleRef = useRef(null);
   useEffect(() => {
     if (form && !originalScheduleRef.current) {
@@ -126,11 +115,6 @@ export default function EditBOQItemPage() {
     }
   }, [form]);
 
-  // Once the user has changed Expected Invoicing Date or Billing Frequency
-  // away from what the item loaded with, every further change to either
-  // (including switching back) regenerates the plan via
-  // GetTrackerCyclesPreview. Untouched, the seeded plan from GetTrackerCycles
-  // above is left alone.
   const hasDivergedRef = useRef(false);
   const previewReady = Boolean(
     form?.expectedInvoicingDate && form?.billingFrequencyId && contractStartDate && contractFinishDate
@@ -171,9 +155,6 @@ export default function EditBOQItemPage() {
       }
     }, 500);
     return () => clearTimeout(timer);
-  // `form` itself is intentionally omitted — it changes on every keystroke
-  // across all fields, and only expectedInvoicingDate/billingFrequencyId
-  // (already listed below) should cause this effect to re-run.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form?.expectedInvoicingDate, form?.billingFrequencyId, contractStartDate, contractFinishDate, itemId, previewReady]);
 

@@ -5,8 +5,6 @@ import { memo, useMemo } from 'react';
 import { CHROME } from '@/theme/vizPalette';
 
 /**
- * A JSON string shown as indented JSON — or as it came, if it does not parse.
- *
  * @param {{ value: string|null, maxHeight?: number }} props
  */
 function JsonBlock({ value, maxHeight = 260 }) {

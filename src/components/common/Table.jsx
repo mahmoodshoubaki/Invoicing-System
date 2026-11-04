@@ -6,14 +6,6 @@ import TablePagination from './TablePagination';
 
 const MIN_COL_WIDTH = 60;
 
-/**
- * The table's sort order, exported so a paginating caller can sort the WHOLE
- * list with exactly the rules a header click uses.
- *
- * Empty values sink to the end in both directions — a row with no date should
- * not jump to the top of a newest-first list. Strings compare with
- * `localeCompare`, which orders ISO date strings chronologically.
- */
 export function sortRows(data, col, dir) {
   if (!col) return data;
   return [...data].sort((a, b) => {
@@ -49,20 +41,8 @@ function Table({
   sort: sortProp,
   onSortChange,
 }) {
-  // sortCol/sortDir were previously two separate useState slots updated
-  // together on every real sort change — splitting state that always
-  // changes as a unit across multiple useState calls invites exactly the
-  // "toggle gets stuck" class of bug (any path that updates one without the
-  // other leaves them inconsistent). One state object updated atomically
-  // removes that possibility entirely.
   const [internalSort, setSort] = useState({ col: null, dir: 'asc' });
 
-  /*
-   * Sorting is internal by default and sorts only the rows passed in. A caller
-   * that paginates must pass `sort` + `onSortChange` instead and sort the whole
-   * list itself: this component never sees the other pages, so sorting here
-   * would reorder the current page and nothing else.
-   */
   const controlled = typeof onSortChange === 'function';
   const sort = controlled ? (sortProp ?? { col: null, dir: 'asc' }) : internalSort;
   const { col: sortCol, dir: sortDir } = sort;
@@ -71,13 +51,6 @@ function Table({
   const resizeState = useRef(null);
   const thRefs = useRef({});
 
-  // table-layout:auto only treats an explicit width as a hint — the browser
-  // can (and does) override it based on other cells' content, which is why
-  // dragging alone has no visible effect. Fixed layout makes widths binding,
-  // but applying it before every column has a real width causes the
-  // header-overlap bug (unspecified columns get squeezed to equal shares).
-  // So: measure each column's natural rendered width once, seed colWidths
-  // with it, then switch to fixed layout — nothing moves until the user drags.
   useLayoutEffect(() => {
     if (!resizable || measured || columns.length === 0) return;
     const initial = {};
@@ -129,15 +102,10 @@ function Table({
     else setSort(next);
   };
 
-  // Controlled: the caller sorted the FULL list before paginating, so sorting
-  // `data` here again would only reorder the current page.
   const sortedData = controlled ? data : sortRows(data, sortCol, sortDir);
 
   const cellPad = compact ? 'px-3 py-2' : 'px-7 py-3';
 
-  // Only columns that were actually dragged (or given an explicit col.width)
-  // get an inline width — everything else keeps the browser's normal
-  // content-based auto sizing, so tables look identical until resized.
   const getColStyle = (col) => {
     const width = colWidths[col.key] ?? col.width;
     if (!width) return undefined;

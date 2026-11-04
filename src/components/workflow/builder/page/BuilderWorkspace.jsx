@@ -7,11 +7,6 @@ import PanelResizeHandle from './PanelResizeHandle';
 import { usePanelWidth } from './usePanelWidth';
 
 /**
- * The canvas and the side panel as one workspace the window's height, each
- * scrolling on its own — so the panel is beside whichever card was clicked.
- * The panel's width is the author's (2026-10-12): dragged at the divider, or
- * sent wide by the panel's Expand button, and remembered in this browser.
- *
  * @param {{ canvas: React.ReactNode, panel: React.ReactNode }} props
  */
 export default function BuilderWorkspace({ canvas, panel }) {

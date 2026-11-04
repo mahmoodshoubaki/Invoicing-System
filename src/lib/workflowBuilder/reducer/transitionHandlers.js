@@ -4,25 +4,6 @@ import { BuilderActions } from '../actions';
 import { catchAllAt } from '../graph';
 import { moveInArray, replaceStage } from './shared';
 
-/**
- * Edits to a stage's transitions — the if / else-if chain that decides where a
- * run goes next, with at most one "otherwise" arm, always last.
- */
-
-/**
- * A new conditional transition, inserted ABOVE the otherwise arm.
- *
- * The engine takes the first transition whose condition matches, and an
- * empty condition matches everything — so a transition added below a
- * catch-all could never be taken. Appending blindly was how the builder let
- * an author write dead branches and then told them, in a hint underneath,
- * to sort it out themselves.
- *
- * `action.condition` lets the caller seed the row with a real first
- * condition from the field catalog, which the reducer cannot know about. A
- * row seeded that way is immediately meaningful; one left empty would BE a
- * second catch-all, which validateDefinition then reports.
- */
 function addTransition(state, action) {
   return replaceStage(state, action.stageId, (stage) => {
     const list = stage.transitions ?? [];
@@ -36,13 +17,6 @@ function addTransition(state, action) {
   });
 }
 
-/**
- * The otherwise arm: at most one, always last.
- *
- * It is stored as an ordinary transition with an empty condition, because
- * that is what the wire format has — but the builder never lets a second
- * one exist, and never lets this one leave the end of the list.
- */
 function setCatchAll(state, action) {
   return replaceStage(state, action.stageId, (stage) => {
     const list = stage.transitions ?? [];
@@ -73,9 +47,6 @@ function removeTransition(state, action) {
   }));
 }
 
-// Reordering is for the conditional rows only — the otherwise arm is last
-// by definition, so a drag that would displace it is dropped rather than
-// silently producing a definition whose tail can never be reached.
 function moveTransition(state, action) {
   return replaceStage(state, action.stageId, (stage) => {
     const list = stage.transitions ?? [];

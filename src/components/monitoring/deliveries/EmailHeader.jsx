@@ -4,7 +4,6 @@ import { memo } from 'react';
 
 import { CHROME } from '@/theme/vizPalette';
 
-/** Stored one address per line; split the way the server reads it back (any space, comma or semicolon). */
 const addressesOf = (text) => String(text ?? '').split(/[\s,;]+/).filter(Boolean);
 
 const same = (a, b) => String(a ?? '').toLowerCase() === String(b ?? '').toLowerCase();
@@ -17,7 +16,6 @@ function Line({ label, addresses, recipientEmail }) {
       <dd className="min-w-0 break-words" style={{ color: CHROME.textSecondary }}>
         {addresses.map((address, i) => (
           <span key={address}>
-            {/* This copy's own reader, picked out of the group. */}
             <span
               style={same(address, recipientEmail) ? { color: CHROME.textPrimary, fontWeight: 600 } : undefined}
               title={same(address, recipientEmail) ? 'This copy was delivered to this address' : undefined}
@@ -33,13 +31,6 @@ function Line({ label, addresses, recipientEmail }) {
 }
 
 /**
- * The To and Cc lines as the reader saw them (2026-10-08).
- *
- * A notification for several people is ONE email addressed to the whole group
- * — "To: Sara, Mona, Karim · Cc: Ahmad" — but each person's copy is delivered
- * to them alone, which is why the monitor has a row per person. This shows the
- * group the email named, with this copy's reader in bold.
- *
  * @param {{ toEmail: string|null, ccEmail: string|null, recipientEmail: string|null }} props
  */
 function EmailHeader({ toEmail, ccEmail, recipientEmail }) {

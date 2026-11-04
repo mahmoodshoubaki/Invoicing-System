@@ -18,12 +18,7 @@ import {
 const PAGE_SIZE = 10;
 
 /**
- * Where a workflow's API calls may go — this application's own API included —
- * a page at a time (2026-10-13). Every host, not just the allowed ones: a
- * withdrawn host still has to be visible to be put back. The list comes whole
- * from the server, so the paging is here.
- *
- * @param {{ canManage: boolean }} props  Workflows.ManageApiDomains — withdraw and re-enable
+ * @param {{ canManage: boolean }} props
  */
 export default function ApiDomainsTable({ canManage }) {
   const dispatch = useDispatch();

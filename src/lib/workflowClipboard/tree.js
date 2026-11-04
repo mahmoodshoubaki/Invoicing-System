@@ -1,17 +1,10 @@
-/** Finding a step in the tree: where it sits, which stage holds it, the lists it holds. */
-
 import { eachStep } from '@/lib/workflowBuilderState';
 
-/** The lists a step holds other steps in: both arms, a loop body, every branch. */
 export function childLists(step) {
   return [step?.whenTrue, step?.whenFalse, step?.body, ...(step?.branches ?? []).map((b) => b.steps)];
 }
 
 /**
- * Where a step sits: its stage, the container path the reducer addresses lists
- * by (see `getStepContainer`), its index in that list, and whether that list is
- * inside a parallel branch at any depth.
- *
  * @returns {{stageId: string, container: Array, index: number, insideParallelBranch: boolean}|null}
  */
 export function locateStep(graph, stepId) {
@@ -45,13 +38,11 @@ export function locateStep(graph, stepId) {
   return null;
 }
 
-/** The stage a step lives in, at any depth. */
 export function stageOfStep(graph, stepId) {
   const at = locateStep(graph, stepId);
   return at ? (graph.stages ?? []).find((s) => s.id === at.stageId) ?? null : null;
 }
 
-/** A step anywhere in the workflow, by id. */
 export function findStep(graph, id) {
   let found = null;
   eachStep(graph, (step) => {

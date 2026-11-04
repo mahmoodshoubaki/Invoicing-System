@@ -1,37 +1,13 @@
-// BFF proxy: the browser only ever talks to this Next.js server (same origin
-// as the app), never to the real backend directly. That makes every
-// auth cookie the backend sets first-party from the browser's point of
-// view — no SameSite/cross-site restrictions, no CORS credentials dance.
-//
-// This route forwards the request to the real backend server-to-server
-// (no browser involved, so no cookie/CORS restrictions apply there either),
-// and relays the response — including Set-Cookie headers — straight back.
-// It never inspects or needs to understand the cookies' contents; it just
-// passes them through opaquely in both directions.
-
 import { fetch as undiciFetch, Agent } from 'undici';
 
 const BACKEND_URL = process.env.BACKEND_API_URL;
 
-// Local dev backends (e.g. ASP.NET Core's self-signed HTTPS dev certificate)
-// aren't trusted by Node's own CA store, even when `dotnet dev-certs https
-// --trust` has made the browser trust it — that only touches the OS/browser
-// trust store, which Node's fetch doesn't consult. Scoped to this one
-// outgoing connection via a dedicated Agent (not a process-wide
-// NODE_TLS_REJECT_UNAUTHORIZED bypass).
-//
-// Allowed in `next dev`, and in `next start` only when BACKEND_ALLOW_SELF_SIGNED
-// is "true" — a production build run locally against the dev backend needs it,
-// and keying this on NODE_ENV alone made every call fail there with a 502.
-// A real deployment has a proper certificate and never sets the flag.
 const allowSelfSigned = process.env.NODE_ENV !== 'production'
   || process.env.BACKEND_ALLOW_SELF_SIGNED === 'true';
 
 const tls = allowSelfSigned ? { connect: { rejectUnauthorized: false } } : {};
 const dispatcher = allowSelfSigned ? new Agent(tls) : undefined;
 
-// The data migration import uploads up to 2 GB and then saves it all, so its
-// answer can take far longer than undici's default 5 minutes.
 const LONG_WAIT_MS = 60 * 60 * 1000;
 const longDispatcher = new Agent({ ...tls, headersTimeout: LONG_WAIT_MS, bodyTimeout: LONG_WAIT_MS });
 const waitsLong = (path) => path[0]?.toLowerCase() === 'api' && path[1]?.toLowerCase() === 'datamigration';
@@ -46,9 +22,6 @@ async function proxy(request, { params }) {
 
   const hasBody = !['GET', 'HEAD'].includes(request.method);
 
-  // Streamed, not read whole first: the bytes go on as they arrive, untouched
-  // (binary multipart included), and a large upload never sits in memory.
-  // Backpressure from the backend slows the browser's upload instead.
   const body = hasBody && request.body ? request.body : undefined;
 
   let backendRes;
@@ -69,9 +42,6 @@ async function proxy(request, { params }) {
   backendRes.headers.forEach((value, key) => {
     if (key.toLowerCase() !== 'set-cookie') responseHeaders.set(key, value);
   });
-  // Set-Cookie headers must be forwarded one-by-one — joining multiple
-  // cookies into a single header value (which naive header-copying does)
-  // corrupts them, since Expires dates themselves contain commas.
   const setCookies = backendRes.headers.getSetCookie?.() ?? [];
   for (const cookie of setCookies) {
     responseHeaders.append('set-cookie', cookie);

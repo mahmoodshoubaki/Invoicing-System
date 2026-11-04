@@ -22,10 +22,6 @@ const settingsApi = createApiClient('/api/NotificationSettings');
 const deliveriesApi = createApiClient('/api/NotificationDeliveries');
 const auditApi = createApiClient('/api/NotificationAudit');
 
-/**
- * Drops empty filters before they reach URLSearchParams, which would otherwise
- * send the literal strings "null" and "undefined" for the server to bind.
- */
 function cleanParams(params) {
   return Object.fromEntries(
     Object.entries(params).filter(([, v]) => v !== null && v !== undefined && v !== '')
@@ -34,16 +30,7 @@ function cleanParams(params) {
 
 const list = (value) => (Array.isArray(value) ? value : []);
 
-/**
- * The Notifications module, every endpoint the front end calls.
- *
- * POSTs with nothing to say still send `{}` — the API binds a body on every
- * POST and refuses a missing one.
- */
 export const notificationRepository = {
-  // =========================================================================
-  // The bell — any signed-in user; "me" comes from the token
-  // =========================================================================
 
   async getMyUnseenCount() {
     const data = await inboxApi.get('/GetMyUnseenCount');
@@ -75,10 +62,6 @@ export const notificationRepository = {
   markAllRead() {
     return inboxApi.post('/MarkAllNotificationsRead', {});
   },
-
-  // =========================================================================
-  // Lookups
-  // =========================================================================
 
   async getChannels() {
     const data = await typesApi.get('/GetChannels');
@@ -115,10 +98,6 @@ export const notificationRepository = {
     return list(data?.faultReasons).map(mapLookup);
   },
 
-  // =========================================================================
-  // Types — also what the workflow builder's type dropdowns read
-  // =========================================================================
-
   async getTypes() {
     const data = await typesApi.get('/GetTypes');
     return list(data?.types).map(mapType);
@@ -146,16 +125,11 @@ export const notificationRepository = {
     return typesApi.post('/DeleteType', { notificationTypeId });
   },
 
-  // =========================================================================
-  // Words — versioned per channel
-  // =========================================================================
-
   async getTemplateVersions(notificationTypeId, channelKey) {
     const data = await typesApi.get('/GetTemplateVersions', { notificationTypeId, channelKey });
     return list(data?.versions).map(mapTemplateVersion);
   },
 
-  /** Always a NEW version, never live. @returns {Promise<{ templateId: string, version: number }>} */
   saveTemplate(version) {
     return typesApi.post('/SaveTemplate', version);
   },
@@ -168,18 +142,10 @@ export const notificationRepository = {
     return typesApi.post('/UnpublishTemplate', { notificationTypeId, channelKey });
   },
 
-  /**
-   * Fills a saved version, or the editor's unsaved text, with sample values.
-   * `problems` not empty is not an error response — show them instead.
-   */
   async previewTemplate(body) {
     const data = await typesApi.post('/PreviewTemplate', body);
     return mapPreview(data);
   },
-
-  // =========================================================================
-  // Email senders
-  // =========================================================================
 
   async getEmailSenders() {
     const data = await sendersApi.get('/GetEmailSenders');
@@ -214,14 +180,6 @@ export const notificationRepository = {
     return sendersApi.post('/DeleteEmailSender', { emailSenderId });
   },
 
-  /**
-   * `sent: false` is not an error response — the caller shows `error`, and the
-   * fault reason's description when `faultReasonKey` is set.
-   *
-   * With `templateId` the test is kept in the monitor (marked as a test) and
-   * `notificationId` points at it — also when it failed. The short check email
-   * (no template) is not kept: `notificationId` is null.
-   */
   async sendTestEmail({ emailSenderId, toAddress, templateId = null, sampleValues = null }) {
     const data = await sendersApi.post('/SendTestEmail', { emailSenderId, toAddress, templateId, sampleValues });
     return {
@@ -233,24 +191,15 @@ export const notificationRepository = {
     };
   },
 
-  // =========================================================================
-  // Settings
-  // =========================================================================
-
   async getSettings() {
     const data = await settingsApi.get('/GetSettings');
     return list(data?.settings).map(mapSetting);
   },
 
-  /** Values always travel as strings. @returns the saved row */
   async updateSetting(key, value) {
     const data = await settingsApi.post('/UpdateSetting', { key, value: String(value) });
     return mapSetting(data);
   },
-
-  // =========================================================================
-  // Delivery monitor
-  // =========================================================================
 
   async getDeliveries(filters = {}) {
     const data = await deliveriesApi.get('/GetDeliveries', cleanParams(filters));
@@ -270,22 +219,14 @@ export const notificationRepository = {
     return mapStatistics(data);
   },
 
-  /**
-   * Anything not in a stopped state is SKIPPED, not refused — compare the
-   * answer with what was picked to say "3 of 5 sent again".
-   */
   async requeue({ deliveryIds = [], notificationId = null }) {
     const data = await deliveriesApi.post('/RequeueDeliveries', { deliveryIds, notificationId });
     return list(data?.requeuedDeliveryIds);
   },
 
   /**
-   * A new notification from an old one, text edited first — to the person it
-   * was for and/or typed To / CC addresses, one copy each (2026-10-13). Refused
-   * with 400, keyed by field (`ToEmails`, `CcEmails`, `Deliveries`).
-   *
-   * @param {Object} body  createResendPayload's
-   * @returns {Promise<{ notificationId: string|null, notificationIds: string[] }>} the copies made, first first
+   * @param {Object} body
+   * @returns {Promise<{ notificationId: string|null, notificationIds: string[] }>}
    */
   async resend(body) {
     const data = await deliveriesApi.post('/ResendNotification', body);
@@ -297,10 +238,6 @@ export const notificationRepository = {
     const data = await deliveriesApi.post('/ArchiveNotifications', { notificationIds });
     return list(data?.archivedNotificationIds);
   },
-
-  // =========================================================================
-  // Audit
-  // =========================================================================
 
   async getConfigChanges(filters = {}) {
     const data = await auditApi.get('/GetConfigChanges', cleanParams(filters));

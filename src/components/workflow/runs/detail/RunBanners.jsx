@@ -5,7 +5,6 @@ import { withAlpha } from '@/utils/color';
 import { INSTANCE_STATUS } from '@/constants/workflow';
 import { branchProgress, cancellationReason, returnPath } from '@/lib/runDetail';
 
-/** A coloured panel that says one thing about the run's state. */
 function Banner({ tone, icon: Icon, title, children }) {
   return (
     <div
@@ -26,9 +25,6 @@ function Banner({ tone, icon: Icon, title, children }) {
 }
 
 /**
- * What the run's own fields cannot say at a glance: why it stopped, that it is
- * in two places at once, how far its parallel branches have got.
- *
  * @param {{ run: Object, history: Array }} props
  */
 export default function RunBanners({ run, history }) {
@@ -38,12 +34,6 @@ export default function RunBanners({ run, history }) {
 
   return (
     <>
-      {/*
-        A cancelled run never explains itself from its own fields — nothing
-        failed, so `failureReason` is null and the reason is in the history.
-        Without this a Cancelled badge is a dead end, and the "its subject was
-        deleted" case reads as the system losing somebody's work.
-      */}
       {run.statusKey === INSTANCE_STATUS.CANCELLED && (
         <Banner tone={STATUS.neutral} icon={CircleSlash} title="This run was stopped">
           {cancelled ?? 'No reason was recorded.'}
@@ -52,7 +42,6 @@ export default function RunBanners({ run, history }) {
 
       {run.failureReason && (
         <Banner tone={STATUS.critical} icon={AlertTriangle} title="Why it stopped">
-          {/* Written by the engine to be read by a person — shown as it arrived. */}
           {run.failureReason}
         </Banner>
       )}

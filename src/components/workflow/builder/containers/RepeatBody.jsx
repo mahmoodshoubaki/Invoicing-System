@@ -1,7 +1,5 @@
 'use client';
 
-/** A repeat on the canvas: the steps it repeats. */
-
 import { memo } from 'react';
 
 import StepList from '@/components/workflow/builder/StepList';

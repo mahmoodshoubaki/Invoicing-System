@@ -3,12 +3,6 @@
 import { motion } from 'motion/react';
 import { CHROME } from '@/theme/vizPalette';
 
-/**
- * Shared Recharts tooltip. Values are right-aligned with tabular figures so
- * the numbers line up as the pointer moves between points, and each row
- * carries a colour chip beside a text label — identity never rides on colour
- * alone. Text stays in ink tokens, never the series colour.
- */
 export default function ChartTooltip({ active, payload, label, format = (v) => v, total = false }) {
   if (!active || !payload?.length) return null;
 

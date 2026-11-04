@@ -4,7 +4,6 @@ import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 import { ROUTES } from '@/constants/routes';
 
-/** "Open in monitor" — only for a test the backend kept (a template test). */
 function MonitorLink({ notificationId }) {
   if (!notificationId) return null;
   return (
@@ -19,9 +18,6 @@ function MonitorLink({ notificationId }) {
 }
 
 /**
- * What came back from SendTestEmail. `sent: false` is not an error response:
- * it shows the reason, and the fault reason's description when there is one.
- *
  * @param {{ result: object, faultReasons: Record<number, {value: string, description?: string}> }} props
  */
 export default function TestEmailResult({ result, faultReasons }) {

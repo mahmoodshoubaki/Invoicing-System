@@ -18,9 +18,7 @@ function Part({ title, children }) {
 }
 
 /**
- * What one earlier version of a change request asked for.
- *
- * @param {{ version: Object, changeRequestId: number|string, projectCode: string }} props  version: mapChangeRequestVersion's
+ * @param {{ version: Object, changeRequestId: number|string, projectCode: string }} props
  */
 export default function ChangeRequestVersionDetails({ version, changeRequestId, projectCode }) {
   const nothingChanged = version.fieldChanges.length === 0 && version.cycleChanges.length === 0 && version.newItems.length === 0;

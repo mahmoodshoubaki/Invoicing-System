@@ -4,9 +4,6 @@ import { useCallback } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 /**
- * One filter kept in the address as `?name=value`, so a link can open the page
- * already filtered and the back button returns to it. '' when absent.
- *
  * @param {string} name
  * @returns {[string, (next: string) => void]}
  */

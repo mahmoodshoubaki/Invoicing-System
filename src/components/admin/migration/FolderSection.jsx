@@ -20,8 +20,6 @@ function Fact({ label, children }) {
 }
 
 /**
- * Step 1: the Migrations folder — its workbook, what is sent and what is skipped.
- *
  * @param {{ folder: ReturnType<import('./useMigrationFolder').useMigrationFolder>, disabled: boolean }} props
  */
 export default function FolderSection({ folder, disabled }) {

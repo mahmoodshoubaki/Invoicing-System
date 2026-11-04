@@ -4,14 +4,7 @@ import { CHROME } from '@/theme/vizPalette';
 import { MIN_PANEL_WIDTH } from '@/lib/panelWidthStore';
 
 /**
- * The divider between the canvas and the side panel (2026-10-12), in the gap
- * between them. Drag it; or tab to it and use the arrow keys (Home and End go
- * to the narrowest and widest); double-click or Enter puts it back. Large
- * screens only — below them the panel sits under the canvas, full width.
- *
- * @param {{
- *   width: number, widest: number|null, onPointerDown: Function, onKeyDown: Function, onReset: Function,
- * }} props
+ * @param {{ width: number, widest: number|null, onPointerDown: Function, onKeyDown: Function, onReset: Function, }} props
  */
 export default function PanelResizeHandle({ width, widest, onPointerDown, onKeyDown, onReset }) {
   return (

@@ -30,9 +30,6 @@ function HistoryEntry({ entry, isLatest, currency, invoiceId, invoiceStatusesMap
   const handleDownload = async (attachment) => {
     setDownloadingIds((prev) => new Set(prev).add(attachment.id));
     try {
-      // invoiceId (not entry.id) — every history entry is a snapshot of the
-      // same live invoice, so the download endpoint's InvoiceId is constant
-      // across the whole timeline.
       const { blob, fileName } = await invoiceRepository.downloadAttachment(
         invoiceId, attachment.contentId, attachment.fileName
       );
@@ -175,13 +172,6 @@ function HistoryEntry({ entry, isLatest, currency, invoiceId, invoiceStatusesMap
   );
 }
 
-/**
- * Shows past revisions of an invoice as a timeline — each entry is a full
- * snapshot (same shape as GetInvoiceById), sorted newest first. Sorted by
- * submissionDate rather than creationDate: real API responses have shown
- * creationDate defaulting to .NET's zero-date (0001-01-01) when unset,
- * while submissionDate is reliably populated.
- */
 export default function InvoiceHistoryModal({ open, onClose, invoiceId, currency }) {
   const dispatch = useDispatch();
   const history = useSelector(selectInvoiceHistory);
@@ -213,8 +203,6 @@ export default function InvoiceHistoryModal({ open, onClose, invoiceId, currency
         <div className="flex flex-col">
           {sorted.map((entry, i) => (
             <HistoryEntry
-              // Every entry is a snapshot of the same invoice, so `entry.id`
-              // repeats across the list — index is the only stable key here.
               key={i}
               entry={entry}
               isLatest={i === 0}

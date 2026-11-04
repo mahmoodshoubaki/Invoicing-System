@@ -4,9 +4,6 @@ import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 
 /**
- * A request's types (with the "Other" description) and its project effect.
- * Requests raised before types existed have neither.
- *
  * @param {{ types: Array<{ key: number, label: string }>, otherTypeText: string|null, projectEffect: { label: string }|null }} props
  */
 export default function TypeAndEffect({ types, otherTypeText, projectEffect }) {

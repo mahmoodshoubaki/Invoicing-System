@@ -6,11 +6,6 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { useServerPage } from '@/hooks/useServerPage';
 import { projectRepository } from '@/repositories/projectRepository';
 
-/**
- * The Projects page's list, searched and filtered by the server a page at a
- * time. `allTotal` is the unfiltered count, once a page without filters has
- * been read.
- */
 export function useProjectsList() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');

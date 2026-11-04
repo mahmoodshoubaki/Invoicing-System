@@ -8,9 +8,6 @@ import { identityRepository } from '@/repositories/identityRepository';
 const IDLE = { status: 'idle', result: null, error: null, signature: null };
 
 /**
- * Checking and importing one folder pick. A check counts only for the pick it
- * was run on; the import is allowed after a clean check of the same pick.
- *
  * @param {ReturnType<import('./useMigrationFolder').useMigrationFolder>} folder
  */
 export function useMigrationRun(folder) {
@@ -42,7 +39,6 @@ export function useMigrationRun(folder) {
     abortRef.current = controller;
     setUpload({ status: 'running', result: null, error: null, signature, progress: { loaded: 0, total: folder.uploadBytes, uploaded: false } });
     try {
-      // A fresh session before minutes of uploading; an expired one is renewed here.
       await identityRepository.getMe();
       const result = await dataMigrationRepository.importHistoricalData(workbook, included, {
         signal: controller.signal,

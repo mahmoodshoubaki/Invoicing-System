@@ -18,18 +18,7 @@ import { useChangeRequestForm } from './useChangeRequestForm';
 import { useScrollToProblem } from './useScrollToProblem';
 
 /**
- * A change request on a project's BOQ (2026-10-18; sent to the API
- * 2026-10-19): its reasons, the user's details, the sub-projects' changes, each
- * item's changes, and a summary — mounted once the project, its BOQ and (to
- * edit a returned request) the request are loaded.
- *
- * A refused Submit (2026-10-20) scrolls to the first problem on the page and
- * puts the cursor in its box — opening any folded item that has one first.
- *
- * @param {{
- *   boqItems: Array, statusNameOf: (statusId) => string|null, subProjects: Array, reasons: Array,
- *   initial?: Object|null, onSubmit: (body: Object) => Promise<void>, cancelHref: string, submitLabel: string,
- * }} props
+ * @param {{ boqItems: Array, statusNameOf: (statusId) => string|null, subProjects: Array, reasons: Array, initial?: Object|null, onSubmit: (body: Object) => Promise<void>, cancelHref: string, submitLabel: string, }} props
  */
 export default function ChangeRequestForm({
   boqItems, statusNameOf, subProjects, reasons, initial = null, onSubmit, cancelHref, submitLabel,

@@ -1,19 +1,3 @@
-/**
- * The workflow builder's editing state — kept at this address for the files
- * that import it. Everything now lives in small modules under ./workflowBuilder/:
- *
- *   actions.js            every edit the reducer understands
- *   reducer.js            the reducer; each action's handler lives in reducer/ by area
- *                         (definition, stages, transitions, steps)
- *   history.js            undo / redo around it
- *   definition.js         a blank workflow, loading one, default titles, the dirty baseline
- *   graph.js              walking the graph: every step, every id, addressing a step's list
- *   variables.js          what a variable starts as; whether a value fits its type
- *   references.js         carrying references when an id or a list name changes
- *   fields.js             what a condition can read
- *   validation/           the save's rules — the definition's, and one file per step type
- */
-
 export { BuilderActions } from '@/lib/workflowBuilder/actions';
 export { builderReducer } from '@/lib/workflowBuilder/reducer';
 export { HistoryActions, emptyHistory, historyReducer } from '@/lib/workflowBuilder/history';

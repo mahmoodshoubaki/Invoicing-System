@@ -15,7 +15,6 @@ import { notificationRepository } from '@/repositories/notificationRepository';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** The type's own sender when it has one, else the default, else the first. */
 function startingSender(senders, preferredSenderId) {
   const pick = senders.find((s) => s.emailSenderId === preferredSenderId)
     ?? senders.find((s) => s.isDefault)
@@ -24,16 +23,7 @@ function startingSender(senders, preferredSenderId) {
 }
 
 /**
- * Sends one saved email version, filled in with the editor's sample values, to
- * one address now. Unlike the senders page's check email, the backend keeps
- * this one in the monitor — marked as a test, with its opens and clicks — and
- * the result links to it.
- *
- * @param {{
- *   version: { templateId: string, version: number },
- *   senders: Array, preferredSenderId: string|null,
- *   sampleValues: Object|null, onClose: () => void,
- * }} props
+ * @param {{ version: { templateId: string, version: number }, senders: Array, preferredSenderId: string|null, sampleValues: Object|null, onClose: () => void, }} props
  */
 export default function TemplateTestEmail({ version, senders, preferredSenderId, sampleValues, onClose }) {
   const { user } = useAuth();

@@ -13,11 +13,6 @@ const DELTA_STYLES = {
   neutral: { cls: 'text-[#52514e] bg-[#898781]/12', Icon: Minus },
 };
 
-/**
- * A single KPI tile: label, animated value, optional trend sparkline and a
- * delta chip. The delta always pairs an arrow icon with text, so direction is
- * never carried by colour alone. Given `href`, the whole tile is a link.
- */
 function KpiTile({
   label, value, format, icon: Icon, accent, trend, delta, deltaType = 'neutral', footnote, href = null,
 }) {
@@ -25,8 +20,6 @@ function KpiTile({
   const Shell = href ? Link : 'div';
 
   return (
-    // No animation (2026-10-08): no spring lift, no fading bloom. Hover shows
-    // the deeper shadow and the accent wash, instantly.
     <Shell
       {...(href ? { href } : {})}
       className="group relative block overflow-hidden rounded-2xl border border-[#e9e7e5] bg-white p-5 shadow-[var(--shadow-card)] outline-none hover:shadow-[0_18px_38px_-14px_rgb(60_60_58/0.20)] focus-visible:ring-2 focus-visible:ring-[#f8485e]/40"

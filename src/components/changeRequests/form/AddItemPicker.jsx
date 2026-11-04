@@ -11,13 +11,7 @@ import { withAlpha } from '@/utils/color';
 const nameOf = (item) => item.englishName ?? `Item ${item.id}`;
 
 /**
- * Picking an item to change. Items that can't be changed are listed too, so
- * picking one says why at once; Add stays off for them.
- *
- * @param {{
- *   form: ReturnType<import('./useChangeRequestForm').useChangeRequestForm>,
- *   choices: Array<{ item: Object, blocker: { reason: string, short: string }|null }>,
- * }} props
+ * @param {{ form: ReturnType<import('./useChangeRequestForm').useChangeRequestForm>, choices: Array<{ item: Object, blocker: { reason: string, short: string }|null }>, }} props
  */
 export default function AddItemPicker({ form, choices }) {
   const [picked, setPicked] = useState('');

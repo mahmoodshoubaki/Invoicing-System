@@ -7,19 +7,7 @@ import NotificationTypeSelect from '@/components/workflow/builder/NotificationTy
 import PlaceholderValues from './PlaceholderValues';
 
 /**
- * One notification a workflow may send: a box to turn it on, the type to send,
- * and values for that type's words. Shared by a task's five and a run's three.
- *
- * What ticking, picking and typing DO is the caller's — a reminder cannot lose
- * its type, an ordinary entry can — so each arrives as its own handler.
- * `children` sit between the type and the values (a reminder's timing).
- *
- * @param {{
- *   label: string, who?: string, entry: Object|null, standardType: number,
- *   types: Array|null, tokens: Array,
- *   onToggle: (on: boolean) => void, onTypeKey: (key: number|null) => void,
- *   onValues: (values: Object) => void, children?: React.ReactNode,
- * }} props
+ * @param {{ label: string, who?: string, entry: Object|null, standardType: number, types: Array|null, tokens: Array, onToggle: (on: boolean) => void, onTypeKey: (key: number|null) => void, onValues: (values: Object) => void, children?: React.ReactNode, }} props
  */
 function NotificationChoice({ label, who, entry, standardType, types, tokens, onToggle, onTypeKey, onValues, children }) {
   const on = Boolean(entry);

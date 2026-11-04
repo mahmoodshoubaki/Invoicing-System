@@ -8,10 +8,7 @@ import { CHROME, STATUS } from '@/theme/vizPalette';
 import { placeholderRows, runValueFor, setPlaceholderValue } from '@/lib/notificationPlaceholders';
 import FreePlaceholderValues from './FreePlaceholderValues';
 
-/** One placeholder's box. */
 function PlaceholderRow({ row, values, tokens, onChange }) {
-  // Left empty, the engine fills a placeholder from a run value of the same
-  // name before it falls back on the default — so say which will happen.
   const fromRun = !row.value && !row.stale ? runValueFor(row.key, tokens) : null;
 
   return (
@@ -55,17 +52,7 @@ function PlaceholderRow({ row, values, tokens, onChange }) {
 }
 
 /**
- * One box per placeholder of the picked type (2026-10-08), each showing its
- * default in grey. Only filled boxes are saved; an empty one keeps the
- * default. Nothing typed here is refused at save.
- *
- * Without the type list (no Notifications.View), the placeholders cannot be
- * known — FreePlaceholderValues takes names typed by hand instead.
- *
- * @param {{
- *   typeKey: number|null, types: Array|null, values: Object|undefined,
- *   onChange: (values: Object) => void, tokens: Array,
- * }} props
+ * @param {{ typeKey: number|null, types: Array|null, values: Object|undefined, onChange: (values: Object) => void, tokens: Array, }} props
  */
 function PlaceholderValues({ typeKey, types, values, onChange, tokens }) {
   if (typeKey == null) return null;

@@ -5,12 +5,6 @@ import { useState } from 'react';
 import { settingProblem } from '@/utils/settingValue';
 
 /**
- * One setting's value being typed: the draft, whether it differs from what is
- * saved, and what is wrong with it. Shared by SettingRow and the engine limits
- * table, so both check a value the same way.
- *
- * A row the system no longer reads (`isKnown: false`) is shown, never edited.
- *
  * @param {{ value: string, type: string, isKnown?: boolean }} setting
  * @param {boolean} canEdit
  */

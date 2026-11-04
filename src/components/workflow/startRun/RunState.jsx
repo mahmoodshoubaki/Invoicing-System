@@ -4,7 +4,6 @@ import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 import { INSTANCE_STATUS_COLORS, INSTANCE_STATUS_LABELS } from '@/constants/workflow';
 
-/** What the run is doing, once it exists. */
 export default function RunState({ instance }) {
   const color = INSTANCE_STATUS_COLORS[instance.statusKey] ?? CHROME.textMuted;
 
@@ -23,11 +22,6 @@ export default function RunState({ instance }) {
         </span>
       </div>
 
-      {/*
-        A run standing somewhere it did not choose to be. A to-do from an
-        earlier stage is still open and will bring it back — without saying so,
-        a live to-do pointing at a different stage reads as a bug.
-      */}
       {instance.returnStageId && (
         <p className="mt-2 text-[11px]" style={{ color: CHROME.textSecondary }}>
           Waiting on <strong>{instance.returnStepId}</strong>, then back to{' '}
@@ -41,7 +35,6 @@ export default function RunState({ instance }) {
           style={{ backgroundColor: withAlpha(STATUS.critical, 0.1), color: CHROME.textSecondary }}
         >
           <AlertTriangle size={11} className="mt-0.5 shrink-0" style={{ color: STATUS.critical }} aria-hidden="true" />
-          {/* Written to be read by a person — shown as-is, never reworded. */}
           <span>{instance.failureReason}</span>
         </p>
       )}

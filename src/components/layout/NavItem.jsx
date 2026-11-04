@@ -9,7 +9,6 @@ import { usePermission } from '@/hooks/usePermission';
 import { selectMyTaskCount } from '@/store/slices/workflowTasksSlice';
 import { selectUnseenCount } from '@/store/slices/notificationsSlice';
 
-/** item.permission is a single { module, action } or an array of them (OR logic). */
 function isAllowed(can, permission) {
   if (!permission) return true;
   const checks = Array.isArray(permission) ? permission : [permission];
@@ -22,32 +21,19 @@ export default function NavItem({ item, depth = 0, collapsed }) {
 
   const matches = (href) => pathname === href || pathname.startsWith(href + '/');
   const hasChildren = item.children?.length > 0;
-  // A group whose pages live at different addresses (Monitoring: /workflow/runs
-  // and /trace) is active, and open, while any one of them is showing.
   const childActive = hasChildren && item.children.some((child) => matches(child.href));
 
-  // null until the person toggles it: until then the group follows the page.
   const [open, setOpen] = useState(null);
   const expanded = open ?? childActive;
 
-  // `exact` stops a parent route claiming its children. /workflow and
-  // /workflow/tasks are separate destinations with separate permissions, so a
-  // prefix match would light both rows up whenever either is open.
   const isActive = childActive || (item.exact ? pathname === item.href : matches(item.href));
   const { icon: Icon } = item;
 
   const language = useSelector((s) => s.ui.language);
   const label = language === 'ar' && item.labelAr ? item.labelAr : item.label;
 
-  /**
-   * Badge counts, keyed by `item.badge`. A nav item opts in by naming a source
-   * rather than each one growing its own selector branch here.
-   */
   const badgeCount = useSelector((s) => {
-    // Unseen, the same number as the bell — not unread, which only the inbox
-    // list knows and would cost a list call per poll.
     if (item.badge === 'unseen') return selectUnseenCount(s);
-    // Pending to-dos only — see selectMyTaskCount for why settled rows must not count.
     if (item.badge === 'workflowTasks') return selectMyTaskCount(s);
     return 0;
   });

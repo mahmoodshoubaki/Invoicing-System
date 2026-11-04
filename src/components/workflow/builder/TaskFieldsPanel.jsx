@@ -7,7 +7,6 @@ import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 import { controlClass, Label, Note } from './containers/shared';
 
-/** Adds a field, and the fields it has to be asked with that are not asked for yet. */
 function withPartners(asked, name, catalog) {
   const next = [...asked, { name, required: true }];
   for (const partner of catalog.find((f) => f.name === name)?.mustBeAskedWith ?? []) {
@@ -17,18 +16,6 @@ function withPartners(asked, name, catalog) {
 }
 
 /**
- * What a human task's holder fills in on the record (2026-10-11) — the task's
- * Fields tab. Think of a shared file: everyone can read the record, but only
- * whoever holds the task writes, and only in the boxes named here.
- *
- * Offered: the record's fields a task can fill, from Workflow fields (an admin
- * page, 2026-10-13) — an invoicing plan included, which conditions never see.
- * Some go together: a BOQ item's billing frequency or expected date brings its
- * invoicing plan along, added here the moment either is picked.
- *
- * A field asked for here that is no longer on the list — switched Off — keeps
- * working, so it is shown by its name and nothing more.
- *
  * @param {{ step: Object, fields: Array, taskFields: Array|null, onChange: (patch: Object) => void }} props
  */
 function TaskFieldsPanel({ step, fields, taskFields, onChange }) {
@@ -37,8 +24,6 @@ function TaskFieldsPanel({ step, fields, taskFields, onChange }) {
   const catalog = taskFields ?? (fields ?? []).filter((f) => (f.source ?? 'record') === 'record');
   const fillable = catalog.filter((f) => f.fillable);
   const unused = fillable.filter((f) => !asked.some((a) => a.name === f.name));
-  // Marked on a hand-started workflow's record fields: a run on several records
-  // has no single one to save to (WF-056).
   const manyRecordsPossible = (fields ?? []).some((f) => f.emptyOnManyTargets);
 
   const setFields = (next) => onChange({ fields: next });
@@ -67,7 +52,6 @@ function TaskFieldsPanel({ step, fields, taskFields, onChange }) {
       <div>
         <Label>Fields to fill</Label>
         {asked.length === 0 ? (
-          // Pointing at the dropdown below: "None" on its own read as "none can be added".
           <p className="rounded-md border border-dashed px-2.5 py-2 text-[11px]" style={{ borderColor: '#e1e0d9', color: CHROME.textMuted }}>
             {unused.length > 0
               ? 'No fields yet — pick one below to have whoever holds this task fill it in.'

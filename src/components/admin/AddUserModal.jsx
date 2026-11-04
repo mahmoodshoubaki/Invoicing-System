@@ -14,23 +14,9 @@ import ADUserSearchInput from './ADUserSearchInput';
 const EMPTY_FORM = {
   displayName: '',
   roleIds: [],
-  // Ticked by default: a new user is sent a welcome with their roles.
   notifyUser: true,
 };
 
-/**
- * Owns every bit of "Add User" form state itself (candidate search, role
- * checkboxes, saving) instead of that living in the parent UsersPage. Typing
- * in the AD search box or toggling a role checkbox now only re-renders this
- * modal — the parent's stat cards, filters, and user table are untouched
- * until `onCreated` actually fires (a user was successfully added).
- *
- * memo only pays off here because the parent passes `onClose`/`onCreated`
- * as useCallback-wrapped (stable) references — without that, this would
- * still re-render every time UsersPage does (e.g. typing in its unrelated
- * user-search box while this modal happens to be open), since memo's
- * shallow prop check would see "new function" every time otherwise.
- */
 function AddUserModal({ open, onClose, onCreated }) {
   const dispatch = useDispatch();
   const roles = useSelector(selectRoles);

@@ -7,10 +7,6 @@ import { useADUserSearch } from './useADUserSearch';
 
 const MAX_VISIBLE = 8;
 
-/**
- * Searchable picker over GetUnregisteredADUsers — the server searches username,
- * email and display name; pick one candidate to seed the new-user form.
- */
 export default function ADUserSearchInput({ selected, onSelect, onClear }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);

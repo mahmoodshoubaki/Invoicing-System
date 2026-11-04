@@ -7,17 +7,11 @@ import {
   setPanelWidth, subscribePanelWidth,
 } from '@/lib/panelWidthStore';
 
-/** Half the grid's gap: the handle sits in the middle of it. */
 const HALF_GAP = 10;
-/** One arrow-key press. */
 const STEP = 24;
 
 /**
- * The side panel's width (2026-10-12): what the author dragged it to, held
- * inside what the workspace can take right now — a remembered 700px still
- * fits on a smaller screen, and comes back on a wider one.
- *
- * @param {React.RefObject<HTMLElement>} workspaceRef  the grid holding the canvas and the panel
+ * @param {React.RefObject<HTMLElement>} workspaceRef
  */
 export function usePanelWidth(workspaceRef) {
   const stored = useSyncExternalStore(subscribePanelWidth, getPanelWidth, getServerPanelWidth);
@@ -43,7 +37,6 @@ export function usePanelWidth(workspaceRef) {
     return clampPanelWidth(rect.right - clientX - HALF_GAP, rect.width);
   }, [workspaceRef]);
 
-  /** Dragging the handle: live while it moves, remembered when it is let go. */
   const startDrag = useCallback((e) => {
     if (e.button !== 0) return;
     e.preventDefault();
@@ -74,11 +67,8 @@ export function usePanelWidth(workspaceRef) {
     setPanelWidth(DEFAULT_PANEL_WIDTH);
   }, []);
 
-  /** The handle from the keyboard: arrows move the divider, Home / End go to the ends. */
   const onHandleKey = useCallback((e) => {
     const total = workspaceRef.current?.getBoundingClientRect().width ?? 0;
-    // The width as it is now, not as of the last render — a held arrow key
-    // repeats faster than the screen redraws.
     const now = clampPanelWidth(getPanelWidth(), total);
     const to = (next) => {
       e.preventDefault();
@@ -92,11 +82,6 @@ export function usePanelWidth(workspaceRef) {
     else if (e.key === 'Enter') { e.preventDefault(); reset(); }
   }, [reset, workspaceRef]);
 
-  /**
-   * Wide for a big condition, and back to where it was. Measured at the click
-   * rather than read off the observer, which a browser stops running for a tab
-   * it is not drawing.
-   */
   const toggleExpand = useCallback(() => {
     const total = workspaceRef.current?.getBoundingClientRect().width ?? 0;
     if (!total) return;

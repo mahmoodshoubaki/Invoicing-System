@@ -15,43 +15,26 @@ import { SelectBox, selectOnModifierClick } from './Selection';
 import MenuButton from './menu/MenuButton';
 import { menuOnRightClick, openOnHeaderClick } from './menu/cardEvents';
 
-/** Stable identity: a fresh [] each render would defeat StepList's memo. */
 const EMPTY_CONTAINER = [];
 
 /**
- * One stage, drawn as a node on the canvas: its name, what kinds of step it
- * holds, and the steps themselves.
- *
- * Everything else about it — its name, its deadline, where it goes next, being
- * the start — is in the side panel (2026-10-08): click its header, or choose
- * Properties… from its menu. Where it goes next is also the labelled connector
- * below it, so the flow still reads top to bottom without opening anything.
- *
- * @param {{
- *   stage: Object, index: number, stages: Array, isStart: boolean, ctx: Object,
- *   selected?: boolean, cut?: boolean, onSelect: Function,
- * }} props
+ * @param {{ stage: Object, index: number, stages: Array, isStart: boolean, ctx: Object, selected?: boolean, cut?: boolean, onSelect: Function, }} props
  */
 function StageLane({ stage, index, stages, isStart, ctx, selected = false, cut = false, onSelect }) {
   const [expanded, setExpanded] = useState(true);
-  // Header only while any stage is being dragged — see useListSorting. The
-  // author's expanded/collapsed choice is kept and comes back on drop.
   const sorting = useListSorting();
 
   const steps = stage.steps ?? [];
   const accent = isStart ? STATUS.info : CHROME.textSecondary;
   const title = stage.title || 'Untitled stage';
 
-  /** The kinds of step in this stage, one dot each. */
   const kinds = [...new Set(steps.map((s) => s.type))];
 
-  // The server's problems with this stage and its transitions, while they are current.
   const problems = stageProblems(ctx.serverProblems, stage.id);
 
   const canvas = ctx.canvas;
   const active = canvas?.inspecting?.kind === 'stage' && canvas.inspecting.id === stage.id;
 
-  // A range runs between stages in the flow, so it needs their order.
   const pick = ({ range }) => onSelect(CLIP_KIND.STAGE, stage.id, { range, listIds: stages.map((s) => s.id) });
   const open = ({ focus }) => canvas?.inspect('stage', stage.id, null, { focus });
   const openMenu = (from) => canvas?.openStageMenu(from, { stage, index, isStart });
@@ -110,8 +93,6 @@ function StageLane({ stage, index, stages, isStart, ctx, selected = false, cut =
             <span className="text-[11px]" style={{ color: CHROME.textMuted }}>
               {steps.length === 0 ? 'no steps' : `${steps.length} step${steps.length === 1 ? '' : 's'}`}
             </span>
-            {/* One dot per kind of step, so a collapsed stage still shows its
-                shape — an approval, a call and a wait, at a glance. */}
             {kinds.map((kind) => (
               <span
                 key={kind}

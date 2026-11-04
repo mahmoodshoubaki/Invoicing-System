@@ -1,17 +1,5 @@
-/**
- * One BOQ item inside a change request (2026-10-18, sent to the API from
- * 2026-10-19): the item as it is, and
- * as the request would leave it.
- *
- * Values are kept as the form's text, the way the BOQ item edit form keeps
- * them; a field "changed" when its text differs (numbers by value, so "10" and
- * "10.00" are the same). The invoicing plan is compared on the cycles not yet
- * invoiced — those are the ones a request can move, add or drop.
- */
-
 const day = (value) => (value ? String(value).slice(0, 10) : '');
 
-/** The fields a request can change, in the order the card shows them. */
 export const ITEM_FIELDS = [
   { key: 'englishName', label: 'English description' },
   { key: 'arabicName', label: 'Arabic description' },
@@ -22,7 +10,6 @@ export const ITEM_FIELDS = [
   { key: 'notes', label: 'Notes' },
 ];
 
-/** The two fields that rebuild an item's invoicing plan when changed, as on the edit form. */
 export const PLAN_ANCHORS = ['billingFrequencyId', 'expectedInvoicingDate'];
 
 function valuesOf(item) {
@@ -37,7 +24,6 @@ function valuesOf(item) {
   };
 }
 
-/** A plan's cycles as the draft keeps them: planned dates as days. */
 export function toPlanCycles(cycles) {
   return (cycles ?? []).map((c) => ({
     id: c.id ?? null,
@@ -50,11 +36,6 @@ export function toPlanCycles(cycles) {
   }));
 }
 
-/**
- * A new item draft: the item and its plan as loaded, nothing changed yet. The
- * baseline expected invoicing date is kept to be shown — it was set when the
- * item was created and a request never changes it.
- */
 export function itemDraftFrom(item, cycles) {
   const values = valuesOf(item);
   const plan = toPlanCycles(cycles);
@@ -76,7 +57,6 @@ function same(field, a, b) {
   return String(a ?? '').trim() === String(b ?? '').trim();
 }
 
-/** The fields this draft changes: `{ key, label, from, to }` each. */
 export function changedItemFields(draft) {
   return ITEM_FIELDS
     .filter((field) => !same(field, draft.original[field.key], draft.values[field.key]))
@@ -84,12 +64,6 @@ export function changedItemFields(draft) {
 }
 
 /**
- * How the plan changes, cycle by cycle, as the API takes it (2026-10-19): a
- * cycle that keeps its id but not its date is Moved; one without an id (or an
- * id the item never had) is Added; an id that is gone is Removed. Cycles
- * already invoiced never change. A rebuilt plan comes back as new cycles, so it
- * reads as the old ones removed and the new ones added.
- *
  * @returns {Array<{ cycleId: number|null, newPlannedDate: string|null, kind: 'Moved'|'Added'|'Removed' }>}
  */
 export function cycleChangesOf(draft) {
@@ -106,13 +80,10 @@ export function cycleChangesOf(draft) {
   return changes;
 }
 
-/** Whether the cycles not yet invoiced differ from the item's plan — a date moved, one added or dropped. */
 export const planChanged = (draft) => cycleChangesOf(draft).length > 0;
 
-/** Whether this item changes at all. */
 export const itemChanges = (draft) => changedItemFields(draft).length > 0 || planChanged(draft);
 
-/** The item's total as the draft would leave it. */
 export function itemTotal(values) {
   const total = Number(values.quantity) * Number(values.unitCost);
   return Number.isFinite(total) ? total : 0;

@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 
 import { projectRepository } from '@/repositories/projectRepository';
 
-/** The EPM project statuses the user's projects hold, loaded once; [] until then or on failure. */
 export function useProjectStatuses() {
   const [statuses, setStatuses] = useState([]);
 

@@ -11,18 +11,7 @@ import { withAlpha } from '@/utils/color';
 import { invoiceRepository } from '@/repositories/invoiceRepository';
 
 /**
- * Deleting one or several invoices, with the consequences said first.
- *
- * All or nothing on the server: if any one cannot go, none does and the
- * message names each — so a refusal is shown inside the dialog, beside the
- * list it is about, rather than in a toast that disappears.
- *
- * @param {{
- *   open: boolean,
- *   invoices: Array<{ id: string, invoiceNumber?: string }>,
- *   onClose: () => void,
- *   onDeleted: (deletedIds: string[]) => void,
- * }} props
+ * @param {{ open: boolean, invoices: Array<{ id: string, invoiceNumber?: string }>, onClose: () => void, onDeleted: (deletedIds: string[]) => void, }} props
  */
 export default function DeleteInvoicesDialog({ open, invoices, onClose, onDeleted }) {
   const [busy, setBusy] = useState(false);
@@ -69,7 +58,6 @@ export default function DeleteInvoicesDialog({ open, invoices, onClose, onDelete
         <ul className="flex flex-wrap gap-1.5">
           {names.slice(0, 12).map((name, i) => (
             <li
-              // Numbers can repeat across projects; position keeps the key unique.
               key={`${name}-${i}`}
               className="rounded-md px-2 py-0.5 font-mono text-[11px]"
               style={{ backgroundColor: '#f6f5f3', color: CHROME.textPrimary }}

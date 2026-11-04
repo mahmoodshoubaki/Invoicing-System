@@ -6,17 +6,6 @@ import { CornerDownRight, Trash2 } from 'lucide-react';
 import { CHROME } from '@/theme/vizPalette';
 import { END_RUN, IconButton } from './stageParts';
 
-/**
- * The otherwise arm — at most one per stage, always last.
- *
- * On the wire it is an ordinary transition with an empty condition; on screen
- * it is not in the list at all, which is what makes "unconditional go-to plus
- * three more transitions" impossible to draw and therefore impossible to build.
- *
- * With conditions above it, it reads "Otherwise". With none, "otherwise" would
- * be a word with nothing to be otherwise TO, so it reads "Go to" — the plain
- * unconditional hand-off, which is the commonest stage of all.
- */
 function OtherwiseRow({ transition, hasConditions, stages, currentStageId, onSet, onRemove }) {
   const targets = stages.filter((s) => s.id !== currentStageId);
   const word = hasConditions ? 'Otherwise' : 'Go to';
@@ -33,9 +22,6 @@ function OtherwiseRow({ transition, hasConditions, stages, currentStageId, onSet
         </span>
         <button
           type="button"
-          // Defaults to the first other stage rather than to "end the run" —
-          // ending the run is already what happens without an arm, so offering
-          // it as the default would make the button do nothing visible.
           onClick={() => onSet(targets[0]?.id ?? null)}
           className="shrink-0 rounded-md px-2 py-1 text-[11px] font-medium transition-colors hover:bg-[#f1f0ee]"
           style={{ color: CHROME.textSecondary }}

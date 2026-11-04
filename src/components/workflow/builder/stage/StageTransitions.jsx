@@ -11,32 +11,15 @@ import TransitionRow from './TransitionRow';
 import OtherwiseRow from './OtherwiseRow';
 
 /**
- * Where a stage goes once its steps are done — its panel's "Then go to".
- * On the canvas, the same rules are the labelled connector below the stage.
- *
- * @param {{
- *   stage: Object, stages: Array, fields: Array,
- *   editing: ReturnType<import('../page/useBuilderEditing').useBuilderEditing>,
- * }} props
+ * @param {{ stage: Object, stages: Array, fields: Array, editing: ReturnType<import('../page/useBuilderEditing').useBuilderEditing>, }} props
  */
 function StageTransitions({ stage, stages, fields, editing }) {
   const { onAddTransition, onUpdateTransition, onRemoveTransition, onMoveTransition, onSetCatchAll } = editing;
   const transitions = stage.transitions ?? [];
 
-  /*
-   * An empty condition matches everything, so a transition holding one IS the
-   * otherwise arm. The list splits on it: everything before is an if/else-if
-   * chain, and the arm itself is drawn separately below.
-   *
-   * A definition saved before this rule existed can hold one mid-list. Those
-   * rows stay exactly where they are rather than being silently reordered —
-   * validateDefinition reports them, and the row renders in its error state.
-   */
   const catchAllIndex = catchAllAt(transitions);
   const catchAll = catchAllIndex === -1 ? null : transitions[catchAllIndex];
 
-  // Every row except the arm, carrying its index in the real array — the
-  // update/remove/move actions address the wire order, not the screen order.
   const conditional = transitions
     .map((transition, at) => ({ transition, at }))
     .filter(({ at }) => at !== catchAllIndex);
@@ -83,11 +66,6 @@ function StageTransitions({ stage, stages, fields, editing }) {
         </SortableList>
       )}
 
-      {/*
-        The otherwise arm, always drawn — set or not. A run whose conditions
-        all fail simply stops, which is a real outcome rather than an
-        oversight, but it is invisible unless it is written down.
-      */}
       <OtherwiseRow
         transition={catchAll}
         hasConditions={conditional.length > 0}
@@ -97,8 +75,6 @@ function StageTransitions({ stage, stages, fields, editing }) {
         onRemove={() => onSetCatchAll(stage.id, false)}
       />
 
-      {/* Only reachable by loading a definition saved before the arm was
-          forced last — the builder cannot produce this state. */}
       {strandedAfterCatchAll > 0 && (
         <p
           className="mt-2 rounded-lg px-2.5 py-2 text-[11px] leading-snug"

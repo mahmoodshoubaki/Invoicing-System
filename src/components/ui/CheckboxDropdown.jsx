@@ -7,20 +7,7 @@ import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 
 /**
- * A dropdown of checkboxes (2026-10-20): the closed box shows what is picked,
- * as small tags that can be taken off; opened, it lists every option — each
- * with an optional line under it — to tick or untick. It closes on a click
- * outside or Escape.
- *
- * `compact` (2026-10-20) is for narrow places like the workflow builder's side
- * panel: a smaller box whose closed face is one line — "Finance, Admin +3 more",
- * the whole list on hover — so a long selection never wraps onto several lines.
- *
- * @param {{
- *   options: Array<{ value: string|number, label: string, description?: string }>,
- *   selected: Array<string|number>, onToggle: (value) => void,
- *   placeholder?: string, error?: string|null, label?: string, compact?: boolean,
- * }} props
+ * @param {{ options: Array<{ value: string|number, label: string, description?: string }>, selected: Array<string|number>, onToggle: (value) => void, placeholder?: string, error?: string|null, label?: string, compact?: boolean, }} props
  */
 export default function CheckboxDropdown({ options, selected, onToggle, placeholder = 'Choose…', error = null, label, compact = false }) {
   const [open, setOpen] = useState(false);

@@ -27,26 +27,10 @@ const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const MINUTES = [0, 15, 30, 45];
 const MONTH_DAYS = Array.from({ length: 28 }, (_, i) => i + 1);
 
-/**
- * A schedule, expressed either way.
- *
- * Cron is precise and unreadable; a form is readable and cannot express
- * everything. So both are offered, over one value: the form writes the
- * expression, and the expression is read back into the form whenever it
- * matches a shape the form can represent. Nothing is stored but the cron
- * string itself, so the two views can never disagree.
- *
- * Month days stop at 28 deliberately — "the 31st of every month" silently does
- * nothing in February, and a scheduler that skips months is a worse outcome
- * than a picker that will not offer the option.
- */
 function CronField({ value, onChange }) {
   const parsed = useMemo(() => parseCron(value), [value]);
   const description = useMemo(() => describeCron(value), [value]);
 
-  // Anything the form cannot represent opens in raw mode, so an author who
-  // wrote an unusual expression is never dropped into a form that would
-  // silently rewrite it.
   const [mode, setMode] = useState(
     parsed.frequency === CRON_FREQUENCY.CUSTOM && value ? 'raw' : 'form'
   );

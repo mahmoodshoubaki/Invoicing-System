@@ -4,13 +4,6 @@ import { memo } from 'react';
 import { motion } from 'motion/react';
 import { CHROME } from '@/theme/vizPalette';
 
-/**
- * The strip that sits above each project tab's table: a few at-a-glance
- * figures on the left, the tab's primary actions on the right.
- *
- * Gives the three tabs a shared shape so switching between them doesn't feel
- * like landing on three differently-built screens.
- */
 function TabToolbar({ stats = [], actions }) {
   return (
     <motion.div

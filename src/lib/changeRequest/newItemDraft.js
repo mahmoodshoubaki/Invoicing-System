@@ -5,7 +5,6 @@ const day = (value) => (value ? String(value).slice(0, 10) : '');
 const blank = (value) => String(value ?? '').trim() === '';
 const isNumber = (text) => !blank(text) && Number.isFinite(Number(text));
 
-/** The fields of a new item, in the order its card shows them. */
 export const NEW_ITEM_FIELDS = [
   { key: 'englishName', label: 'English description' },
   { key: 'arabicName', label: 'Arabic description' },
@@ -16,10 +15,8 @@ export const NEW_ITEM_FIELDS = [
   { key: 'notes', label: 'Notes' },
 ];
 
-/** The two fields a new item's plan is generated from. */
 export const NEW_ITEM_PLAN_ANCHORS = ['baselineInvoicingDate', 'billingFrequencyId'];
 
-/** A blank new item. `key` names it in the form and in refusals (newItems[i] follows the list order). */
 export function emptyNewItem(key) {
   return {
     key,
@@ -31,7 +28,6 @@ export function emptyNewItem(key) {
   };
 }
 
-/** A new item as a request holds it — mapChangeRequestNewItem's. */
 export function newItemFrom(row, key) {
   const dates = (row.plannedDates ?? []).map(day).filter(Boolean).sort();
   return {
@@ -49,16 +45,11 @@ export function newItemFrom(row, key) {
   };
 }
 
-/** Its total. */
 export function newItemTotal(values) {
   const total = Number(values.quantity) * Number(values.unitCost);
   return Number.isFinite(total) ? total : 0;
 }
 
-/**
- * What stops a new item, by field. Its plan's dates must fall inside the
- * contract dates the request leaves.
- */
 export function newItemProblems(draft, window, today = toISODate(new Date())) {
   const v = draft.values;
   const problems = {};
@@ -80,7 +71,6 @@ export function newItemProblems(draft, window, today = toISODate(new Date())) {
   return problems;
 }
 
-/** As the create request takes it. */
 export function newItemPayload(draft) {
   const v = draft.values;
   return {

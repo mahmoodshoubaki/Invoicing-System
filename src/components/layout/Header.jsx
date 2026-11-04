@@ -11,6 +11,8 @@ import { Currencies } from '@/constants/currencies';
 import CurrencyMenu from './CurrencyMenu';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import logo from '@/theme/assets/devoteam-logo.png';
+import { APP_SHORT_NAME, COMPANY_SHORT_NAME, withBasePath } from '@/constants/appConfig';
+import { ROUTES } from '@/constants/routes';
 
 export default function Header() {
   const dispatch = useDispatch();
@@ -18,12 +20,7 @@ export default function Header() {
 
   const handleLogout = async () => {
     await logout();
-    // Hard reload, not router.push — this wipes the entire Redux store
-    // (invoices/projects/BOQ/users, all still in memory from the logged-out
-    // session) instead of leaving it dangling through a soft navigation,
-    // matching how handleSessionExpired (apiClient.js) already redirects
-    // on session loss.
-    window.location.href = '/login';
+    window.location.href = withBasePath(ROUTES.LOGIN);
   };
 
   return (
@@ -40,11 +37,11 @@ export default function Header() {
 
       <div className="flex items-center gap-2 min-w-0">
         <div className="w-8 h-8 flex items-center justify-center shrink-0">
-          <Image src={logo} alt="Devoteam logo" width={32} height={32} className="rounded-full" />
+          <Image src={logo} alt={`${COMPANY_SHORT_NAME} logo`} width={32} height={32} className="rounded-full" />
         </div>
         <div className="min-w-0 hidden sm:block">
-          <p className="text-xs font-bold text-dark leading-tight truncate">Devoteam</p>
-          <p className="text-[10px] text-gray-400 leading-tight truncate">Invoicing System</p>
+          <p className="text-xs font-bold text-dark leading-tight truncate">{COMPANY_SHORT_NAME}</p>
+          <p className="text-[10px] text-gray-400 leading-tight truncate">{APP_SHORT_NAME}</p>
         </div>
       </div>
 

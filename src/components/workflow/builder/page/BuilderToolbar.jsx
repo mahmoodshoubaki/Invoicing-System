@@ -9,16 +9,7 @@ import { withAlpha } from '@/utils/color';
 import { CLIP_KIND, describeClip } from '@/lib/workflowClipboard';
 
 /**
- * Undo / redo, and copy / cut / paste.
- *
- * Discoverability: the shortcuts are the real controls, but a keyboard-only
- * affordance is one nobody finds. Disabled states double as a readout of
- * whether there is anything to go back to.
- *
- * @param {{
- *   canUndo: boolean, canRedo: boolean, onUndo: () => void, onRedo: () => void,
- *   clip: ReturnType<import('./useBuilderClipboard').useBuilderClipboard>,
- * }} props
+ * @param {{ canUndo: boolean, canRedo: boolean, onUndo: () => void, onRedo: () => void, clip: ReturnType<import('./useBuilderClipboard').useBuilderClipboard>, }} props
  */
 export default function BuilderToolbar({ canUndo, canRedo, onUndo, onRedo, clip }) {
   const { selection, clipboard, isCut, clipLabel, clipVerb, pasteTarget } = clip;
@@ -34,8 +25,6 @@ export default function BuilderToolbar({ canUndo, canRedo, onUndo, onRedo, clip 
 
       <span className="mx-1 h-4 w-px bg-[#e6e4dd]" aria-hidden="true" />
 
-      {/* Copy, cut and paste. With nothing ticked, a line saying how — the
-          tick boxes are visible, Ctrl+click is not. */}
       {selection.ids.length > 0 ? (
         <>
           <span
@@ -60,8 +49,6 @@ export default function BuilderToolbar({ canUndo, canRedo, onUndo, onRedo, clip 
         </span>
       ) : null}
 
-      {/* The button names where the paste will land before anything happens —
-          the ticked item is the cursor, and this is how to see it. */}
       {clipboard && (
         <>
           <Button
@@ -78,8 +65,6 @@ export default function BuilderToolbar({ canUndo, canRedo, onUndo, onRedo, clip 
               {pasteTarget ? ` ${pasteTarget.where}` : ''}
             </span>
           </Button>
-          {/* A cut leaves the originals faded on the canvas; this is the way
-              back out without moving anything. */}
           {isCut && (
             <Button variant="ghost" size="sm" icon={X} onClick={clip.cancelCut} title="Leave them where they are (Esc)">
               Cancel move

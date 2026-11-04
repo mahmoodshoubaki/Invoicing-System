@@ -14,27 +14,7 @@ import { withAlpha } from '@/utils/color';
 import { formatCurrency, formatDate } from '@/utils';
 
 /**
- * One item in a change request: the same fields as the BOQ item form, starting
- * at what the item has now, each changed one saying what it was — and its
- * invoicing plan, cycles already invoiced locked. The baseline expected
- * invoicing date is shown and locked; the updated one can change. Changing the
- * billing frequency or the updated date rebuilds the plan inside the contract
- * dates the request leaves.
- *
- * It folds away to its header (2026-10-20) — name, how many changes, and how
- * many problems — so a request with several items stays readable.
- *
- * In a workflow task (2026-10-20) the fields or the plan can be locked — the
- * task does not ask for them, so they stay as the request has them — and the
- * item can be taken out only when nothing locked would go with it.
- *
- * @param {{
- *   draft: Object, problems: Object|null, plan: { busy?: boolean, error?: string|null }|undefined,
- *   window: { start: string, end: string },  the contract dates the request leaves
- *   onField: (itemId, key, value) => void, onCycles: (itemId, cycles) => void, onRemove: (itemId) => void,
- *   revealToken: number,  ticks on each refused Submit — a folded card with a problem opens
- *   lockFields?: boolean, lockPlan?: boolean, canRemove?: boolean,
- * }} props
+ * @param {{ draft: Object, problems: Object|null, plan: { busy?: boolean, error?: string|null }|undefined, window: { start: string, end: string }, the contract dates the request leaves onField: (itemId, key, value) => void, onCycles: (itemId, cycles) => void, onRemove: (itemId) => void, revealToken: number, ticks on each refused Submit — a folded card with a problem opens lockFields?: boolean, lockPlan?: boolean, canRemove?: boolean, }} props
  */
 function ItemChangeCard({
   draft, problems, plan, window, onField, onCycles, onRemove, revealToken = 0,
@@ -52,7 +32,6 @@ function ItemChangeCard({
   const count = changed.size + (planChanged(draft) ? 1 : 0);
   const problemCount = Object.keys(errors).length;
   const [open, setOpen] = useState(true);
-  // A refused Submit opens a folded card that has a problem, so the problem can be seen.
   const [seenToken, setSeenToken] = useState(revealToken);
   if (revealToken !== seenToken) {
     setSeenToken(revealToken);

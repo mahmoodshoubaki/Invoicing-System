@@ -1,7 +1,5 @@
 'use client';
 
-/** Adding or changing an email sender — SMTP or Amazon SES. */
-
 import { useState } from 'react';
 
 import Button from '@/components/common/Button';
@@ -16,11 +14,6 @@ import { BLANK_SES, BLANK_SMTP, Field } from './senderShared';
 import SesFields from './SesFields';
 import SmtpFields from './SmtpFields';
 
-/**
- * Adding or changing a sender. Passwords and secret keys are never shown and
- * never kept between saves, so the form asks for them every time — an empty
- * box with a hint, not a row of dots pretending to hold something.
- */
 export function SenderForm({ sender, securityModes, onClose, onSaved }) {
   const editing = Boolean(sender);
   const [provider, setProvider] = useState(sender?.providerKey ?? EMAIL_PROVIDER.SMTP);
@@ -43,7 +36,6 @@ export function SenderForm({ sender, securityModes, onClose, onSaved }) {
     setForm({ ...(next === EMAIL_PROVIDER.SES ? BLANK_SES : BLANK_SMTP), ...common });
   };
 
-  // What the server would refuse, said before the click.
   const missing = [
     !form.name.trim() && 'a name',
     !form.fromAddress.trim() && 'a from address',

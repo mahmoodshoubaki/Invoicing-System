@@ -7,12 +7,8 @@ import { changeRequestRepository } from '@/repositories/changeRequestRepository'
 import { draftFromChangeRequest, itemIdsOf } from '@/lib/changeRequest/fromChangeRequest';
 
 /**
- * A returned change request, loaded and turned back into a draft (2026-10-19):
- * the request, the invoicing plans of the items it touches, and the draft
- * those make — once the BOQ and the sub-projects are loaded too.
- *
  * @param {string|number} crId
- * @param {{ boqItems: Array, subProjects: Array, loading: boolean }} data  useChangeRequestPageData's
+ * @param {{ boqItems: Array, subProjects: Array, loading: boolean }} data
  * @returns {{ changeRequest: Object|null, initial: Object|null, error: Error|null }}
  */
 export function useReturnedChangeRequestDraft(crId, data) {

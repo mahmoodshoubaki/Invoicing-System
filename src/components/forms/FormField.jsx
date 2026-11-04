@@ -5,7 +5,6 @@ import { createPortal } from 'react-dom';
 import { Calendar, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { formatDate } from '@/utils/formatters';
 
-// `data-field` and `data-problem` let a form find its first problem and scroll to it (2026-10-20).
 export function FormField({ label, required, error, hint, children, className = '' }) {
   return (
     <div data-field className={`flex flex-col gap-1.5 ${className}`}>
@@ -44,18 +43,6 @@ export function Input({
   );
 }
 
-/**
- * Numeric text input that displays thousands separators ("1,234.56") while
- * unfocused, and the plain editable number while typing. A native
- * `type="number"` input can never show commas — browsers reject non-numeric
- * characters outright — and reformatting live on every keystroke causes the
- * cursor to jump mid-edit, so this only reformats on blur/focus instead.
- * `value`/`onChange` behave like Input's: `value` is a plain numeric
- * string, and `onChange` receives `{ target: { value } }` with the comma
- * formatting already stripped back out, so existing `set(field)`-style
- * handlers (`(e) => setForm(f => ({...f, [field]: e.target.value}))`) work
- * unchanged.
- */
 export function NumberInput({
   label, required, error, hint, value, onChange, decimals = 2, className = '', onFocus, onBlur, ...props
 }) {
@@ -118,11 +105,6 @@ function parseIsoDate(value) {
   return new Date(y, m - 1, d);
 }
 
-/** Which date the calendar should open on: the selected value if there is
- * one, otherwise `min` (clamped to `max`) so a fresh picker for e.g. a new
- * tracker cycle opens right around the next available date instead of
- * whatever month today happens to be — which could be many clicks away for
- * a contract running a year or more out. */
 function initialViewIso(value, min, max) {
   if (value) return value;
   if (min && (!max || min <= max)) return min;
@@ -130,8 +112,6 @@ function initialViewIso(value, min, max) {
   return null;
 }
 
-/** Always returns a full 6-row (42-cell) Monday-first grid, padded with
- * adjacent-month days so the calendar height never shifts between months. */
 function buildCalendarGrid(year, month) {
   const firstOfMonth = new Date(year, month, 1);
   const leadingCount = (firstOfMonth.getDay() + 6) % 7;
@@ -146,15 +126,6 @@ function buildCalendarGrid(year, month) {
   return cells;
 }
 
-/**
- * DD/MM/YYYY date picker. A native `<input type="date">` displays in
- * whatever format the OS/browser locale dictates, which can't be forced to
- * DD/MM/YYYY — so this renders a formatted trigger plus a self-built
- * calendar popover instead. `value`/`onChange` behave like Input's: `value`
- * is a plain ISO date string ('YYYY-MM-DD') and `onChange` receives
- * `{ target: { value } }` with an ISO string, so existing `set(field)`-style
- * handlers work unchanged. `min`/`max` are ISO date strings.
- */
 const POPOVER_WIDTH = 288;
 const POPOVER_HEIGHT_ESTIMATE = 340;
 
@@ -167,13 +138,6 @@ export function DatePicker({
   const triggerRef = useRef(null);
   const popoverRef = useRef(null);
 
-  // Renders the calendar into a portal at a fixed, viewport-relative
-  // position instead of as a normal in-flow child. Positioned absolutely
-  // inside the trigger (the original approach), the popover's height was
-  // part of the table row's/section's layout, so opening it inside a table
-  // cell pushed the row taller and the page scrolled to follow — jarring,
-  // especially many rows deep. A portal sidesteps that entirely: it can
-  // never affect the layout of anything it's opened from.
   useLayoutEffect(() => {
     if (!open || !triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
@@ -205,9 +169,6 @@ export function DatePicker({
     function handleKey(e) {
       if (e.key === 'Escape') setOpen(false);
     }
-    // Scroll can happen on the trigger's own ancestors (a table wrapper, the
-    // page, etc.) — closing rather than tracking it keeps the popover from
-    // ever drifting away from a trigger that's scrolled out from under it.
     function handleScroll() { setOpen(false); }
 
     document.addEventListener('mousedown', handleClick);
@@ -239,10 +200,6 @@ export function DatePicker({
   const selectedIso = value ? String(value).slice(0, 10) : '';
   const todayIso = toIsoDate(new Date());
 
-  // Year options span min/max when given (so the dropdown can't jump
-  // somewhere entirely out of range), padded out to a plain +/-10 window
-  // otherwise — always including the currently-viewed year even if it
-  // happens to sit outside that.
   const minYear = parseIsoDate(min)?.getFullYear();
   const maxYear = parseIsoDate(max)?.getFullYear();
   const yearRangeStart = Math.min(minYear ?? year - 10, year);

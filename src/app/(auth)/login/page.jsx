@@ -9,10 +9,17 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import logo from '@/theme/assets/devoteam-logo.png';
+import { COMPANY_NAME, COMPANY_SHORT_NAME, withBasePath } from '@/constants/appConfig';
+import { ROUTES } from '@/constants/routes';
+
+// Same-site paths only, so a crafted link cannot send the user to another site.
+function redirectTarget() {
+  const target = new URLSearchParams(window.location.search).get('redirect');
+  return target && /^\/(?![/\\])/.test(target) ? target : withBasePath(ROUTES.DASHBOARD);
+}
 
 const EASE = [0.16, 1, 0.3, 1];
 
-/** Rotating value props on the brand panel — purely decorative. */
 const HIGHLIGHTS = [
   { icon: Layers, title: 'Every project, one ledger', body: 'BOQs, invoicing plans and collections in a single tracked pipeline.' },
   { icon: LineChart, title: 'Variance you can see', body: 'Know the moment a cycle slips — before it becomes a delayed invoice.' },
@@ -20,8 +27,6 @@ const HIGHLIGHTS = [
 ];
 
 function AuroraField() {
-  // Three slow-drifting colour fields. Sizes/positions are deliberately
-  // oversized and blurred so the edges never read as discrete circles.
   const blobs = [
     { className: 'bg-[#f8485e]', size: 620, from: { x: -80, y: -60 }, to: { x: 60, y: 80 }, duration: 18, opacity: 0.55 },
     { className: 'bg-[#fcc354]', size: 520, from: { x: 220, y: 260 }, to: { x: 80, y: 120 }, duration: 22, opacity: 0.40 },
@@ -63,11 +68,9 @@ export default function LoginPage() {
   const [fieldError, setFieldError] = useState({});
   const [highlight, setHighlight] = useState(0);
 
-  // Already signed in (e.g. valid session restored from sessionStorage) — no need to log in again.
   useEffect(() => {
     if (isAuthenticated) {
-      const params = new URLSearchParams(window.location.search);
-      window.location.href = params.get('redirect') || '/dashboard';
+      window.location.href = redirectTarget();
     }
   }, [isAuthenticated]);
 
@@ -89,11 +92,9 @@ export default function LoginPage() {
     if (!validate()) return;
     try {
       await login(form.username, form.password);
-      const params = new URLSearchParams(window.location.search);
-      const redirectTo = params.get('redirect') || '/dashboard';
-      window.location.href = redirectTo;
+      window.location.href = redirectTarget();
     } catch {
-      // error state is already set inside AuthContext.login — nothing to do here
+      // ignore
     }
   };
 
@@ -116,7 +117,7 @@ export default function LoginPage() {
               <Image src={logo} alt="" width={28} height={28} className="rounded-md" />
             </span>
             <div className="leading-tight">
-              <p className="text-sm font-semibold text-white">Devoteam Middle East</p>
+              <p className="text-sm font-semibold text-white">{COMPANY_NAME}</p>
               <p className="text-xs text-white/45">Invoicing &amp; Revenue Tracking</p>
             </div>
           </motion.div>
@@ -190,7 +191,7 @@ export default function LoginPage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5, duration: 0.6 }}
           >
-            © {new Date().getFullYear()} Devoteam Middle East · All rights reserved
+            © {new Date().getFullYear()} {COMPANY_NAME} · All rights reserved
           </motion.p>
         </aside>
 
@@ -207,7 +208,7 @@ export default function LoginPage() {
             >
               <h2 className="text-2xl font-bold tracking-tight text-[#3c3c3a]">Sign in</h2>
               <p className="mt-1.5 text-sm text-[#6f6f6c]">
-                Use your Devoteam directory account to continue.
+                Use your {COMPANY_SHORT_NAME} directory account to continue.
               </p>
             </motion.div>
 
@@ -228,7 +229,6 @@ export default function LoginPage() {
                 )}
               </AnimatePresence>
 
-              {/* Username */}
               <motion.div
                 variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } } }}
               >
@@ -263,7 +263,6 @@ export default function LoginPage() {
                 )}
               </motion.div>
 
-              {/* Password */}
               <motion.div
                 variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } } }}
               >

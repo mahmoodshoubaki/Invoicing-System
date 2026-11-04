@@ -23,12 +23,7 @@ import { useNewInvoiceForm } from '@/components/invoices/new/useNewInvoiceForm';
 import { formatCurrency } from '@/utils/formatters';
 import { useToast } from '@/hooks/useToast';
 
-/**
- * A new invoice request for one project. Each part lives in
- * components/invoices/new/ — this lays them out.
- */
 export default function NewInvoicePage() {
-  // See projects/[id]/boq/page.jsx for why this is decoded defensively.
   const { id: rawId } = useParams();
   const projectCode = decodeURIComponent(rawId);
   const toast = useToast();

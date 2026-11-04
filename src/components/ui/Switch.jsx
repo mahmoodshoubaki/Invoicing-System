@@ -3,9 +3,6 @@
 import { STATUS } from '@/theme/vizPalette';
 
 /**
- * An on/off switch — a real checkbox underneath, so it is clicked, tabbed to
- * and read out like one.
- *
  * @param {{ checked: boolean, onChange: (checked: boolean) => void, disabled?: boolean, label: string, title?: string }} props
  */
 export default function Switch({ checked, onChange, disabled = false, label, title }) {

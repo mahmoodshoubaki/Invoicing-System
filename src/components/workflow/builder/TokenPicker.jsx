@@ -5,34 +5,14 @@ import { Braces } from 'lucide-react';
 
 import { CHROME } from '@/theme/vizPalette';
 
-/** Where a token comes from, in the order the menu lists them. */
 const GROUPS = [
   ['record', 'This record'],
   ['item', 'The item this loop is on'],
   ['variable', 'Workflow variables'],
   ['outcome', 'Step answers'],
-  // A notification's own values — WorkflowName, a task's TaskTitle, a failed
-  // run's FailureReason — offered only where one is being typed for.
   ['notification', 'Sent with this notification'],
 ];
 
-/**
- * Inserts a `{{token}}` into the field beside it.
- *
- * A step input, an http.call URL, a request body — all of them accept
- * placeholders the engine fills in at run time, and until now the only way to
- * learn what could go in one was to be told. The hint said
- * "{{variableName}} fills in a value the run holds", which names the syntax and
- * not one single thing you could actually write.
- *
- * So the names live in a menu instead of in somebody's memory. What it lists is
- * exactly what a condition at the same place could compare against — the same
- * catalog, so the two can never drift — plus secrets, which are resolvable in
- * an input and deliberately not readable in a condition.
- *
- * Insertion goes at the caret when there is one, because a URL is usually
- * built around a token rather than ended with it.
- */
 function TokenPicker({ fields = [], inputRef, value = '', onInsert, allowSecrets = false }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
@@ -59,8 +39,6 @@ function TokenPicker({ fields = [], inputRef, value = '', onInsert, allowSecrets
     const text = `{{${token}}}`;
     const el = inputRef?.current;
 
-    // Without a live element to read a caret from, appending is the only honest
-    // option — guessing a position would drop the token somewhere arbitrary.
     if (!el || typeof el.selectionStart !== 'number') {
       onInsert(`${value}${text}`);
       setOpen(false);
@@ -72,8 +50,6 @@ function TokenPicker({ fields = [], inputRef, value = '', onInsert, allowSecrets
     onInsert(`${value.slice(0, start)}${text}${value.slice(end)}`);
     setOpen(false);
 
-    // Put the caret after what was just inserted, so typing continues where the
-    // author was rather than at the end of the field.
     requestAnimationFrame(() => {
       el.focus();
       const at = start + text.length;
@@ -143,9 +119,6 @@ function TokenPicker({ fields = [], inputRef, value = '', onInsert, allowSecrets
               >
                 Credentials
               </p>
-              {/* A secret is not a value the builder can list — the names live
-                  on the server and the values never reach the browser. So this
-                  inserts the shape and leaves the name to be typed. */}
               <button
                 type="button"
                 role="menuitem"

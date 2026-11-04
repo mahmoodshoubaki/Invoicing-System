@@ -5,20 +5,6 @@ import { Boxes, User, Users } from 'lucide-react';
 import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 
-/**
- * Who a to-do is assigned to right now — people and roles.
- *
- * People and roles are drawn differently on purpose: a person is one specific
- * individual, a role is anybody holding it, and "Finance Approvers" reading the
- * same as "Sara" would hide that the second is a pool of people.
- *
- * Reads `assignedUsers` / `assignedRoles` off the row — see `mapAssignees` in
- * `models/workflow.js` for why these cannot be worked out from the definition,
- * and for the fact that the field names are proposed rather than confirmed.
- *
- * `emptyText` is what to say when nobody is listed. Omit it to render nothing,
- * which is right where an empty list only means the API has not sent the field.
- */
 export default function AssigneeList({ users = [], roles = [], groups = [], emptyText = null, compact = false }) {
   if (users.length === 0 && roles.length === 0 && groups.length === 0) {
     return emptyText ? (

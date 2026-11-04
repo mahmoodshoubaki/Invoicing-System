@@ -5,15 +5,7 @@ import { withAlpha } from '@/utils/color';
 import { CHANNEL_TABS, NO_STATUS } from './typeTabs';
 
 /**
- * Which channel's words are being edited. Each shows what is sent today (the
- * live version, or "off"), a newer draft if there is one, and a dot when it has
- * unsaved edits — the other channel's editor keeps them while out of sight.
- *
- * @param {{
- *   value: number, onChange: (channelKey: number) => void,
- *   channels: Array<{ channelKey: number, liveVersion: number|null, latestVersion: number|null }>,
- *   status: Record<number, { dirty: boolean }>,
- * }} props
+ * @param {{ value: number, onChange: (channelKey: number) => void, channels: Array<{ channelKey: number, liveVersion: number|null, latestVersion: number|null }>, status: Record<number, { dirty: boolean }>, }} props
  */
 export default function ChannelSwitch({ value, onChange, channels, status }) {
   return (

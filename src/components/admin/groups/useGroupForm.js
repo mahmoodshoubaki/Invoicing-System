@@ -8,7 +8,7 @@ import { groupFormErrors, groupFormProblems } from '@/lib/groupForm';
 const EMPTY = [];
 
 /**
- * @param {Object|null} group  mapGroup's; null for a new group
+ * @param {Object|null} group
  * @param {(result: { gone?: boolean }) => void} onSaved
  */
 export function useGroupForm(group, onSaved) {
@@ -18,7 +18,6 @@ export function useGroupForm(group, onSaved) {
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
 
-  // Names for the members already in the group; the picker names anyone added.
   const [known] = useState(() => Object.fromEntries(
     (group?.members ?? []).map((m) => [m.userId, { id: m.userId, displayName: m.displayName }])
   ));

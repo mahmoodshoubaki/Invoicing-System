@@ -1,14 +1,9 @@
 import { WARNING_DAYS } from '../constants/sla';
 
 /**
- * Add a number of days to a date, returning a new Date.
- *
  * @param {Date|string} date
  * @param {number} days
  * @returns {Date}
- *
- * @example
- * addDays(new Date('2025-01-01'), 30) // => Date('2025-01-31')
  */
 export function addDays(date, days) {
   const d = new Date(date);
@@ -17,8 +12,6 @@ export function addDays(date, days) {
 }
 
 /**
- * Subtract a number of days from a date, returning a new Date.
- *
  * @param {Date|string} date
  * @param {number} days
  * @returns {Date}
@@ -28,15 +21,9 @@ export function subtractDays(date, days) {
 }
 
 /**
- * Return the difference in whole days between two dates (date1 - date2).
- * Positive result means date1 is after date2.
- *
  * @param {Date|string} date1
  * @param {Date|string} date2
  * @returns {number}
- *
- * @example
- * diffInDays('2025-01-10', '2025-01-01') // => 9
  */
 export function diffInDays(date1, date2) {
   const d1 = new Date(date1);
@@ -48,8 +35,6 @@ export function diffInDays(date1, date2) {
 }
 
 /**
- * Return true if the given date is strictly in the past (before today).
- *
  * @param {Date|string} date
  * @returns {boolean}
  */
@@ -64,9 +49,6 @@ export function isOverdue(date) {
 }
 
 /**
- * Return true if the given date falls within the warning window
- * (today up to warningDays in the future, inclusive).
- *
  * @param {Date|string} date
  * @param {number} warningDays
  * @returns {boolean}
@@ -83,8 +65,6 @@ export function isWarning(date, warningDays = WARNING_DAYS) {
 }
 
 /**
- * Return true if the given date is today.
- *
  * @param {Date|string} date
  * @returns {boolean}
  */
@@ -101,13 +81,8 @@ export function isToday(date) {
 }
 
 /**
- * Convert a Date or date string to ISO 8601 date string (YYYY-MM-DD).
- *
  * @param {Date|string} date
  * @returns {string}
- *
- * @example
- * toISODate(new Date('2025-03-15')) // => '2025-03-15'
  */
 export function toISODate(date) {
   if (!date) return '';
@@ -120,13 +95,8 @@ export function toISODate(date) {
 }
 
 /**
- * Parse an ISO 8601 date string (YYYY-MM-DD) into a Date object set to midnight UTC.
- *
  * @param {string} str
  * @returns {Date|null}
- *
- * @example
- * fromISODate('2025-03-15') // => Date object at 2025-03-15T00:00:00.000Z
  */
 export function fromISODate(str) {
   if (!str || typeof str !== 'string') return null;
@@ -137,8 +107,6 @@ export function fromISODate(str) {
 }
 
 /**
- * Return the start of the day (00:00:00.000) for a given date.
- *
  * @param {Date|string} date
  * @returns {Date}
  */
@@ -149,8 +117,6 @@ export function startOfDay(date) {
 }
 
 /**
- * Return the end of the day (23:59:59.999) for a given date.
- *
  * @param {Date|string} date
  * @returns {Date}
  */
@@ -161,8 +127,6 @@ export function endOfDay(date) {
 }
 
 /**
- * Format a date as a relative human-readable string (e.g. "3 days ago", "in 2 days").
- *
  * @param {Date|string} date
  * @returns {string}
  */
@@ -179,8 +143,6 @@ export function formatRelativeDate(date) {
 }
 
 /**
- * Return the number of months between two dates.
- *
  * @param {Date|string} startDate
  * @param {Date|string} endDate
  * @returns {number}

@@ -1,16 +1,8 @@
 import { CHANNEL, TEMPLATE_LANGUAGE } from '@/constants/notifications';
 import { findPlaceholders } from '@/lib/templatePlaceholders';
 
-/**
- * A channel's words as the editor holds them, and the checks a save must pass.
- * Plain functions, no React — the editor's hook and its tabs read them, and
- * they can be tested on their own.
- */
-
-/** Subjects are capped by the server; bodies have no limit. */
 export const SUBJECT_MAX = 200;
 
-/** The documented keys, for when the lookup cannot be read. */
 export const FALLBACK_LANGUAGES = [
   { key: TEMPLATE_LANGUAGE.ENGLISH, value: 'English' },
   { key: TEMPLATE_LANGUAGE.ARABIC, value: 'Arabic' },
@@ -18,7 +10,6 @@ export const FALLBACK_LANGUAGES = [
   { key: TEMPLATE_LANGUAGE.ARABIC_THEN_ENGLISH, value: 'Arabic then English' },
 ];
 
-/** A fresh draft for a channel that has no words yet: email in HTML, in-app in plain text. */
 export function blankDraft(channelKey) {
   return {
     languageKey: TEMPLATE_LANGUAGE.ENGLISH_THEN_ARABIC,
@@ -32,7 +23,6 @@ export function blankDraft(channelKey) {
   };
 }
 
-/** A draft started from a saved version. */
 export function draftFrom(version) {
   return {
     languageKey: version.languageKey ?? TEMPLATE_LANGUAGE.ENGLISH_THEN_ARABIC,
@@ -48,7 +38,6 @@ export function draftFrom(version) {
 
 export const sameDraft = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
-/** What a save, or a preview of the editor's text, sends. */
 export function draftRequest(draft, typeId, channelKey) {
   return {
     notificationTypeId: typeId,
@@ -65,17 +54,7 @@ export function draftRequest(draft, typeId, channelKey) {
 }
 
 /**
- * Everything that would stop a save, worked out once: the bar shows `saveHint`,
- * the tab bar marks the tab each problem is on, and each tab shows its own.
- *
- * @returns {{
- *   listed: string[],    value names the list has
- *   unlisted: string[],  values the text uses that the list does not name (the server refuses those)
- *   missing: string[],   texts still empty, in words
- *   tooLong: boolean,    a subject over SUBJECT_MAX
- *   emptyKey: boolean,   a listed value without a name
- *   saveHint: string|null,
- * }}
+ * @returns {{ listed: string[], value names the list has unlisted: string[], values the text uses that the list does not name (the server refuses those) missing: string[], texts still empty, in words tooLong: boolean, a subject over SUBJECT_MAX emptyKey: boolean, a listed value without a name saveHint: string|null, }}
  */
 export function checkDraft(draft) {
   const used = findPlaceholders([draft.englishSubject, draft.englishBody, draft.arabicSubject, draft.arabicBody]);
@@ -100,7 +79,6 @@ export function checkDraft(draft) {
   return { listed, unlisted, missing, tooLong, emptyKey, saveHint };
 }
 
-/** The preview box's starting values: each listed value's default, or its name in brackets. */
 export function samplesFromDefaults(draft) {
   const values = Object.fromEntries(
     draft.placeholders.filter((p) => p.key.trim()).map((p) => [p.key.trim(), p.value || `[${p.key.trim()}]`])
@@ -109,9 +87,6 @@ export function samplesFromDefaults(draft) {
 }
 
 /**
- * The sample values as typed. A preview takes any JSON; a test email needs an
- * object of values (`asObject`), which the server reads as name → value.
- *
  * @returns {{ values: any } | { error: string }}
  */
 export function parseSamples(text, { asObject = false } = {}) {

@@ -48,7 +48,6 @@ const InfoItem = ({ icon: Icon, label, value, valueClass = '' }) => (
 );
 
 export default function EditInvoicePage() {
-  // See boq/page.jsx for why the project code segment is decoded defensively.
   const { id: rawId, invoiceId } = useParams();
   const projectCode = decodeURIComponent(rawId);
   const router = useRouter();
@@ -111,8 +110,6 @@ export default function EditInvoicePage() {
     }
   };
 
-  // The detail page isn't nested under the project route, so it's still
-  // reached with the project code passed along as a query param.
   const viewInvoiceHref = `/invoices/${invoiceId}?projectCode=${encodeURIComponent(projectCode)}`;
   const attachmentsUploading = attachmentsToAdd.some((a) => a.status === 'uploading');
 
@@ -133,8 +130,6 @@ export default function EditInvoicePage() {
         invoiceId,
         reasonsForUpdate,
         expectedCollectionDate,
-        // Not on this form (a workflow task fills it); sent unchanged, since
-        // UpdateInvoice clears it when it is missing.
         financialClaimReference: invoice.financialClaimReference,
         attachmentIdsToDelete: Array.from(attachmentIdsToDelete),
         attachmentsToAdd,
@@ -205,7 +200,6 @@ export default function EditInvoicePage() {
 
       <form onSubmit={handleSubmit}>
        <Reveal className="flex flex-col gap-5">
-        {/* Read-only invoice info */}
         <FormSection
           title="Invoice Information"
           subtitle="Read-only — set when the request was submitted"
@@ -231,7 +225,6 @@ export default function EditInvoicePage() {
           </div>
         </FormSection>
 
-        {/* Read-only BOQ lines */}
         <FormSection
           title={`BOQ Line Items (${invoice.lines.length})`}
           subtitle="Line items are fixed once the invoice is raised"

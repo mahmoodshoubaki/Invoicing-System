@@ -8,7 +8,6 @@ import { ROUTES } from '@/constants/routes';
 import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 
-/** Beside a page's title when this person may look but not change. */
 export function ReadOnlyPill() {
   return (
     <span
@@ -21,7 +20,6 @@ export function ReadOnlyPill() {
   );
 }
 
-/** To the audit of every workflow setting change. */
 export function ChangesButton() {
   return (
     <Link href={ROUTES.MONITORING_AUDIT('workflow')}>
@@ -30,7 +28,6 @@ export function ChangesButton() {
   );
 }
 
-/** In place of a page this person may not read — the route guard's rule, said on the page too. */
 export function NoAccessNote({ children }) {
   return (
     <p

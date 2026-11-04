@@ -7,10 +7,6 @@ import CheckboxDropdown from '@/components/ui/CheckboxDropdown';
 import { CHROME, STATUS } from '@/theme/vizPalette';
 
 /**
- * Why the BOQ changes: one or more of the fixed reasons (from the server, with
- * Arabic), picked from a dropdown of checkboxes (2026-10-20) — each with its
- * fixed justification under it, to be read, never edited.
- *
  * @param {{ form: ReturnType<import('./useChangeRequestForm').useChangeRequestForm>, reasons: Array }} props
  */
 export default function ReasonsSection({ form, reasons }) {

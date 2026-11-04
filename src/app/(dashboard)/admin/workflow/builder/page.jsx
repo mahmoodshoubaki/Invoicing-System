@@ -66,26 +66,6 @@ function LoadError({ message }) {
   );
 }
 
-/**
- * The workflow builder. Each part of the screen lives in its own file under
- * components/workflow/builder/page/ — this only wires them together:
- *
- *   useBuilderDocument   the definition, its undo stack, loading it
- *   useBuilderCatalogs   what conditions and steps can read
- *   useAssigneeNames     people's names; assignees who left are dropped
- *   useBuilderClipboard  selecting, copying, cutting, pasting
- *   useBuilderSave       saving the draft, and the problems the server found in it
- *   useBuilderPublish    publishing the draft, making an older version live, discarding the draft
- *   useBuilderEditing    every stage / transition / step edit
- *   useInspector         what the side panel has open (a step, a stage, or the workflow)
- *   useCardMenu          the one right-click / ⋯ menu
- *   useCanvasActions     what a card can do: open, its menu, duplicate, add-and-open
- *   useStepTreeContext   what the nested step editors share
- *
- * The canvas and the side panel form one workspace the height of the window,
- * each scrolling on its own — so the panel is beside whichever card was clicked
- * (BuilderWorkspace, which also lets the panel be resized).
- */
 function BuilderContent() {
   const searchParams = useSearchParams();
   const code = searchParams.get('code');
@@ -122,7 +102,6 @@ function BuilderContent() {
 
   const clip = useBuilderClipboard({ state, workflowKey: code ?? null, dispatch });
   const inspector = useInspector({ graph: state.graph, workflowKey: code ?? null });
-  // A new workflow's first save gives it its code; what was ticked, copied and open carries over.
   const { adoptCode: adoptClipCode } = clip;
   const { adoptCode: adoptPanelCode } = inspector;
   const onCodeAssigned = useCallback((saved) => {
@@ -135,7 +114,6 @@ function BuilderContent() {
   const { versions, serverProblems } = save;
   const publish = useBuilderPublish({ state, dispatch, versions, save, reload: doc.reload });
   const facts = versionFacts(state, versions);
-  // The server's list decides while it describes what is on screen; the builder's own checks stand in otherwise.
   const problemCount = serverProblems ? serverProblems.length : errors.length;
   const serverIndex = useMemo(() => (serverProblems ? indexProblems(serverProblems) : null), [serverProblems]);
 

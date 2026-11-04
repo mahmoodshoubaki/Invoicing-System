@@ -1,10 +1,6 @@
 import { FlaskConical } from 'lucide-react';
 import { CHROME } from '@/theme/vizPalette';
 
-/**
- * Marks a notification sent as a test from the template editor (`isTest`).
- * Dashed and neutral, so it never reads as a delivery status.
- */
 export default function TestBadge({ size = 'sm' }) {
   const large = size === 'md';
   return (

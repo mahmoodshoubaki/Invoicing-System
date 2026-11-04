@@ -1,14 +1,7 @@
-/**
- * Change requests (api/BoqChangeRequests, 2026-10-19): the lookups, the list
- * row, and one request in full. Old values are the server's to read — a request
- * only ever sends new ones.
- */
-
 import { createWaitingTask } from '@/models/waitingTask';
 
 const list = (value) => (Array.isArray(value) ? value : []);
 
-/** One reason, with its fixed justification, English and Arabic. */
 export function mapChangeRequestReason(raw) {
   return {
     key: raw.key,
@@ -19,7 +12,6 @@ export function mapChangeRequestReason(raw) {
   };
 }
 
-/** One change request type. `requiresText` types (Other) need the requester to describe it. */
 export function mapChangeRequestType(raw) {
   return {
     key: raw.key,
@@ -29,12 +21,10 @@ export function mapChangeRequestType(raw) {
   };
 }
 
-/** One project effect: what a request does to the contract value. */
 export function mapChangeRequestProjectEffect(raw) {
   return { key: raw.key, label: raw.valueEN ?? '', labelAr: raw.valueAR ?? '' };
 }
 
-/** One status: 1 Submitted, 2 Returned, 3 Approved, 4 Rejected, 5 Cancelled. */
 export function mapChangeRequestStatus(raw) {
   return {
     key: raw.key,
@@ -44,7 +34,6 @@ export function mapChangeRequestStatus(raw) {
   };
 }
 
-/** A row of a BOQ's change request list. */
 export function mapChangeRequestRow(raw) {
   return {
     id: raw.id ?? raw.ID,
@@ -60,7 +49,6 @@ export function mapChangeRequestRow(raw) {
   };
 }
 
-/** A file on a change request (or a BOQ). */
 export function mapChangeRequestAttachment(raw) {
   return {
     id: raw?.id ?? raw?.ID ?? null,
@@ -72,7 +60,6 @@ export function mapChangeRequestAttachment(raw) {
   };
 }
 
-/** A new BOQ item a change request adds. `plannedDates` from the request; `trackerCycles` from a task's value. */
 export function mapChangeRequestNewItem(raw) {
   const dates = list(raw?.plannedDates).length
     ? list(raw.plannedDates)
@@ -93,7 +80,6 @@ export function mapChangeRequestNewItem(raw) {
 const requestPart = (request) => JSON.stringify(request);
 const doneFiles = (files) => (files ?? []).filter((f) => f.status === 'done');
 
-/** CreateChangeRequest's multipart body: the request JSON, and the files (at least one). */
 export function createChangeRequestFormData(request, files) {
   const formData = new FormData();
   formData.append('Request', requestPart(request));
@@ -101,7 +87,6 @@ export function createChangeRequestFormData(request, files) {
   return formData;
 }
 
-/** UpdateChangeRequest's multipart body. `request` carries `attachmentIdsToDelete`. */
 export function updateChangeRequestFormData(request, files) {
   const formData = new FormData();
   formData.append('Request', requestPart(request));
@@ -109,7 +94,6 @@ export function updateChangeRequestFormData(request, files) {
   return formData;
 }
 
-/** One change request, the summary first — what a reviewer reads. */
 export function mapChangeRequest(raw) {
   const summary = raw.summary ?? {};
   return {
@@ -136,7 +120,6 @@ export function mapChangeRequest(raw) {
   };
 }
 
-/** What a change request asks for: shared by its current version and its earlier ones. */
 function mapChangeRequestContent(raw) {
   return {
     reasons: list(raw.reasons).map((r) => ({ key: r.key, label: r.valueEN ?? '', labelAr: r.valueAR ?? '' })),
@@ -167,7 +150,6 @@ function mapChangeRequestContent(raw) {
   };
 }
 
-/** One earlier version of a change request, from GetChangeRequestHistory. */
 export function mapChangeRequestVersion(raw) {
   return {
     version: raw.version ?? null,

@@ -11,23 +11,11 @@ import {
 
 export const FIELD_PAGE_SIZE = 10;
 
-/** How long typing pauses before the search is sent. */
 const SEARCH_DELAY_MS = 300;
 
 const NO_ROWS = [];
 
 /**
- * One kind of thing's fields on the Workflow fields page (2026-10-13): a page
- * at a time from the server (search, skip, take), the admin's edits, and saving
- * the changed rows.
- *
- * Edits are kept by field name with the row as loaded, so they survive paging
- * and searching, and Save sends every changed row wherever it is. The save
- * answers with those rows only; they are put in place on the page shown.
- *
- * After a save the builder's own copy of the field list is fetched again, so a
- * label renamed here reads the new way in the builder without a reload.
- *
  * @param {number} targetTypeKey
  */
 export function useFieldSettings(targetTypeKey) {
@@ -35,7 +23,6 @@ export function useFieldSettings(targetTypeKey) {
   const [query, setQueryText] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  // Rows a page, as the reader chooses (2026-10-21).
   const [pageSize, setPageSizeValue] = useState(FIELD_PAGE_SIZE);
   const [loaded, setLoaded] = useState({ key: null, rows: NO_ROWS, total: 0, error: null });
   const [edits, setEdits] = useState({});
@@ -43,7 +30,6 @@ export function useFieldSettings(targetTypeKey) {
   const [serverErrors, setServerErrors] = useState({ byName: {}, other: [] });
   const [token, setToken] = useState(0);
 
-  // The search goes to the server once typing pauses, and starts at page 1.
   useEffect(() => {
     const timer = setTimeout(() => {
       setSearch(query.trim());
@@ -79,7 +65,6 @@ export function useFieldSettings(targetTypeKey) {
     const row = loaded.rows.find((r) => r.name === name);
     if (!row) return;
     setEdits((prev) => applyEdit(prev, row, patch));
-    // A changed row answers its own refusal.
     setServerErrors((prev) => {
       if (!prev.byName[name]) return prev;
       const byName = { ...prev.byName };

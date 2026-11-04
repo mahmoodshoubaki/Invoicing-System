@@ -2,7 +2,6 @@ import { STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 import { plural } from './sourceNote';
 
-/** How far past its date something is, in whole days. */
 export default function LateBadge({ days }) {
   return (
     <span

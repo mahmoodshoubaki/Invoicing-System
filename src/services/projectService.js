@@ -1,15 +1,8 @@
 import { projectRepository } from '@/repositories/projectRepository';
 import { PROJECT_STATUS } from '@/constants/statuses';
 
-/**
- * projectService — business logic layer on top of projectRepository.
- *
- * Adds validation, business rules, and computed/enriched fields before
- * delegating to the repository for persistence.
- */
 export const projectService = {
   /**
-   * Fetch all projects applying optional filters.
    * @param {object} filters
    * @returns {Promise<object[]>}
    */
@@ -19,7 +12,6 @@ export const projectService = {
   },
 
   /**
-   * Fetch a single project by id with enriched fields.
    * @param {string} id
    * @returns {Promise<object>}
    */
@@ -29,7 +21,6 @@ export const projectService = {
   },
 
   /**
-   * Create a new project after validating required fields.
    * @param {object} data
    * @returns {Promise<object>}
    */
@@ -51,13 +42,11 @@ export const projectService = {
   },
 
   /**
-   * Update an existing project with validation.
    * @param {string} id
    * @param {object} data
    * @returns {Promise<object>}
    */
   async updateProject(id, data) {
-    // Ensure project exists first
     await projectRepository.getProject(id);
 
     const updated = await projectRepository.updateProject(id, data);
@@ -65,7 +54,6 @@ export const projectService = {
   },
 
   /**
-   * Delete a project. Only Archived projects can be deleted.
    * @param {string} id
    * @returns {Promise<void>}
    */
@@ -82,7 +70,6 @@ export const projectService = {
   },
 
   /**
-   * Archive a project (Active | On Hold → Archived).
    * @param {string} id
    * @returns {Promise<object>}
    */
@@ -98,20 +85,13 @@ export const projectService = {
   },
 
   /**
-   * Return aggregate project statistics.
    * @returns {Promise<object>}
    */
   async getProjectStats() {
     return projectRepository.getProjectStats();
   },
 
-  // ---------------------------------------------------------------------------
-  // Private helpers
-  // ---------------------------------------------------------------------------
-
   /**
-   * Validate required fields for project creation.
-   * Throws an Error with a descriptive message if validation fails.
    * @param {object} data
    */
   _validateProjectData(data) {
@@ -138,7 +118,6 @@ export const projectService = {
   },
 
   /**
-   * Add computed/derived fields to a project object.
    * @param {object} project
    * @returns {object}
    */
@@ -155,8 +134,8 @@ export const projectService = {
 
     return {
       ...project,
-      collectionRate,         // Percentage of revenue collected
-      remainingValue,         // Contract value not yet recognised as revenue
+      collectionRate,
+      remainingValue,
       displayName: project.projectName || project.contractName || 'Unnamed Project',
     };
   },

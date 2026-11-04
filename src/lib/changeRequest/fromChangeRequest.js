@@ -1,12 +1,3 @@
-/**
- * A returned change request back into the form (2026-10-19), so its requester
- * can change it and send it again — whole: what is left out is dropped.
- *
- * Its items are locked while it is open, so each still reads as it was when
- * the request was raised; the request's new values and cycle changes are put
- * on top of that.
- */
-
 import { CR_TARGET } from '@/constants/changeRequests';
 import { itemDraftFrom } from './itemDraft';
 import { applyProjectEdit } from './projectDraft';
@@ -16,7 +7,6 @@ const day = (value) => (value ? String(value).slice(0, 10) : '');
 const DATE_FIELDS = new Set(['expectedInvoicingDate', 'contractStartDate']);
 const formText = (fieldName, value) => (DATE_FIELDS.has(fieldName) ? day(value) : value ?? '');
 
-/** The ids of the items a request touches, in the order it first names them. */
 export function itemIdsOf(changeRequest) {
   const ids = [
     ...changeRequest.fieldChanges.filter((c) => c.targetTypeKey === CR_TARGET.BOQ_ITEM).map((c) => String(c.targetId)),
@@ -26,12 +16,9 @@ export function itemIdsOf(changeRequest) {
 }
 
 /**
- * @param {Object} changeRequest  mapChangeRequest's
+ * @param {Object} changeRequest
  * @param {{ boqItems: Array, cyclesByItem: Object<string, Array>, subProjects: Array }} context
- * @returns {{
- *   reasons: number[], typeKeys: number[], otherTypeText: string, projectEffectKey: number|null,
- *   details: string, projectEdits: Object, items: Array, newItems: Array, files: Object,
- * }}
+ * @returns {{ reasons: number[], typeKeys: number[], otherTypeText: string, projectEffectKey: number|null, details: string, projectEdits: Object, items: Array, newItems: Array, files: Object, }}
  */
 export function draftFromChangeRequest(changeRequest, { boqItems, cyclesByItem, subProjects }) {
   let projectEdits = {};

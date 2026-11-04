@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from 'react';
 
 import { ApiError } from '@/lib/apiClient';
 import { ROUTES } from '@/constants/routes';
+import { withBasePath } from '@/constants/appConfig';
 
 const FALLBACK = 'The jobs dashboard could not be opened.';
 
@@ -19,13 +20,6 @@ function toError(text) {
   }
 }
 
-/**
- * State of the Hangfire frame, read on every page it loads. The frame is
- * same-origin, so its document is readable:
- * - a JSON body is a refusal (API 401/403, proxy 502), shown as an error;
- * - links leaving /hangfire ("Back to site") open in the whole window, since
- *   app pages send X-Frame-Options: DENY and would show blank in the frame.
- */
 export function useHangfireFrame() {
   const frameRef = useRef(null);
   const [frameKey, setFrameKey] = useState(0);
@@ -42,7 +36,7 @@ export function useHangfireFrame() {
     if (doc) {
       for (const link of doc.querySelectorAll('a[href]')) {
         const { origin, pathname } = new URL(link.href, doc.baseURI);
-        if (origin === window.location.origin && !pathname.startsWith(ROUTES.HANGFIRE)) link.target = '_top';
+        if (origin === window.location.origin && !pathname.startsWith(withBasePath(ROUTES.HANGFIRE))) link.target = '_top';
       }
     }
     setStatus('ready');

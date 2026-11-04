@@ -8,18 +8,7 @@ import { notificationRepository } from '@/repositories/notificationRepository';
 import { blankDraft, checkDraft, draftFrom, draftRequest, sameDraft } from './templateDraft';
 
 /**
- * One channel's words: its saved versions, and the draft being edited.
- *
- * Saving always makes a NEW version, never live. Publishing makes one live;
- * publishing an older one rolls back. Versions are never edited or deleted —
- * so the editor holds a draft, started from whichever version is picked, and
- * "Save as new version" adds it to the list.
- *
- * @param {{
- *   typeId: string, channelKey: number, channelLabel: string,
- *   onChanged: () => void,  the type's live/latest versions moved
- *   onStatus?: (channelKey, { dirty, placeholderIssues, bodyIssues }) => void,
- * }} options
+ * @param {{ typeId: string, channelKey: number, channelLabel: string, onChanged: () => void, the type's live/latest versions moved onStatus?: (channelKey, { dirty, placeholderIssues, bodyIssues }) => void, }} options
  */
 export function useTemplateDraft({ typeId, channelKey, channelLabel, onChanged, onStatus }) {
   const toast = useToast();
@@ -62,8 +51,6 @@ export function useTemplateDraft({ typeId, channelKey, channelLabel, onChanged, 
   const checks = useMemo(() => checkDraft(draft), [draft]);
   const canSave = !busy && !checks.saveHint && (dirty || versions.length === 0);
 
-  // Where the problems are, for the page's tab bar — so one on a tab not showing
-  // is not missed. A channel nobody has written for yet is not "missing" anything.
   const untouchedBlank = versions.length === 0 && !dirty;
   const placeholderIssues = untouchedBlank ? 0 : checks.unlisted.length + (checks.emptyKey ? 1 : 0);
   const bodyIssues = dirty ? checks.missing.length + (checks.tooLong ? 1 : 0) : 0;
@@ -90,7 +77,6 @@ export function useTemplateDraft({ typeId, channelKey, channelLabel, onChanged, 
 
   const discard = () => setDraft(base);
 
-  /** Runs one action: one at a time, its error shown above the tabs. */
   const run = async (name, action) => {
     setBusy(name);
     setActionError(null);
@@ -120,7 +106,7 @@ export function useTemplateDraft({ typeId, channelKey, channelLabel, onChanged, 
     onChanged();
   });
 
-  /** @returns {Promise<boolean>} whether it went through — the confirm box closes only then */
+  /** @returns {Promise<boolean>} */
   const turnOff = () => run('off', async () => {
     await notificationRepository.unpublishTemplate(typeId, channelKey);
     toast.success(`${channelLabel} is off for this type`, 'Its versions are kept; publishing one turns it back on.');

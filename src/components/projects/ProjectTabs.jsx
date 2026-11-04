@@ -6,10 +6,8 @@ import { FileDiff, FileText, LayoutList, Network, PieChart } from 'lucide-react'
 
 export const PROJECT_TABS = ['Overview', 'EPM Sub-Projects', 'BOQ', 'Invoices', 'Change requests'];
 
-/** A tab as it reads in the address (`?tab=change-requests`), so a link can open the page on it. */
 export const tabSlug = (tab) => tab.toLowerCase().replace(/\s+/g, '-');
 
-/** Stable, so the memo'd bar is not handed a new empty list every render. */
 const NO_TABS = [];
 
 const TAB_ICONS = {
@@ -20,14 +18,6 @@ const TAB_ICONS = {
   'Change requests': FileDiff,
 };
 
-/**
- * Controlled tab nav — a pure function of `activeTab`, so switching tabs
- * only re-renders this and whichever tab panel is now active, not the
- * stat cards or hero above it.
- *
- * The active pill is a single shared element animated between tabs via
- * layoutId, rather than four elements cross-fading — so it physically slides.
- */
 function ProjectTabs({ activeTab, onChange, counts = {}, hidden = NO_TABS }) {
   return (
     <div className="mb-5 flex w-fit max-w-full gap-1 overflow-x-auto rounded-2xl bg-[#f4f3f1] p-1.5">

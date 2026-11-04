@@ -3,18 +3,6 @@ import { workflowRepository } from '@/repositories/workflowRepository';
 import { identityRepository } from '@/repositories/identityRepository';
 import { mapBlockedRun, mapProblem } from '@/models/workflow';
 
-/**
- * Workflow definitions and the builder's reference data.
- *
- * Runs and tasks live in their own slices — they are independent domains with
- * their own loading lifecycles, and folding them in here would make every
- * task poll invalidate the builder's state.
- */
-
-// ---------------------------------------------------------------------------
-// Async thunks
-// ---------------------------------------------------------------------------
-
 export const fetchDefinitions = createAsyncThunk(
   'workflow/fetchDefinitions',
   async (filters = {}, { rejectWithValue }) => {
@@ -54,34 +42,15 @@ export const saveDefinition = createAsyncThunk(
     try {
       return await workflowRepository.saveDefinition(payload);
     } catch (err) {
-      /*
-       * The ONE rejection in this module that is an object rather than a
-       * string, because the caller genuinely branches on it: a stale save comes
-       * back 409 and needs a different *offer* — reload and reapply — rather
-       * than the server's sentence.
-       *
-       * **So it must never be rendered raw.** `saveDefinition.rejected` puts
-       * this in `state.saveError`, which nothing reads today; if something ever
-       * does, it has to take `.message`. Passing an object where React expects
-       * a child throws, and that is exactly how `completeTask` broke My Tasks
-       * on 2026-09-13.
-       */
       return rejectWithValue({
         message: err.message || 'Failed to save this workflow.',
         status: err.status ?? null,
-        // WF-052: somebody else saved, published or discarded the draft.
         code: err.code ?? null,
       });
     }
   }
 );
 
-/**
- * Why a publish or a go-back was refused, as an object the screen branches on
- * (2026-10-11): WF-053 carries the draft's `Problems`, WF-024 the `BlockedRuns`
- * that stopped it. Like saveDefinition's, **never render it raw** — take
- * `.message`.
- */
 function publishRefusal(err, fallback) {
   const body = err.body ?? {};
   return {
@@ -93,7 +62,6 @@ function publishRefusal(err, fallback) {
   };
 }
 
-/** The draft becomes the next version, live. Resolves `{ definitionId, version }`. */
 export const publishDefinition = createAsyncThunk(
   'workflow/publishDefinition',
   async (code, { rejectWithValue }) => {
@@ -105,7 +73,6 @@ export const publishDefinition = createAsyncThunk(
   }
 );
 
-/** Makes an existing version live again. Rejects with the same object as a publish. */
 export const activateDefinition = createAsyncThunk(
   'workflow/activateDefinition',
   async (definitionId, { rejectWithValue }) => {
@@ -118,7 +85,6 @@ export const activateDefinition = createAsyncThunk(
   }
 );
 
-/** Throws the draft away — DeleteDefinition with the draft's id. Rejects with the message. */
 export const discardDraft = createAsyncThunk(
   'workflow/discardDraft',
   async (draftId, { rejectWithValue }) => {
@@ -131,11 +97,6 @@ export const discardDraft = createAsyncThunk(
   }
 );
 
-/**
- * The condition builder's field catalog, cached per target type — the builder
- * switches between them and refetching on every switch would make the operator
- * dropdown flicker for data that does not change.
- */
 export const fetchFields = createAsyncThunk(
   'workflow/fetchFields',
   async (targetTypeKey, { rejectWithValue }) => {
@@ -148,7 +109,6 @@ export const fetchFields = createAsyncThunk(
   }
 );
 
-/** Events, actions and target types — the three builder dropdowns, fetched together. */
 export const fetchBuilderCatalogs = createAsyncThunk(
   'workflow/fetchBuilderCatalogs',
   async (_, { rejectWithValue }) => {
@@ -165,19 +125,6 @@ export const fetchBuilderCatalogs = createAsyncThunk(
   }
 );
 
-/**
- * Resolves the people a definition's `humanTask` steps are assigned to.
- *
- * Assignees are stored as bare GUIDs, so a loaded workflow arrives with ids and
- * no names. This looks up only the ids not already cached, using the endpoint's
- * `ids=` form — which returns people **whether or not they are still active**,
- * so a task assigned to somebody who has since left still shows their name
- * rather than a raw GUID.
- *
- * Kept apart from `usersSlice`, which holds the admin screen's full directory:
- * the builder's typeahead would otherwise keep overwriting that list with
- * search results.
- */
 export const resolveAssignees = createAsyncThunk(
   'workflow/resolveAssignees',
   async (ids, { getState, rejectWithValue }) => {
@@ -187,9 +134,6 @@ export const resolveAssignees = createAsyncThunk(
 
     try {
       const found = await identityRepository.getAuthorizedUsers({ ids: requested });
-      // `requested` comes back too, so the reducer can tell an id that resolved
-      // to a deactivated person from one the directory no longer knows at all.
-      // Both are unusable as assignees, for different reasons worth naming.
       return { requested, found };
     } catch (err) {
       return rejectWithValue(err.message || 'Failed to look up assignees.');
@@ -213,8 +157,6 @@ export const approveApiDomain = createAsyncThunk(
   async (args, { dispatch, rejectWithValue }) => {
     try {
       await workflowRepository.approveApiDomain(args);
-      // ApproveApiDomain's response body is documented only as "string" and its
-      // meaning is unconfirmed, so refetch rather than guess at its shape.
       return await dispatch(fetchApiDomains()).unwrap();
     } catch (err) {
       return rejectWithValue(err.message || 'Failed to approve this host.');
@@ -234,12 +176,6 @@ export const setApiDomainEnabled = createAsyncThunk(
   }
 );
 
-/**
- * The engine's own limits.
- *
- * Reading them is `Workflows.Manage` — drawing a workflow needs to know what it
- * will be measured against. Changing one is `Workflows.ManageSettings`.
- */
 export const fetchSettings = createAsyncThunk(
   'workflow/fetchSettings',
   async (_, { rejectWithValue }) => {
@@ -251,12 +187,6 @@ export const fetchSettings = createAsyncThunk(
   }
 );
 
-/**
- * Change one limit.
- *
- * Returns just the row that changed, which is what the reducer merges — a
- * refetch would throw away anything else being edited on the same screen.
- */
 export const updateSetting = createAsyncThunk(
   'workflow/updateSetting',
   async (args, { rejectWithValue }) => {
@@ -268,16 +198,11 @@ export const updateSetting = createAsyncThunk(
   }
 );
 
-// ---------------------------------------------------------------------------
-// Slice
-// ---------------------------------------------------------------------------
-
 const initialState = {
   definitions: [],
   isLoading: false,
   error: null,
 
-  /** The definition open in the builder. */
   current: null,
   currentLoading: false,
   currentError: null,
@@ -288,7 +213,6 @@ const initialState = {
   versions: [],
   versionsLoading: false,
 
-  /** Field catalog keyed by targetTypeKey — see fetchFields. */
   fieldsByTargetType: {},
   fieldsLoading: false,
 
@@ -303,10 +227,8 @@ const initialState = {
   settings: [],
   settingsLoading: false,
   settingsError: null,
-  /** key currently being saved — one row spins without freezing the panel. */
   savingSettingKey: null,
 
-  /** Assignee id -> user, filled on demand. See resolveAssignees. */
   assigneesById: {},
 };
 
@@ -368,9 +290,6 @@ const workflowSlice = createSlice({
         state.versionsLoading = false;
       });
 
-    // saveDefinition returns { id, code, version } — an identity, not a
-    // definition. Nothing is merged into `current` from it: the builder either
-    // stays on what the user is editing or reloads the saved version by id.
     builder
       .addCase(saveDefinition.pending, (state) => {
         state.isSaving = true;
@@ -383,15 +302,6 @@ const workflowSlice = createSlice({
         state.isSaving = false;
         state.saveError = action.payload;
       });
-
-    // activateDefinition intentionally has no fulfilled case.
-    //
-    // Publishing changes two things at once — this version goes live and the
-    // previous one stands down — and the id being activated belongs to a
-    // *version*, which the definitions list does not carry. There is no row here
-    // that can be honestly patched from it, so the caller refetches both the
-    // version list and the definitions list instead. Anything less would leave
-    // `activeVersion` stale while `isPublished` claimed otherwise.
 
     builder
       .addCase(fetchFields.pending, (state) => {
@@ -444,8 +354,6 @@ const workflowSlice = createSlice({
       })
       .addCase(updateSetting.fulfilled, (state, action) => {
         state.savingSettingKey = null;
-        // Merge the one row that came back rather than refetching: another row
-        // may be mid-edit on the same screen.
         state.settings = state.settings.map((row) =>
           row.key === action.payload.key ? action.payload : row
         );
@@ -461,9 +369,6 @@ const workflowSlice = createSlice({
         if (user.id) state.assigneesById[user.id] = user;
       }
 
-      // Every requested id gets an entry, so an id the directory did not return
-      // is recorded as gone rather than looking merely unresolved — otherwise it
-      // would be re-requested forever and never reported.
       for (const id of requested) {
         if (!state.assigneesById[id]) state.assigneesById[id] = { id, missing: true };
       }
@@ -481,10 +386,6 @@ const workflowSlice = createSlice({
 });
 
 export const { clearCurrentDefinition, clearSaveError, clearError } = workflowSlice.actions;
-
-// ---------------------------------------------------------------------------
-// Selectors
-// ---------------------------------------------------------------------------
 
 export const selectDefinitions = (state) => state.workflow.definitions;
 export const selectDefinitionsLoading = (state) => state.workflow.isLoading;
@@ -511,19 +412,13 @@ export const selectApiDomainsLoading = (state) => state.workflow.apiDomainsLoadi
 
 export const selectFieldsByTargetType = (state) => state.workflow.fieldsByTargetType;
 
-/** Fields for one target type. Returns a stable empty array when not yet loaded. */
 const EMPTY_FIELDS = [];
 export const makeSelectFields = (targetTypeKey) =>
   createSelector([selectFieldsByTargetType], (byType) => byType[targetTypeKey] ?? EMPTY_FIELDS);
 
-/**
- * Only the fields a query or a schedule scan may search. Reading a field in a
- * condition is always allowed; searching on one is not.
- */
 export const makeSelectFilterableFields = (targetTypeKey) =>
   createSelector([makeSelectFields(targetTypeKey)], (fields) => fields.filter((f) => f.filterable));
 
-/** Approved hosts that are currently enabled — what an http.call may reach. */
 export const selectEnabledApiDomains = createSelector([selectApiDomains], (domains) =>
   domains.filter((d) => d.isEnabled)
 );

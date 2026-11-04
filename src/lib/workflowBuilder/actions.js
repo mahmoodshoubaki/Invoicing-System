@@ -1,15 +1,11 @@
-/** Every edit the builder's reducer understands. */
-
 export const BuilderActions = {
   LOADED: 'loaded',
   RESET: 'reset',
   MARK_SAVED: 'markSaved',
-  /** The open draft was published: it is now that version, live, and there is no draft. */
   MARK_PUBLISHED: 'markPublished',
   SET_FIELD: 'setField',
   SET_TARGET_TYPE: 'setTargetType',
   SET_TRIGGER: 'setTrigger',
-  /** The workflow-level notification checkboxes — `graph.notifications`. */
   SET_RUN_NOTIFICATIONS: 'setRunNotifications',
   ADD_VARIABLE: 'addVariable',
   UPDATE_VARIABLE: 'updateVariable',

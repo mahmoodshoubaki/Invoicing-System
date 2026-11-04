@@ -25,7 +25,6 @@ export default function GroupsPage() {
   const loading = useSelector(selectGroupsLoading);
   const error = useSelector(selectGroupsError);
 
-  // undefined: closed; null: a new group; a group: editing it.
   const [editing, setEditing] = useState(undefined);
   const [deleting, setDeleting] = useState(null);
   const [deleteBusy, setDeleteBusy] = useState(false);

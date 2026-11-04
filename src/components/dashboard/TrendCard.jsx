@@ -9,14 +9,7 @@ import { CHROME } from '@/theme/vizPalette';
 import NotAvailable from './NotAvailable';
 
 /**
- * Revenue, invoiced and collected for the months up to the picked one.
- *
- * @param {{
- *   source: { status: string, data: Array|null, error: Error|null, reload: () => void },
- *   months: number,
- *   periodLabel: string,
- *   className?: string,
- * }} props
+ * @param {{ source: { status: string, data: Array|null, error: Error|null, reload: () => void }, months: number, periodLabel: string, className?: string, }} props
  */
 export default function TrendCard({ source, months, periodLabel, className = '' }) {
   return (

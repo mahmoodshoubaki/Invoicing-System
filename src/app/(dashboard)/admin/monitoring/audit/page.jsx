@@ -14,17 +14,12 @@ import { NOTIFICATION_CONFIG_AREAS, NOTIFICATION_PERMISSIONS, WORKFLOW_CONFIG_AR
 import { notificationRepository } from '@/repositories/notificationRepository';
 import { workflowRepository } from '@/repositories/workflowRepository';
 
-/**
- * The audit's parts, each with what reading it needs. Passwords and secret keys
- * show only as "changed", never their value.
- */
 const VIEWS = [
   { key: 'requests', label: 'Send requests', permission: NOTIFICATION_PERMISSIONS.MANAGE_SETTINGS },
   { key: 'notifications', label: 'Notification changes', permission: NOTIFICATION_PERMISSIONS.MANAGE_SETTINGS },
   { key: 'workflow', label: 'Workflow changes', permission: WORKFLOW_PERMISSIONS.MANAGE },
 ];
 
-// Module-level, so each is one stable function for the list to load with.
 const loadNotificationChanges = (filters) => notificationRepository.getConfigChanges(filters);
 const loadWorkflowChanges = (filters) => workflowRepository.getConfigChanges(filters);
 
@@ -35,7 +30,6 @@ function AuditContent() {
   const asked = params.get('view');
   const [view, setView] = useState(() => (views.some((v) => v.key === asked) ? asked : views[0]?.key ?? null));
 
-  // Type names for the requests filter. GetTypes needs Notifications.View; without it the filter takes a number.
   const canReadTypes = allow(can, NOTIFICATION_PERMISSIONS.VIEW);
   const [types, setTypes] = useState(null);
   useEffect(() => {
@@ -63,7 +57,6 @@ function AuditContent() {
   );
 }
 
-/** Admin › Monitoring › Audit. `useSearchParams` needs a Suspense boundary above it. */
 export default function AuditPage() {
   return (
     <Suspense fallback={null}>

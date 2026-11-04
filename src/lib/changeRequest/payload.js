@@ -1,19 +1,3 @@
-/**
- * A change request as the API takes it (2026-10-19) — only what changes, as
- * text, never an old value (the server reads those):
- *
- *   fieldChanges  { targetTypeKey: 3, targetId: "<item id>", fieldName, newValue }
- *                 { targetTypeKey: 4, targetId: "<projectUID>", fieldName, newValue }
- *   cycleChanges  { boqItemId, cycleId, newPlannedDate } — no cycleId adds a
- *                 cycle, no date removes one, both move one
- *
- * Numbers go as "15", dates as "2026-12-01". The same body raises a request and
- * (with its id) sends a returned one again — whole.
- *
- * Alongside the body come the indexes that tie a refusal's `fieldChanges[i]` /
- * `cycleChanges[i]` back to the box it is about.
- */
-
 import { CR_TARGET } from '@/constants/changeRequests';
 import { ITEM_FIELDS, changedItemFields, cycleChangesOf } from './itemDraft';
 import { PROJECT_FIELDS, changedProjectFields } from './projectDraft';
@@ -28,7 +12,7 @@ function asText(key, value) {
 }
 
 /**
- * @param {{ draft: Object, subProjects: Array }} input  the draft, and the sub-projects as loaded
+ * @param {{ draft: Object, subProjects: Array }} input
  * @returns {{ body: Object, fieldIndex: Array, cycleIndex: Array, newItemIndex: string[] }}
  */
 export function createChangeRequestBody({ draft, subProjects }) {
@@ -38,7 +22,6 @@ export function createChangeRequestBody({ draft, subProjects }) {
   const cycleIndex = [];
 
   for (const change of changedProjectFields(subProjects, draft.projectEdits)) {
-    // The server applies contract dates to the main project; no id is named.
     fieldChanges.push({ targetTypeKey: CR_TARGET.PROJECT, targetId: '', fieldName: change.key, newValue: asText(change.key, change.to) });
     fieldIndex.push({ kind: 'project', uid: change.uid, key: change.key });
   }
@@ -72,14 +55,6 @@ export function createChangeRequestBody({ draft, subProjects }) {
   };
 }
 
-/**
- * A refusal's `errors` (BOQ-016), put back where they belong: `fieldChanges[i]`
- * under that field's box, `cycleChanges[i]` under that item's plan,
- * `reasonKeys` under the reasons, `additionalDetails` under the details, and
- * `changes` (or anything else) on the request as a whole — each of those
- * messages kept apart (2026-10-21), so they can be grouped and read one by
- * one rather than as one run-on paragraph.
- */
 export function mapServerErrors(errors, { fieldIndex, cycleIndex, newItemIndex = [] }) {
   const result = {
     reasons: null, typeKeys: null, otherTypeText: null, projectEffectKey: null, details: null,

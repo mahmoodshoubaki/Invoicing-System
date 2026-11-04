@@ -1,7 +1,5 @@
 'use client';
 
-/** A branch on the canvas: the steps on each side of its condition. */
-
 import { memo } from 'react';
 
 import StepList from '@/components/workflow/builder/StepList';

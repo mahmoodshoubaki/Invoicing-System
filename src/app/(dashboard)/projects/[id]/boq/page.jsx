@@ -37,10 +37,6 @@ import {
 import { useToast } from '@/hooks/useToast';
 
 export default function ProjectBOQPage() {
-  // The route param is the project code — client-side navigations don't
-  // decode %2F etc. back out of the segment the way SSR does, so decode it
-  // ourselves. Safe either way: an already-decoded value passes through
-  // decodeURIComponent unchanged.
   const { id: rawId } = useParams();
   const projectCode = decodeURIComponent(rawId);
   const encoded = encodeURIComponent(projectCode);
@@ -67,7 +63,6 @@ export default function ProjectBOQPage() {
   const [historyItemId, setHistoryItemId] = useState(null);
 
   const canCreate = can('Boqs', 'Create');
-  // Boqs.Update still covers the BOQ's files; editing an item is administrator only.
   const canUpdate = can('Boqs', 'Update');
   const canEditItem = can('System', 'Administrator');
   const canDelete = can('Boqs', 'Delete');
@@ -174,8 +169,6 @@ export default function ProjectBOQPage() {
       label: 'Item',
       render: (val, row) => (
         <div className="min-w-0 max-w-xs">
-          {/* The name opens the item. Read-only, so it is offered to everyone
-              who can see the list rather than only to whoever may edit. */}
           <Link
             href={ROUTES.PROJECT_BOQ_ITEM(encoded, row.id)}
             onClick={(e) => e.stopPropagation()}
@@ -212,7 +205,6 @@ export default function ProjectBOQPage() {
       key: 'statusId',
       label: 'Status',
       sortable: false,
-      // Who its workflow is waiting on, under the status (2026-10-21) — on every item row.
       render: (val, row) => {
         const waiting = waitingOnText(row.waitingOn);
         return (
@@ -257,9 +249,6 @@ export default function ProjectBOQPage() {
               <Button variant="ghost" size="xs" icon={Edit2} title="Edit" />
             </Link>
           )}
-          {/* No per-row Approve: approving BOQ items is moving to a workflow run
-              over the selected items (parked — see WORKFLOW-PLAN.md,
-              "Parked feature — BOQ items approval"). The button here was a stub. */}
           {canDelete && (
             <Button
               variant="ghost" size="xs" icon={Trash2}
@@ -333,7 +322,6 @@ export default function ProjectBOQPage() {
               <Link href={`/projects/${encoded}`}>
                 <Button variant="ghost" icon={ChevronLeft} size="sm">Back</Button>
               </Link>
-              {/* A formal change to the approved BOQ, decided by an approver (2026-10-18). */}
               {can('ChangeRequests', 'Create') && hasMainProject(subProjects) && (
                 <Link href={ROUTES.PROJECT_CHANGE_REQUEST_NEW(encoded)}>
                   <Button variant="outline" icon={FileDiff} size="sm">New change request</Button>

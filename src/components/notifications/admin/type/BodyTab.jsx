@@ -7,17 +7,7 @@ import PlainTextField from './PlainTextField';
 import { FALLBACK_LANGUAGES, SUBJECT_MAX } from './templateDraft';
 
 /**
- * What a version says: the language it is sent in, its priority, whether it is
- * HTML, and its two subjects and two bodies. HTML bodies get the visual editor
- * and the full width; plain-text ones sit side by side. Every one of them —
- * subjects and plain bodies too — has the Value menu for `{{ Name }}`.
- *
- * @param {{
- *   draft: Object, update: (patch) => void, readOnly: boolean,
- *   languages: Array, priorities: Array,
- *   valueNames: string[],  what every "Value" menu offers
- *   versionKey: string,    the version being edited — a new one reopens each body in the view that suits it
- * }} props
+ * @param {{ draft: Object, update: (patch) => void, readOnly: boolean, languages: Array, priorities: Array, valueNames: string[], what every "Value" menu offers versionKey: string, the version being edited — a new one reopens each body in the view that suits it }} props
  */
 export default function BodyTab({ draft, update, readOnly, languages, priorities, valueNames, versionKey }) {
   const languageOptions = languages.length ? languages : FALLBACK_LANGUAGES;

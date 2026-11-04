@@ -5,7 +5,6 @@ import FormSection from '@/components/common/FormSection';
 import Button from '@/components/common/Button';
 import { formatCurrency } from '@/utils/formatters';
 
-/** The project the request is for, with its revenue and WIP as reference while filling it in. */
 export default function ProjectSummarySection({ project, projectCode, projectFinancials, currency }) {
   return (
     <FormSection

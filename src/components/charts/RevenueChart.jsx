@@ -33,8 +33,6 @@ function CustomTooltip({ active, payload, label, currency }) {
 }
 
 /**
- * RevenueChart — Recharts AreaChart showing monthly revenue trend.
- *
  * @param {{ data: Array<{month: string, revenue: number, invoiced: number, collected: number}> }} props
  */
 export default function RevenueChart({ data = [] }) {

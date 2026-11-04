@@ -13,28 +13,11 @@ import {
   activateDefinition, discardDraft, fetchDefinitions, fetchDefinitionVersions, publishDefinition,
 } from '@/store/slices/workflowSlice';
 
-/** WF-053: the draft still has problems. WF-054: there is no draft. */
 const HAS_PROBLEMS = 'WF-053';
 const NO_DRAFT = 'WF-054';
 
 /**
- * Making things live from the builder (2026-10-11), and throwing the draft away.
- *
- *   publish the draft   PublishDefinition — it becomes the next version, live
- *   make vN live        ActivateDefinition — going back to an older version
- *   discard the draft   DeleteDefinition with the draft's id
- *
- * Both ways of going live confirm first (`pending`) with what they will do to
- * running workflows, and both can be refused 409 WF-024 by runs waiting in a
- * stage that changed — those are kept (`blockedRuns`) and the dialog stays open
- * to list them. A publish refused for problems (WF-053) hands its list to the
- * save hook, which shows it like a save's.
- *
- * @param {{
- *   state: Object, dispatch: Function, versions: Array,
- *   save: ReturnType<import('./useBuilderSave').useBuilderSave>,
- *   reload: () => void,
- * }} options
+ * @param {{ state: Object, dispatch: Function, versions: Array, save: ReturnType<import('./useBuilderSave').useBuilderSave>, reload: () => void, }} options
  */
 export function useBuilderPublish({ state, dispatch, versions, save, reload }) {
   const router = useRouter();
@@ -69,7 +52,6 @@ export function useBuilderPublish({ state, dispatch, versions, save, reload }) {
     setBlockedRuns([]);
   }, []);
 
-  /** What a refusal means for the screen. True when the dialog should stay open. */
   const refused = useCallback((refusal, what) => {
     if (refusal?.status === 409 && refusal.blockedRuns?.length) {
       setBlockedRuns(refusal.blockedRuns);
@@ -92,8 +74,6 @@ export function useBuilderPublish({ state, dispatch, versions, save, reload }) {
 
   const confirm = useCallback(async () => {
     if (!pending) return;
-    // Read BEFORE going live — afterwards every run is on the new version, so
-    // this is the only moment the answer is known.
     const runsMoved = versionsWithRunsToMove(versions, pending.version).length > 0;
 
     setBusy(true);
@@ -138,7 +118,6 @@ export function useBuilderPublish({ state, dispatch, versions, save, reload }) {
     forgetProblems();
     dispatchRedux(fetchDefinitions());
 
-    // A workflow that only ever had a draft is gone with it.
     if (!hasPublishedOrSavedVersions(versions)) {
       toast.success('Draft discarded', 'It was never published, so the workflow is gone too.');
       router.push(ROUTES.WORKFLOW);

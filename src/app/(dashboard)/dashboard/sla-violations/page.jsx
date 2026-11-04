@@ -17,7 +17,6 @@ import { pageInfo } from '@/lib/pageInfo';
 
 const BREADCRUMBS = [{ label: 'Dashboard', href: ROUTES.DASHBOARD }, { label: 'SLA violations' }];
 
-/** Every open workflow task past its due date, the most late first. */
 export default function SlaViolationsPage() {
   const router = useRouter();
   const [projectStatus, setProjectStatus] = useUrlParam('projectStatus');

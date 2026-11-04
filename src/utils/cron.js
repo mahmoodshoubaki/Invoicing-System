@@ -1,20 +1,3 @@
-/**
- * Standard five-field cron, in both directions.
- *
- *   ┌ minute      0-59
- *   │ ┌ hour      0-23
- *   │ │ ┌ day of month  1-31
- *   │ │ │ ┌ month       1-12
- *   │ │ │ │ ┌ day of week  0-6, Sunday = 0
- *   0 9 * * 1   →  09:00 every Monday
- *
- * Most schedules people actually want are one of four shapes, so the builder
- * offers those as a form and keeps a raw field for everything else. This module
- * is the translation between the two, plus a plain-English description so the
- * raw field is never the only thing telling an author what they typed.
- */
-
-/** Sunday-first, matching cron's own day-of-week numbering. */
 export const WEEKDAYS = [
   { value: 0, label: 'Sunday', short: 'Sun' },
   { value: 1, label: 'Monday', short: 'Mon' },
@@ -25,12 +8,6 @@ export const WEEKDAYS = [
   { value: 6, label: 'Saturday', short: 'Sat' },
 ];
 
-/**
- * The working week here is Sunday to Thursday — Friday and Saturday are the
- * weekend. Same rule the BOQ invoicing tracker uses for working days, kept
- * identical on purpose so the two features cannot disagree about what a
- * working day is.
- */
 export const WORKING_DAYS_CRON = '0-4';
 
 export const CRON_FREQUENCY = {
@@ -43,20 +20,17 @@ export const CRON_FREQUENCY = {
 
 const pad = (n) => String(n).padStart(2, '0');
 
-/** "09:00" from hour and minute numbers. */
 export function formatTime(hour, minute) {
   return `${pad(hour)}:${pad(minute)}`;
 }
 
 /**
- * Builds a cron expression from the friendly form.
- *
  * @param {Object} parts
- * @param {string} parts.frequency  one of CRON_FREQUENCY
- * @param {number} [parts.hour]     0-23
- * @param {number} [parts.minute]   0-59
- * @param {number} [parts.weekday]  0-6, for WEEKLY
- * @param {number} [parts.monthDay] 1-31, for MONTHLY
+ * @param {string} parts.frequency
+ * @param {number} [parts.hour]
+ * @param {number} [parts.minute]
+ * @param {number} [parts.weekday]
+ * @param {number} [parts.monthDay]
  * @returns {string}
  */
 export function buildCron({ frequency, hour = 9, minute = 0, weekday = 1, monthDay = 1 }) {
@@ -75,12 +49,6 @@ export function buildCron({ frequency, hour = 9, minute = 0, weekday = 1, monthD
 }
 
 /**
- * Reads an expression back into the friendly form, so opening a saved workflow
- * shows the form rather than dropping the author into the raw field.
- *
- * Returns `frequency: 'custom'` for anything outside the four shapes — ranges,
- * step values, lists — which the raw field still handles perfectly well.
- *
  * @param {string} expression
  * @returns {{frequency: string, hour: number, minute: number, weekday: number, monthDay: number}}
  */
@@ -119,10 +87,6 @@ const ORDINAL_SUFFIX = (n) => {
 };
 
 /**
- * Plain English for an expression, or null when it is too unusual to describe.
- * A null means "show the raw expression and say nothing more" — inventing a
- * confident description of a cron nobody parsed would be worse than silence.
- *
  * @param {string} expression
  * @returns {string|null}
  */
@@ -130,8 +94,6 @@ export function describeCron(expression) {
   const parts = String(expression ?? '').trim().split(/\s+/);
   if (parts.length !== 5) return null;
 
-  // The background jobs' sub-hourly shapes — every minute, every N minutes,
-  // hourly at a minute — which the four friendly shapes below do not cover.
   const [min, hr, dom, mon, dow] = parts;
   if (hr === '*' && dom === '*' && mon === '*' && dow === '*') {
     if (min === '*') return 'Every minute';
@@ -158,11 +120,6 @@ export function describeCron(expression) {
 }
 
 /**
- * Shallow validity check — five fields, each made of characters cron allows.
- * Deliberately not a full parser: the server owns the real validation, and a
- * strict front-end check would reject valid expressions this app has no
- * business having opinions about.
- *
  * @param {string} expression
  * @returns {boolean}
  */

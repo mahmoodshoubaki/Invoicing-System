@@ -31,22 +31,6 @@ import { SYSTEM_PERMISSIONS } from '@/constants/notifications';
 import { ROUTES } from '@/constants/routes';
 import { CHROME } from '@/theme/vizPalette';
 
-/**
- * One change request (2026-10-19) — ChangeRequests.View, and the server shows
- * it only to whoever may see it (ViewAll, its requester, or whoever its
- * workflow waits on). The summary first, then every change old → new.
- *
- * A request sent back (Returned) can be edited and sent again by its requester,
- * when that requester is a System.Administrator — the server's `canEdit` says
- * requester + Returned, and UpdateChangeRequest needs System.Administrator.
- *
- * A workflow can also hand the request back through a task (2026-10-20) — it
- * stays Submitted then, so who has it is read from `waitingOn`, and the task
- * itself is answered here when it is the signed-in person's.
- *
- * "Workflow runs" (2026-10-21) lists every run on the request, as on an
- * invoice — only for WorkflowInstances.View, which the runs need.
- */
 export default function ChangeRequestPage() {
   const { id: rawId, crId } = useParams();
   const projectCode = decodeURIComponent(rawId);
@@ -74,7 +58,6 @@ export default function ChangeRequestPage() {
 
   return (
     <div className="mx-auto max-w-7xl">
-      {/* Rendered only for someone who may see runs, so it never asks for them otherwise. */}
       {canViewRuns && cr && (
         <TargetRunsModal
           open={runsOpen}

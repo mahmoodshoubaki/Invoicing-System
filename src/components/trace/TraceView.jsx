@@ -23,7 +23,6 @@ import { allow } from '@/constants/workflowPermissions';
 
 const MAX_LENGTH = 64;
 
-/** Each module its own quiet colour, so a long trace reads as two threads. */
 const MODULE_LOOK = {
   Workflow: { tone: STATUS.info, icon: GitBranch },
   Notifications: { tone: '#c2562c', icon: Bell },
@@ -34,7 +33,6 @@ function timeOnly(value) {
   return new Date(value).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
-/** The trace before or after this one on the same runs — a click away. */
 function LinkedTraces({ label, icon: Icon, links, traceHref }) {
   if (links.length === 0) return null;
   return (
@@ -69,7 +67,6 @@ function TraceContent({ traceHref }) {
   const [error, setError] = useState(null);
   const requestRef = useRef(0);
 
-  // The box follows the URL when a linked trace is opened.
   const [shownId, setShownId] = useState(id);
   if (shownId !== id) {
     setShownId(id);
@@ -212,11 +209,6 @@ function TraceContent({ traceHref }) {
   );
 }
 
-/**
- * Everything one tracking number caused, across modules — Admin › Monitoring › Trace.
- *
- * `useSearchParams` needs a Suspense boundary above it in the App Router.
- */
 export default function TraceView() {
   return (
     <Suspense fallback={null}>

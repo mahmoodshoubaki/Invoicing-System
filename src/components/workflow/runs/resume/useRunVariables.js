@@ -11,11 +11,6 @@ import { variableRows } from '@/lib/runVariables';
 const NONE = [];
 
 /**
- * A run's values as rows to correct (2026-10-21), loaded as the resume dialog
- * opens — and the names of the people its person values hold, so a picker
- * shows a name rather than an id. Only ids are looked up; a name that cannot
- * be found leaves the id showing.
- *
  * @param {string} instanceId
  * @returns {{ status: 'loading'|'ready'|'error', rows: Array, people: Object, error: Error|null }}
  */

@@ -13,14 +13,7 @@ import ReasonPicker from './ReasonPicker';
 const NO_REASON = { reasonKey: '', otherReason: '' };
 
 /**
- * Answering a to-do with a button that asks for a reason, a comment, or both.
- * The server refuses a missing one too (WF-019, WF-059); this saves the round trip.
- *
- * @param {{
- *   task: Object, outcome: Object, open: boolean, busy: boolean, onClose: () => void,
- *   onConfirm: (answer: { comment: string|null, reasonKey: string, otherReason: string }) => void,
- *   withComment?: boolean,  false where the comment box is already on the page
- * }} props
+ * @param {{ task: Object, outcome: Object, open: boolean, busy: boolean, onClose: () => void, onConfirm: (answer: { comment: string|null, reasonKey: string, otherReason: string }) => void, withComment?: boolean, false where the comment box is already on the page }} props
  */
 export default function TaskAnswerDialog({ task, outcome, open, busy, onClose, onConfirm, withComment = true }) {
   const [comment, setComment] = useState('');
@@ -49,8 +42,6 @@ export default function TaskAnswerDialog({ task, outcome, open, busy, onClose, o
       footer={
         <>
           <Button variant="outline" onClick={onClose} disabled={busy}>Cancel</Button>
-          {/* Coloured as the author coloured the outcome, so the confirm button
-              reads as the same choice the row offered, not a generic OK. */}
           <button
             type="button"
             disabled={busy || (tried && (commentMissing || Boolean(problem)))}

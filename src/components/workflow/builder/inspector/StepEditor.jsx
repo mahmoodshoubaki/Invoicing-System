@@ -19,16 +19,7 @@ import { QueryEditor } from '@/components/workflow/builder/containers/QueryEdito
 import { RepeatEditor } from '@/components/workflow/builder/containers/RepeatEditor';
 
 /**
- * The settings of one step, at one of its panel's tabs (stepTabs).
- *
- * `ctx` is the context AT the step — inside a For each it includes the loop
- * item's fields — so conditions and value menus here offer what the step can
- * really read.
- *
- * @param {{
- *   step: Object, tab: string, ctx: Object, stageId: string,
- *   insideParallelBranch: boolean, onChange: (patch: Object) => void,
- * }} props
+ * @param {{ step: Object, tab: string, ctx: Object, stageId: string, insideParallelBranch: boolean, onChange: (patch: Object) => void, }} props
  */
 function StepEditor({ step, tab, ctx, stageId, insideParallelBranch, onChange }) {
   const fields = ctx.fields;

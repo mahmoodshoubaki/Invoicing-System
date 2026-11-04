@@ -4,15 +4,6 @@ import { motion } from 'motion/react';
 import { CHROME, SERIES } from '@/theme/vizPalette';
 
 /**
- * Ranked bars for one measure split across nominal categories (revenue by
- * stream, say).
- *
- * Every bar is the SAME hue on purpose. These categories have no natural
- * order, so tinting each one differently — or ramping them darker-where-bigger
- * — would double-encode length as colour and burn the only free channel on
- * information the bar already shows. Length ranks them; colour just says
- * "this is the measure".
- *
  * @param {{items: Array<{label: string, value: number}>, format?: Function, color?: string}} props
  */
 export default function MetricBars({ items = [], format = (v) => v, color = SERIES[0], emptyMessage = 'Nothing to show.' }) {
@@ -29,8 +20,6 @@ export default function MetricBars({ items = [], format = (v) => v, color = SERI
       data-motion
       className="flex flex-col gap-3"
       initial="hidden"
-      // `animate`, not a one-shot `whileInView` — a row added after the
-      // container has played would otherwise inherit `hidden` and stay invisible.
       animate="show"
       variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
     >

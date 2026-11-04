@@ -8,35 +8,18 @@ import { CLIP_KIND, copyItems, joinNames, prepareStagePaste, prepareStepPaste } 
 import { stageMenuItems, stepMenuItems, workflowMenuItems } from '@/components/workflow/builder/menu/cardMenus';
 import { stepTabs } from '@/components/workflow/builder/stepTabs';
 
-/** Whether a list sits inside a parallel branch, at any depth — from its path alone. */
 const inBranch = (container) => (container ?? []).some((hop) => hop.list === 'branches');
 
 /**
- * What the cards on the canvas can do beyond being looked at: open in the side
- * panel, and everything in their menus — Duplicate, Copy, Cut, Paste, Move,
- * Delete, Make it the start.
- *
- * Adding a stage or a step opens it in the panel straight away: its settings
- * live there now, so that is where its author is going next.
- *
- * @param {{
- *   state: Object, dispatch: Function,
- *   editing: ReturnType<import('./useBuilderEditing').useBuilderEditing>,
- *   clip: ReturnType<import('./useBuilderClipboard').useBuilderClipboard>,
- *   inspector: ReturnType<import('../inspector/useInspector').useInspector>,
- *   menu: ReturnType<import('../menu/useCardMenu').useCardMenu>,
- * }} options
+ * @param {{ state: Object, dispatch: Function, editing: ReturnType<import('./useBuilderEditing').useBuilderEditing>, clip: ReturnType<import('./useBuilderClipboard').useBuilderClipboard>, inspector: ReturnType<import('../inspector/useInspector').useInspector>, menu: ReturnType<import('../menu/useCardMenu').useCardMenu>, }} options
  */
 export function useCanvasActions({ state, dispatch, editing, clip, inspector, menu }) {
   const toast = useToast();
-  // The hooks hand back fresh objects every render; their handlers are stable.
-  // Depending on the handlers keeps every card on the canvas from redrawing.
   const { onAddStep, onAddStage, onMoveStep, onRemoveStep, onSetStart, onMoveStage, onRemoveStage } = editing;
   const { countFor, copyItem, cutItem, pasteSteps, pasteStages } = clip;
   const { open: openItem, openAt, showWorkflow, inspecting } = inspector;
   const openMenu = menu.open;
 
-  // -------------------------------------------------------------------------- adding
   const addStep = useCallback((stageId, container, step) => {
     const stage = state.graph.stages.find((s) => s.id === stageId);
     const size = stage ? getStepContainer(stage, container).length : 0;
@@ -54,7 +37,6 @@ export function useCanvasActions({ state, dispatch, editing, clip, inspector, me
   }, [onAddStage, openAt, state.graph.stages.length]);
 
   // -------------------------------------------------------------------------- duplicating
-  /** A copy right below the original, with new ids — a paste that needs no clipboard. */
   const duplicateStep = useCallback((where) => {
     const stage = state.graph.stages.find((s) => s.id === where.stageId);
     const step = stage ? getStepContainer(stage, where.container)[where.index] : null;

@@ -13,9 +13,6 @@ import { formatFileSize } from '@/utils/formatters';
 import { saveBlob } from '@/utils/saveBlob';
 
 /**
- * The request's files: at least one is required, and when editing at least
- * one must stay.
- *
  * @param {{ form: ReturnType<import('./useChangeRequestForm').useChangeRequestForm>, changeRequestId?: number|string|null }} props
  */
 export default function RequestFilesSection({ form, changeRequestId = null }) {

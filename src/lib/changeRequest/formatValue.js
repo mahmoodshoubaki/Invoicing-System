@@ -1,10 +1,3 @@
-/**
- * A change request's values as people read them (2026-10-19). The server sends
- * every value as text — numbers like "15", dates like "2026-12-01" — and names
- * the field; this shows money as money, a date as a date and a billing
- * frequency by its name.
- */
-
 import { formatCurrency, formatDate } from '@/utils';
 
 const MONEY = new Set(['projectValue', 'unitCost']);

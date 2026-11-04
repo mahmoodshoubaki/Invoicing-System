@@ -15,18 +15,7 @@ const NONE = [];
 const NOTHING_KEPT = { fieldChanges: [], cycleChanges: [] };
 
 /**
- * What a workflow task on a change request needs to draw it (2026-10-20): the
- * draft the form starts from — the task's own values for the parts it asks
- * for, the request as loaded for the rest — and, when it asks for the
- * request's changes, the BOQ's items, the project's EPM sub-projects and the
- * plans of the items the request touches, read as the edit page reads them.
- *
- * The request itself is read for the parts the task does not ask for. Without
- * it (somebody who may answer the task but not open the request), a task that
- * asks for both lists — or for none — still works from its own values; one
- * that asks for just one list does not, since the other would be drawn wrong.
- *
- * @param {Object} task  a GetMyTasks row about a change request
+ * @param {Object} task
  * @param {ReturnType<import('@/lib/changeRequest/taskFields').changeRequestTaskParts>} parts
  */
 export function useChangeRequestTaskData(task, parts) {
@@ -92,7 +81,6 @@ export function useChangeRequestTaskData(task, parts) {
       }
     })();
     return () => { cancelled = true; };
-    // The task's values are read once, as it opens; a reload is asked by token.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [changeRequestId, changes, token]);
 

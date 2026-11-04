@@ -17,8 +17,6 @@ function CustomTooltip({ active, payload }) {
 }
 
 /**
- * InvoiceStatusChart — Recharts PieChart (donut) for invoice status distribution.
- *
  * @param {{ data: Array<{name: string, value: number, color: string}> }} props
  */
 export default function InvoiceStatusChart({ data = [] }) {

@@ -16,8 +16,6 @@ const NONE = [];
 const firstMessage = (err) => Object.values(err?.errors ?? {}).flat().filter(Boolean)[0] ?? err?.message;
 
 /**
- * A BOQ's files. Adding and deleting need Boqs.Update.
- *
  * @param {{ boq: { id: string, attachments: Array }, canUpdate: boolean, onChanged: () => void }} props
  */
 export default function BoqFilesPanel({ boq, canUpdate, onChanged }) {

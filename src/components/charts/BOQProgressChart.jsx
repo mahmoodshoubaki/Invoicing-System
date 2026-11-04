@@ -31,8 +31,6 @@ function CustomTooltip({ active, payload, label }) {
 }
 
 /**
- * BOQProgressChart — Stacked BarChart showing BOQ status breakdown per project.
- *
  * @param {{ data: Array<{project: string, approved: number, pending: number, delayed: number, invoiced: number}> }} props
  */
 export default function BOQProgressChart({ data = [] }) {

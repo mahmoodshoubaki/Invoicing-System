@@ -1,8 +1,6 @@
 'use client';
 
 /**
- * "All" and one tab per invoice status from the lookup.
- *
  * @param {{ statuses: Array<{ id: number, label: string }>, value: number|null, onChange: (id: number|null) => void }} props
  */
 export default function InvoiceStatusTabs({ statuses, value, onChange }) {

@@ -6,24 +6,6 @@ import { addToast } from '@/store/slices/uiSlice';
 
 let toastId = 0;
 
-/**
- * Fire-and-forget notifications.
- *
- * The returned object is memoised on `dispatch`, which react-redux keeps
- * stable for the life of the store — so it is created once per component and
- * never changes identity.
- *
- * That stability is load-bearing, not tidiness. This hook is almost always
- * used inside a `useCallback` that ends up as a prop on a memoised child:
- *
- *   const handleThing = useCallback(() => { … toast.error(…) }, [toast]);
- *
- * With a fresh object literal each render, `toast` changed every time, so
- * `handleThing` changed every time, so every `memo()` beneath it was defeated
- * — silently, since the app still behaves correctly and merely re-renders the
- * world. Memoising here fixes it once for every caller rather than making each
- * one work around it with a ref.
- */
 export function useToast() {
   const dispatch = useDispatch();
 

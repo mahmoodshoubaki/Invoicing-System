@@ -10,23 +10,9 @@ const controlClass =
   'rounded-md border border-gray-200 bg-white px-2 py-1.5 text-xs outline-none focus:border-primary disabled:bg-[#fbfaf9]';
 
 /**
- * Picks a notification type. Workflows save its KEY (the number), never its id.
- *
- * The list is `GetTypes`, which needs `Notifications.View`. Somebody who can
- * draw workflows but not read that list gets a number box instead of a dead
- * dropdown — the save still checks the key (WF-050) — and is told why.
- *
- * Any type may be picked anywhere; the standard one for the slot is marked so
- * the sensible default is easy to find.
- *
- * @param {{
- *   value: number|null, onChange: (key: number|null) => void,
- *   types: Array|null,  null = the list could not be read
- *   standardType?: number, disabled?: boolean, ariaLabel?: string, placeholder?: string,
- * }} props
+ * @param {{ value: number|null, onChange: (key: number|null) => void, types: Array|null, null = the list could not be read standardType?: number, disabled?: boolean, ariaLabel?: string, placeholder?: string, }} props
  */
 function NotificationTypeSelect({ value, onChange, types, standardType, disabled = false, ariaLabel = 'Notification type', placeholder = 'Choose a notification type…' }) {
-  // Standard types first (in key order), then the admin-made ones by category.
   const groups = useMemo(() => {
     if (!types) return [];
     const standard = types.filter((t) => t.key < FIRST_CUSTOM_TYPE_KEY).sort((a, b) => a.key - b.key);
@@ -90,7 +76,6 @@ function NotificationTypeSelect({ value, onChange, types, standardType, disabled
             ))}
           </optgroup>
         ))}
-        {/* A saved key that no longer exists stays visible rather than resetting. */}
         {missing && <option value={value}>Type {value} — deleted or never existed</option>}
       </select>
 

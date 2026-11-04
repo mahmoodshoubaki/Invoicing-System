@@ -3,12 +3,11 @@
 import Skeleton from '@/components/ui/Skeleton';
 import ErrorNote from '@/components/ui/ErrorNote';
 import { ROUTES } from '@/constants/routes';
+import { withBasePath } from '@/constants/appConfig';
 import { useHangfireFrame } from './useHangfireFrame';
 
-/** Fills the window below the page header; the app shell's header, padding and footer take about 16rem. */
 const FRAME_SIZE = { height: 'calc(100vh - 16rem)', minHeight: '30rem' };
 
-/** The API's Hangfire dashboard in a frame, served from this origin through the proxy. */
 export default function HangfireFrame() {
   const { frameRef, frameKey, status, error, onLoad, retry } = useHangfireFrame();
 
@@ -24,7 +23,7 @@ export default function HangfireFrame() {
       <iframe
         key={frameKey}
         ref={frameRef}
-        src={ROUTES.HANGFIRE}
+        src={withBasePath(ROUTES.HANGFIRE)}
         title="Hangfire dashboard"
         onLoad={onLoad}
         className="block size-full border-0"

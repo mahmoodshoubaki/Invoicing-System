@@ -18,8 +18,6 @@ const COLUMNS = [
 ];
 
 /**
- * A check's or an import's problems, a page at a time, narrowed to one sheet if wanted.
- *
  * @param {{ problems: Array<{ id: number, sheet: string|null, row: number|null, path: string|null, message: string }> }} props
  */
 export default function MigrationProblems({ problems }) {

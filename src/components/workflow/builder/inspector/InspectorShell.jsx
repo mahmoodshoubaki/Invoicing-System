@@ -11,16 +11,7 @@ import { PanelSizeContext } from './PanelSizeContext';
 const headerButton = 'shrink-0 rounded-md p-1 transition-colors hover:bg-[#f1f0ee]';
 
 /**
- * The frame every view of the side panel shares: what is open (a kind and a
- * name), its tabs, a way back to the workflow's own settings, and — on a large
- * screen — Expand, which sends the panel wide for a big condition and back
- * (2026-10-12). The header stays put while the panel scrolls.
- *
- * @param {{
- *   icon: React.ComponentType, accent: string, kicker: string, title: React.ReactNode,
- *   onClose?: () => void, tabs?: Array<{key: string, label: string}>|null, tab?: string,
- *   onTab?: (key: string) => void, children: React.ReactNode,
- * }} props
+ * @param {{ icon: React.ComponentType, accent: string, kicker: string, title: React.ReactNode, onClose?: () => void, tabs?: Array<{key: string, label: string}>|null, tab?: string, onTab?: (key: string) => void, children: React.ReactNode, }} props
  */
 export default function InspectorShell({ icon: Icon, accent, kicker, title, onClose, tabs, tab, onTab, children }) {
   const size = useContext(PanelSizeContext);

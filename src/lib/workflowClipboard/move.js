@@ -1,8 +1,3 @@
-/**
- * Moving — a cut, pasted. The originals move, ids and all, so nothing pointing
- * at them breaks.
- */
-
 import { BuilderActions, builderReducer, eachStep } from '@/lib/workflowBuilderState';
 
 import { refusedInBranch } from './branchRule';
@@ -10,18 +5,8 @@ import { CLIP_KIND } from './kinds';
 import { joinNames, orderedSelection } from './selection';
 import { childLists } from './tree';
 
-/**
- * Stands in for the moved things at the destination while the originals are
- * taken out.
- *
- * Positions are indexes — a step's place is "index 2 of the list inside the
- * step at index 0" — and taking the originals out first would shift them
- * whenever an original sat earlier in the same list or in a list above. So the
- * destination is marked BEFORE anything is removed, and filled in after.
- */
 const MARKER_ID = '__moving-here__';
 
-/** Replaces the marker in a step tree with `items`, at any depth. */
 function fillMarker(steps, items) {
   return (steps ?? []).flatMap((step) => {
     if (step.id === MARKER_ID) return items;
@@ -34,7 +19,6 @@ function fillMarker(steps, items) {
   });
 }
 
-/** Takes the steps named in `ids` out of a step tree, at any depth. */
 function removeSteps(steps, ids) {
   return (steps ?? []).filter((step) => !ids.has(step.id)).map((step) => {
     const next = { ...step };
@@ -46,22 +30,15 @@ function removeSteps(steps, ids) {
   });
 }
 
-/** Whether the marker sits anywhere inside these steps. */
 function holdsMarker(steps) {
   return (steps ?? []).some((step) => step.id === MARKER_ID || childLists(step).some((list) => holdsMarker(list)));
 }
 
 /**
- * Moves stages to `index` in the flow, keeping their ids.
- *
- * Nothing that points at a stage has to change: transitions, deadlines,
- * escalations and the start stage all name it by id, and the id goes with it.
- *
  * @param {Object} graph
- * @param {string[]} ids the stages that were cut
- * @param {number} index where the first lands, counted as the flow is NOW
- * @returns {{ graph: Object, moved: string[] }} `moved` empty means nothing that
- *   was cut still exists, and `graph` is the one passed in.
+ * @param {string[]} ids
+ * @param {number} index
+ * @returns {{ graph: Object, moved: string[] }}
  */
 export function moveStages(graph, ids, index) {
   const items = orderedSelection(graph, CLIP_KIND.STAGE, ids);
@@ -79,21 +56,9 @@ export function moveStages(graph, ids, index) {
 }
 
 /**
- * Moves steps into one list, keeping their ids — and everything inside them.
- *
- * Keeping ids is the point of cutting rather than copying: a condition reading
- * `approve.outcome` still reads the same step wherever it now stands.
- *
- * Refused, with nothing moved, when:
- *   - the destination is inside one of the steps being moved — a block cannot
- *     be put inside itself;
- *   - the destination is a parallel branch, and a delay or parallel step is
- *     among them — the same rule as pasting.
- *
  * @param {Object} graph
- * @param {string[]} ids the steps that were cut
+ * @param {string[]} ids
  * @param {{ stageId: string, container: Array, index: number, insideParallelBranch?: boolean }} target
- *   counted as the workflow is NOW, originals still in place
  * @returns {{ graph: Object, moved: string[], refused: string|null }}
  */
 export function moveSteps(graph, ids, target) {
@@ -107,8 +72,6 @@ export function moveSteps(graph, ids, target) {
     }
   }
 
-  // Mark the destination with the reducer's own insert, so it is addressed
-  // exactly the way a paste is.
   const marked = builderReducer({ graph }, {
     type: BuilderActions.INSERT_STEPS,
     stageId: target.stageId,
@@ -116,9 +79,6 @@ export function moveSteps(graph, ids, target) {
     index: target.index,
     steps: [{ id: MARKER_ID }],
   }).graph;
-  // Checked by looking for the marker, not by identity: a stale path still
-  // yields a new graph object, and moving on without the marker placed would
-  // take the originals out and put them nowhere.
   if (!(marked.stages ?? []).some((stage) => holdsMarker(stage.steps))) {
     return { graph, moved: [], refused: 'That place no longer exists.' };
   }

@@ -2,18 +2,8 @@ import { boqRepository } from '@/repositories/boqRepository';
 import { BOQ_STATUS } from '@/constants/statuses';
 import { VAT_RATE } from '@/constants/sla';
 
-/**
- * boqService — business logic layer on top of boqRepository.
- *
- * Key responsibilities:
- *   - Input validation before persistence
- *   - totalCost and vatSAR derivation
- *   - Approval readiness checks
- *   - Status transition guards
- */
 export const boqService = {
   /**
-   * Return all BOQ items for a project.
    * @param {string} projectId
    * @returns {Promise<object[]>}
    */
@@ -23,7 +13,6 @@ export const boqService = {
   },
 
   /**
-   * Return a single BOQ item, enriched with derived display fields.
    * @param {string} id
    * @returns {Promise<object>}
    */
@@ -33,9 +22,6 @@ export const boqService = {
   },
 
   /**
-   * Create a new BOQ item.
-   * Validates required fields and auto-computes totalCost and vatSAR.
-   *
    * @param {object} data
    * @returns {Promise<object>}
    */
@@ -62,7 +48,6 @@ export const boqService = {
   },
 
   /**
-   * Update a BOQ item. Re-derives totalCost/vatSAR if inputs change.
    * @param {string} id
    * @param {object} data
    * @returns {Promise<object>}
@@ -70,7 +55,6 @@ export const boqService = {
   async updateBOQItem(id, data) {
     const existing = await boqRepository.getBOQItem(id);
 
-    // Cannot edit an invoiced item
     if (existing.status === BOQ_STATUS.INVOICED) {
       throw new Error('Cannot edit a BOQ item that has already been invoiced.');
     }
@@ -89,7 +73,6 @@ export const boqService = {
   },
 
   /**
-   * Delete a BOQ item.
    * @param {string} id
    * @returns {Promise<void>}
    */
@@ -98,7 +81,6 @@ export const boqService = {
   },
 
   /**
-   * Submit a BOQ item for approval (Draft → Pending Verification).
    * @param {string} id
    * @returns {Promise<object>}
    */
@@ -125,7 +107,6 @@ export const boqService = {
   },
 
   /**
-   * Approve a BOQ item (Pending Verification → Approved).
    * @param {string} id
    * @returns {Promise<object>}
    */
@@ -143,7 +124,6 @@ export const boqService = {
   },
 
   /**
-   * Bulk-create BOQ items for a project.
    * @param {string} projectId
    * @param {object[]} items
    * @returns {Promise<object[]>}
@@ -166,12 +146,7 @@ export const boqService = {
     return boqRepository.bulkCreateBOQ(projectId, items);
   },
 
-  // ---------------------------------------------------------------------------
-  // Private helpers
-  // ---------------------------------------------------------------------------
-
   /**
-   * Validate required BOQ fields. Throws on failure.
    * @param {object} data
    */
   _validateBOQData(data) {
@@ -191,8 +166,6 @@ export const boqService = {
   },
 
   /**
-   * Check that a BOQ item has all required fields for approval.
-   * Returns an array of error strings (empty means ready).
    * @param {object} item
    * @returns {string[]}
    */
@@ -222,7 +195,6 @@ export const boqService = {
   },
 
   /**
-   * Add computed display fields to a BOQ item.
    * @param {object} item
    * @returns {object}
    */

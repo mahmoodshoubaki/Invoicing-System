@@ -17,7 +17,6 @@ const TONE_COLOR = {
   [TONE.WARNING]: '#F59E0B',
 };
 
-/** A step's circle: ticked when done, pulsing where the record is, dashed for what comes next. */
 function Marker({ step, number }) {
   const color = TONE_COLOR[step.tone] ?? colors.primary;
   if (step.state === STEP.DONE) {
@@ -58,7 +57,6 @@ function Marker({ step, number }) {
   );
 }
 
-/** The line from a step to the next one: drawn in once the step is done. */
 function Connector({ done, index }) {
   return (
     <span className="absolute left-[calc(50%+22px)] right-[calc(-50%+22px)] top-4 h-0.5 -translate-y-1/2 overflow-hidden rounded-full bg-[#ecebe6]" aria-hidden="true">
@@ -76,20 +74,7 @@ function Connector({ done, index }) {
 }
 
 /**
- * A record's progress through its workflow (2026-10-21) — change requests,
- * invoices and BOQ items: each step ticked, pulsing where the record is, or
- * dashed for what comes next; what is next in a sentence when it can be
- * known; and who it is waiting on, from the record's own `waitingOn` — so a
- * reader who may not see workflows still learns who has it.
- *
- * A long workflow scrolls sideways to the step it is on.
- *
- * @param {{
- *   steps: Array, next: string|null, ready: boolean,
- *   waitingOn?: Array,  the record's own
- *   hereLabel?: string, label: string,  what the steps are of, for screen readers
- *   emptyMessage?: string|null,  said instead of the steps — a record no workflow runs on
- * }} props
+ * @param {{ steps: Array, next: string|null, ready: boolean, waitingOn?: Array, the record's own hereLabel?: string, label: string, what the steps are of, for screen readers emptyMessage?: string|null, said instead of the steps — a record no workflow runs on }} props
  */
 export default function WorkflowStepper({ steps, next, ready, waitingOn = null, hereLabel = 'Now', label, emptyMessage = null }) {
   const trackRef = useRef(null);

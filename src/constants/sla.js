@@ -1,28 +1,13 @@
-/**
- * SLA Warning threshold: warn when due date is this many days away.
- */
 export const WARNING_DAYS = 7;
 
-/**
- * SLA Critical threshold: trigger a reminder on the due date itself.
- */
 export const CRITICAL_DAYS = 0;
 
-/**
- * SLA Escalation levels based on how many days overdue an item is.
- * Level 1: 1 day overdue  → first escalation
- * Level 2: 7 days overdue → second escalation
- * Level 3: 14 days overdue → final escalation
- */
 export const SLA_ESCALATION_LEVELS = [
   { level: 1, daysOverdue: 1, label: 'Initial Escalation', description: 'Notify immediate supervisor' },
   { level: 2, daysOverdue: 7, label: 'Secondary Escalation', description: 'Notify department head' },
   { level: 3, daysOverdue: 14, label: 'Final Escalation', description: 'Notify BU Head and management' },
 ];
 
-/**
- * Billing frequency options for BOQ items.
- */
 export const BILLING_FREQUENCY = {
   MONTHLY: 'Monthly',
   QUARTERLY: 'Quarterly',
@@ -32,13 +17,9 @@ export const BILLING_FREQUENCY = {
 
 export const BILLING_FREQUENCY_LIST = Object.values(BILLING_FREQUENCY);
 
-/**
- * Default VAT rate in Saudi Arabia.
- */
-export const VAT_RATE = 0.15;
+export { VAT_RATE } from '@/constants/appConfig';
 
 /**
- * Determine the SLA status of a date relative to today.
  * @param {Date|string} dueDate
  * @param {number} warningDays
  * @returns {'overdue'|'critical'|'warning'|'normal'}
@@ -58,8 +39,6 @@ export function getSlaStatus(dueDate, warningDays = WARNING_DAYS) {
 }
 
 /**
- * Get the escalation level for a number of days overdue.
- * Returns null if not overdue.
  * @param {number} daysOverdue
  * @returns {{ level: number, daysOverdue: number, label: string, description: string } | null}
  */

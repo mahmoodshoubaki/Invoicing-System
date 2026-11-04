@@ -20,37 +20,20 @@ import {
   INSTANCE_STATUS, INSTANCE_STATUS_LABELS, TASK_STATUS, TASK_STATUS_COLORS, TASK_STATUS_LABELS,
 } from '@/constants/workflow';
 
-/**
- * The tabs, each a server-side filter.
- *
- * "Overdue" and "Needs an action" were here until 2026-09-30, worked out in the
- * browser from `isOverdue` and `canAct`. With GetMyTasks paged that cannot
- * work: filtering one page shows what is on that page, not what the person has.
- * So every tab is now a `statusKey` the server filters on. Overdue is still on
- * every row, just not a filter.
- */
 export const TASK_FILTERS = {
   ALL: 'all',
   PENDING: 'pending',
   COMPLETED: 'completed',
 };
 
-/** What each tab asks GetMyTasks for. `null` is every status. */
 export const TASK_FILTER_STATUS = {
   [TASK_FILTERS.ALL]: null,
   [TASK_FILTERS.PENDING]: TASK_STATUS.PENDING,
   [TASK_FILTERS.COMPLETED]: TASK_STATUS.COMPLETED,
 };
 
-/** Rows per page to start with — the reader can choose another (2026-10-21) — and the `take` each page asks the server for. */
 export const TASK_PAGE_SIZE = 10;
 
-/**
- * How long until a task is due, in plain words.
- *
- * `isOverdue` comes from the server and is authoritative — clock skew between
- * the browser and the backend would otherwise make a row disagree with itself.
- */
 function dueLabel(dueOn, isOverdue) {
   if (!dueOn) return null;
   if (isOverdue) return 'Overdue';
@@ -62,46 +45,13 @@ function dueLabel(dueOn, isOverdue) {
   return `Due ${formatDate(dueOn)}`;
 }
 
-/**
- * Whether a row can still be answered — the three reasons it cannot, in order.
- *
- * `GetMyTasks` is documented as pending-only, so a row with no `statusKey` is
- * read as pending. A settled row must never offer outcome buttons: they would
- * read as a choice still open, and the server refuses it anyway.
- */
 function rowState(task, canAct) {
   const settled = task.statusKey != null && task.statusKey !== TASK_STATUS.PENDING;
-  // Null unless the API sends the run's status on the row — see mapMyTask.
   const runStopped = task.runStatusKey != null && task.runStatusKey !== INSTANCE_STATUS.RUNNING;
   const readOnly = !canAct || !task.canAct;
   return { settled, runStopped, readOnly, answerable: !settled && !runStopped && !readOnly };
 }
 
-/**
- * My Tasks as a table.
- *
- * A card per to-do read well at five and badly at fifty: every card repeated
- * the same labels and the outcome buttons pushed the next task off screen. A
- * table puts the comparison people actually make — what is this, whose, when —
- * in columns they can scan down.
- *
- * Every rule the card list enforced carries over unchanged:
- *
- * - **Outcome buttons are rendered literally** — label, colour and whether a
- *   comment is required all come from whoever drew the workflow.
- * - **Hand on is offered independently of `canAct`.** `WorkflowTasks.Reassign`
- *   has no ownership check, so a read-only row still gets it: covering for a
- *   colleague means passing their work on, not deciding it.
- * - **A run that is not going blocks the answer** once the row says so, rather
- *   than offering a button that can only fail with WF-001.
- *
- * **It shows the page it is handed, and nothing more.** GetMyTasks is paged, so
- * the filter, the page and the order all belong to the server: `tasks` is one
- * page, `total` counts every match. This table does no filtering, sorting or
- * slicing of its own — any of those over one page would describe the page, not
- * the person's work. That is also why the column headers do not sort: clicking
- * one would reorder ten rows and imply it had reordered the list.
- */
 function TaskTable({
   tasks, filter = TASK_FILTERS.ALL, total = 0, page = 1, onPageChange, pageSize = TASK_PAGE_SIZE, onPageSizeChange = null, isLoading = false,
   onComplete, onAsk, onOpenForm, completingTaskId, canAct, canReassign, canViewRuns, onReassign,
@@ -116,15 +66,6 @@ function TaskTable({
         return (
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-1.5">
-              {/*
-                The title opens the run: "why is this on my list, and what has
-                happened so far" is answered there, not here.
-
-                A run is `WorkflowInstances.View`, which is NOT implied by being
-                able to see your own to-dos — so without it the title is plain
-                text. Linked anyway, it was a link that could only ever land on
-                "you do not have permission to view workflow runs".
-              */}
               {canViewRuns ? (
                 <Link
                   href={ROUTES.MONITORING_RUN(task.instanceId)}
@@ -146,8 +87,6 @@ function TaskTable({
                   {TASK_STATUS_LABELS[task.statusKey] ?? 'Settled'}
                 </span>
               )}
-              {/* A reassigned row is the closed copy; the live one is with
-                  somebody else. Saying who is the whole point of the row. */}
               {task.statusKey === TASK_STATUS.REASSIGNED && task.reassignedToName && (
                 <span className="text-[11px]" style={{ color: CHROME.textSecondary }}>
                   to {task.reassignedToName}
@@ -165,7 +104,6 @@ function TaskTable({
     {
       key: 'projectCode',
       label: 'Request / Project',
-      // The record the task is about beside its project, as on the runs list (2026-10-13).
       render: (code, task) => (
         <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <TargetLinks targetTypeKey={task.targetTypeKey} targetIds={task.targetIds} projectCode={code} size="xs" />
@@ -182,8 +120,6 @@ function TaskTable({
       ),
     },
     {
-      // Before Due, so a row reads in order: when it arrived, then when it is
-      // due. Sorts on the raw ISO string, which orders chronologically.
       key: 'createdOn',
       label: 'Created',
       sortable: true,
@@ -259,9 +195,6 @@ function TaskTable({
         } else if (task.buttons.length === 0) {
           answer = <span className="text-[11px]" style={{ color: CHROME.textMuted }}>No outcomes defined</span>;
         } else if ((task.fields?.length ?? 0) > 0) {
-          // A task with fields to fill is answered in its form (2026-10-11): the
-          // boxes and the buttons belong together, and a button that saves them
-          // has to see what was typed.
           answer = (
             <button
               type="button"
@@ -287,7 +220,6 @@ function TaskTable({
                     : onComplete({ task, outcomeKey: button.key, comment: null }))}
                   className="inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2.5 py-1 text-[11px] font-semibold transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
                   style={{
-                    // The author's colour; only the text colour is ours, for contrast.
                     backgroundColor: button.colorHex ?? '#f1f0ee',
                     color: readableTextOn(button.colorHex, CHROME.textPrimary),
                   }}
@@ -304,8 +236,6 @@ function TaskTable({
         return (
           <div className="flex flex-wrap items-center justify-end gap-2">
             {answer}
-            {/* Independent of `canAct` on purpose — see the component note. A
-                settled row has nothing left to hand on. */}
             {canReassign && !settled && (
               <button
                 type="button"
@@ -325,9 +255,6 @@ function TaskTable({
     },
   ], [canAct, canReassign, canViewRuns, completingTaskId, onAsk, onComplete, onOpenForm, onReassign]);
 
-  // Nothing matches this tab at all — not merely an empty page, which the page
-  // clamps away. Said per tab, since "nothing waiting on you" under Completed
-  // would be answering a different question.
   if (!isLoading && total === 0) {
     const empty = {
       [TASK_FILTERS.COMPLETED]: {
@@ -345,18 +272,11 @@ function TaskTable({
     <Table
       columns={columns}
       data={tasks}
-      // The server's order, as it came: see the comment on this component.
       sortable={false}
       rowKey="taskId"
       compact
       isLoading={isLoading}
       emptyMessage="Nothing on this page."
-      /*
-       * An object, never a bare `pagination` flag: the table reads the page, the
-       * range and `onChange` off it. The numbers are the SERVER's — `total` is
-       * every match, so the pager can offer pages this screen has never loaded.
-       * Omitted when everything fits on the smallest page (see pageInfo).
-       */
       pagination={pageInfo(page, pageSize, total, onPageChange, onPageSizeChange)}
     />
   );

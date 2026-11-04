@@ -1,24 +1,3 @@
-/**
- * The `{{…}}` grammar for a condition's value.
- *
- * A condition value used to be a literal string. It now runs through the
- * engine's placeholder resolver first, which is what makes "on or before today"
- * mean the day the run reaches the condition rather than the day somebody drew
- * the workflow.
- *
- * Three things can sit in the braces and they are NOT interchangeable:
- *
- *   {{today}} {{now}}      built-ins, computed at the moment of the check
- *   {{today+7d}}           an offset — legal on a built-in and ONLY on one
- *   {{reviewDeadline}}     a name the run answers: a variable, a field on the
- *                          tracked record, or a loop item
- *
- * The offset rule is the one that catches people. `{{reviewDeadline+7d}}` looks
- * like the obvious extension of `{{today+7d}}` and is refused at save as
- * WF-037, so the editor has to stop offering the control the moment a name is
- * chosen rather than let it be typed and rejected later.
- */
-
 import {
   PLACEHOLDER_BUILTIN,
   PLACEHOLDER_BUILTIN_INFO,
@@ -26,30 +5,19 @@ import {
   SECRETS_PREFIX,
 } from '@/constants/workflow';
 
-/** The whole value is one placeholder — the only shape the editor produces. */
 const WHOLE = /^\{\{([^{}]*)\}\}$/;
 
-/** `name+7d` / `name-4h`. The unit set is fixed by the engine: d, h, m. */
 const OFFSET = /^([A-Za-z_][\w.]*)\s*([+-])\s*(\d+)\s*([dhm])$/;
 
-/** A bare name, possibly dotted for a loop item or a record field. */
 const BARE = /^[A-Za-z_][\w.]*$/;
 
 const BUILTINS = new Set(Object.values(PLACEHOLDER_BUILTIN));
 
-/** Case-insensitive, because the engine still accepts bare `Today` / `Now`. */
 export function isBuiltin(name) {
   return BUILTINS.has(String(name ?? '').toLowerCase());
 }
 
 /**
- * What a condition value actually is.
- *
- * `literal` covers plain text AND text with a placeholder embedded in it
- * (`INV-{{year}}`). Those still resolve at run time, so they are not an error —
- * they are simply not something the structured editor can round-trip, and are
- * left in the free-text box.
- *
  * @returns {{kind: 'literal'|'builtin'|'name'|'secret'|'malformed', …}}
  */
 export function readPlaceholder(value) {
@@ -79,30 +47,19 @@ export function readPlaceholder(value) {
   return { kind: 'name', name: inner };
 }
 
-/** A built-in, with its offset only when there is one to write. */
 export function writeBuiltin(name, { sign = '+', amount = 0, unit = 'd' } = {}) {
   const n = Number(amount) || 0;
   return n > 0 ? `{{${name}${sign}${n}${unit}}}` : `{{${name}}}`;
 }
 
-/** A name the run answers. Never carries an offset — see the file header. */
 export function writeName(name) {
   return `{{${name}}}`;
 }
 
-/**
- * Reasons the server would refuse this value, in the author's words.
- *
- * `builtinsOnly` is the schedule-`scan` case: a scan runs before any instance
- * exists, so there is no run to answer a variable name and only the two
- * built-ins mean anything there.
- */
 export function validatePlaceholderValue(value, { builtinsOnly = false, label = 'A condition' } = {}) {
   const errors = [];
   if (typeof value !== 'string' || value === '') return errors;
 
-  // Unbalanced braces anywhere, including inside an otherwise-literal string —
-  // `{{today` resolves to nothing and the run fails rather than the save.
   const opens = (value.match(/\{\{/g) ?? []).length;
   const closes = (value.match(/\}\}/g) ?? []).length;
   if (opens !== closes) {
@@ -138,7 +95,6 @@ export function validatePlaceholderValue(value, { builtinsOnly = false, label = 
   return errors;
 }
 
-/** Prose for a summary line: "7 days after today". */
 export function describePlaceholder(parsed) {
   if (parsed.kind === 'builtin') {
     const base = PLACEHOLDER_BUILTIN_INFO[parsed.name]?.label.toLowerCase() ?? parsed.name;

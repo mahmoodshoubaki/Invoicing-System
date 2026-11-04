@@ -4,9 +4,6 @@ import { controlClass } from '@/components/ui/kit';
 import { FALLBACK_SECURITY, Field } from './senderShared';
 
 /**
- * An SMTP sender's server and sign-in. The password is never shown or kept
- * between saves, so it is asked for every time.
- *
  * @param {{ form: Object, set: (patch) => void, editing: boolean, securityModes: Array }} props
  */
 export default function SmtpFields({ form, set, editing, securityModes }) {

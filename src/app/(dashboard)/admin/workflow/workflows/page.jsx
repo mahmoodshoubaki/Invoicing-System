@@ -51,8 +51,6 @@ export default function WorkflowsPage() {
   const canRun = allow(can, WORKFLOW_PERMISSIONS.RUN);
 
   useEffect(() => {
-    // Unfiltered on purpose: the list is small, and filtering client-side keeps
-    // the target-type counts stable instead of having them shift as you narrow.
     dispatch(fetchDefinitions());
   }, [dispatch]);
 
@@ -100,8 +98,6 @@ export default function WorkflowsPage() {
         />
       )}
 
-      {/* Mounted per workflow rather than kept alive and reset: a fresh mount
-          is what guarantees the previous run's answers are gone. */}
       {startFor && (
         <StartRunModal
           key={startFor.code}

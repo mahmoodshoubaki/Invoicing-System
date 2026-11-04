@@ -7,10 +7,6 @@ import { useSettingDraft } from '@/components/ui/useSettingDraft';
 import { STATUS } from '@/theme/vizPalette';
 
 /**
- * An engine limit's value, its Save, and what is wrong with what was typed.
- * The table keys it on the saved value, so a saved row resets its draft to
- * what the server actually stored rather than keeping what was typed.
- *
  * @param {{ setting: Object, canEdit: boolean, saving: boolean, onSave: (key: string, value: string) => void }} props
  */
 function SettingValueCell({ setting, canEdit, saving, onSave }) {

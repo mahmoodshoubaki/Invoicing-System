@@ -2,16 +2,11 @@ export { colors, colorShades, semanticColors } from './colors';
 
 import { colors, colorShades, semanticColors } from './colors';
 
-/**
- * Full theme configuration object for use across the application.
- * Can be consumed by components, Tailwind plugin extensions, or context providers.
- */
 export const theme = {
   colors,
   colorShades,
   semanticColors,
 
-  /** Typography scale */
   typography: {
     fontFamily: {
       sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
@@ -35,7 +30,6 @@ export const theme = {
     },
   },
 
-  /** Spacing scale (rem) */
   spacing: {
     0: '0',
     1: '0.25rem',
@@ -52,7 +46,6 @@ export const theme = {
     24: '6rem',
   },
 
-  /** Border radius scale */
   borderRadius: {
     none: '0',
     sm: '0.125rem',
@@ -64,7 +57,6 @@ export const theme = {
     full: '9999px',
   },
 
-  /** Box shadow scale */
   boxShadow: {
     sm: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
     DEFAULT: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
@@ -74,7 +66,6 @@ export const theme = {
     none: '0 0 #0000',
   },
 
-  /** Z-index scale */
   zIndex: {
     behind: -1,
     base: 0,
@@ -87,7 +78,6 @@ export const theme = {
     tooltip: 70,
   },
 
-  /** Transition durations */
   transition: {
     fast: '150ms',
     base: '200ms',
@@ -95,7 +85,6 @@ export const theme = {
     slower: '500ms',
   },
 
-  /** Breakpoints (matches Tailwind defaults) */
   breakpoints: {
     sm: '640px',
     md: '768px',

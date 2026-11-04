@@ -11,11 +11,6 @@ import ChangeRequestTaskEditor from './ChangeRequestTaskEditor';
 import { useChangeRequestTaskData } from './useChangeRequestTaskData';
 
 /**
- * The change request fields a workflow task asks for (2026-10-20) — its
- * reasons, its details, its item and project changes, its plan changes — on
- * My Tasks and on the request's own page. Loads what drawing them needs, then
- * the editor; until then the task's saving buttons wait (useTaskForm says so).
- *
  * @param {{ task: Object, parts: Object, handleRef: { current: Object|null } }} props
  */
 export default function ChangeRequestTaskFields({ task, parts, handleRef }) {

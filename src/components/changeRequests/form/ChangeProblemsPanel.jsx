@@ -7,15 +7,9 @@ import { groupProblems } from '@/lib/changeRequest/problemText';
 import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 
-/** Items shown before "Show N more". */
 const FIRST_ITEMS = 3;
 
 /**
- * What stops the request as a whole (2026-10-21) — the form's own checks and
- * the server's refusal — in one panel: a heading with how many things there
- * are, the request-wide ones first, then one block per item with what is
- * wrong and what to do. A long list folds after a few items.
- *
  * @param {{ messages: string[], itemNames: string[] }} props
  */
 export default function ChangeProblemsPanel({ messages, itemNames }) {

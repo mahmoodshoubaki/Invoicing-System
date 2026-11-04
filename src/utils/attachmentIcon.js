@@ -13,7 +13,6 @@ const ATTACHMENT_ICONS = {
   jpeg: ImageIcon,
 };
 
-/** Picks a representative icon component for a file based on its extension. */
 export function iconForFileName(fileName) {
   const ext = fileName?.split('.').pop()?.toLowerCase();
   return ATTACHMENT_ICONS[ext] || FileIcon;

@@ -9,9 +9,6 @@ import { selectBillingFrequencies } from '@/store/slices/lookupsSlice';
 import { CHROME } from '@/theme/vizPalette';
 
 /**
- * Every field a change request changes, old → new, as the server read the old
- * values when it was raised.
- *
  * @param {{ changes: Array }} props
  */
 export default function FieldChangesTable({ changes }) {

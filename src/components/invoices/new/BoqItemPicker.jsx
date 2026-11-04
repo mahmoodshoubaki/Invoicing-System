@@ -6,13 +6,7 @@ import { formatCurrency } from '@/utils/formatters';
 import BoqItemRow from './BoqItemRow';
 
 /**
- * The BOQ items a request can invoice — tick each one, then enter how many to
- * invoice — with the running grand total.
- *
- * @param {{
- *   boqItems: Array, loading: boolean, currency: string,
- *   invoice: ReturnType<import('./useNewInvoiceForm').useNewInvoiceForm>,
- * }} props
+ * @param {{ boqItems: Array, loading: boolean, currency: string, invoice: ReturnType<import('./useNewInvoiceForm').useNewInvoiceForm>, }} props
  */
 export default function BoqItemPicker({ boqItems, loading, currency, invoice }) {
   const { form, errors, selectedIds, grandTotal } = invoice;

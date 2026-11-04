@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { Montserrat } from 'next/font/google';
 import '@/app/globals.css';
+import { APP_NAME, COMPANY_NAME, COMPANY_SHORT_NAME, DEFAULT_LANGUAGE } from '@/constants/appConfig';
 
 const montserrat = Montserrat({
   subsets: ['latin'],
@@ -10,14 +11,13 @@ const montserrat = Montserrat({
 });
 
 export const metadata = {
-  title: 'Enterprise Invoicing & Tracking System | Devoteam',
-  description:
-    'Devoteam Middle East — Enterprise Invoicing & Project Tracking System for managing BOQ, invoices, SLA compliance, and revenue recognition.',
+  title: `${APP_NAME} | ${COMPANY_SHORT_NAME}`,
+  description: `${COMPANY_NAME} — ${APP_NAME}`,
 };
 
 export default async function RootLayout({ children }) {
   const cookieStore = await cookies();
-  const lang = cookieStore.get('language')?.value ?? 'en';
+  const lang = cookieStore.get('language')?.value ?? DEFAULT_LANGUAGE;
 
   return (
     <html lang={lang} dir={lang === 'ar' ? 'rtl' : 'ltr'} className={`${montserrat.variable} h-full antialiased`}>

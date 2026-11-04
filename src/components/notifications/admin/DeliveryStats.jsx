@@ -20,16 +20,9 @@ function Tile({ label, value, hint, tone }) {
   );
 }
 
-// A fraction, not a percent: formatPercentage reads anything up to 1 as a
-// fraction, so "1%" passed as 1 would come out as 100%.
 const pct = (part, whole) => (whole > 0 ? formatPercentage(part / whole, 0) : '—');
 
 /**
- * The monitor's totals for the chosen period: how much went, how much is
- * waiting, how much is stuck and needs a person, and how email and the bell
- * are being read. Opens and clicks are hints — mail programs open things by
- * themselves and link scanners click first — so they say "approx.".
- *
  * @param {{ stats: Object|null, statuses: Record<number, Object>, onPickStatus: (key: number) => void }} props
  */
 function DeliveryStats({ stats, statuses, onPickStatus }) {
@@ -68,7 +61,6 @@ function DeliveryStats({ stats, statuses, onPickStatus }) {
         />
       </div>
 
-      {/* The status mix as one bar — click a part to filter the list to it. */}
       {summary.total > 0 && (
         <div className="rounded-xl border border-[#f1f0ee] bg-white px-4 py-3">
           <div className="flex h-2.5 overflow-hidden rounded-full" style={{ backgroundColor: '#f1f0ee' }}>

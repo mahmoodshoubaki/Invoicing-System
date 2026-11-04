@@ -1,10 +1,5 @@
 'use client';
 
-/**
- * A for-each's list and item name — edited in the side panel. The steps run
- * for each item stay on the canvas (ForEachBody).
- */
-
 import { memo, useMemo } from 'react';
 import { AlertTriangle } from 'lucide-react';
 
@@ -16,42 +11,20 @@ import { slugify } from '@/utils/slug';
 import { loopItemFields } from './loopContext';
 import { controlClass, EMPTY_LISTS, Note } from './shared';
 
-/**
- * A sensible name for the loop item, from what the list actually holds.
- *
- * The author should not have to invent a name for something the builder can
- * work out: a list of Invoices binds `invoice`. It stays editable, but nobody
- * has to think about it to get started.
- */
 function defaultItemName(list) {
   const label = TARGET_TYPE_LABELS[list?.targetTypeKey];
   const base = slugify(label ?? '').replace(/-/g, '');
   return base && base !== 'none' ? base : 'item';
 }
 
-/**
- * Repeats its body once per item in a list.
- *
- * Reads as a sentence — "For each **invoice** in **Overdue invoices**" — and
- * then shows what an item actually contains. The previous version asked the
- * author to name the item with no explanation and showed nothing about its
- * shape, which made the whole step unusable: you cannot write a condition
- * against fields you have never been told exist.
- */
 export const ForEachEditor = memo(function ForEachEditor({ step, ctx, onChange }) {
-  // A fresh [] each render would change the identity of everything memoised
-  // below it — the standard way a useMemo quietly stops memoising.
   const lists = ctx.lists ?? EMPTY_LISTS;
   const list = lists.find((l) => l.name === step.source);
 
-  // The item's fields, from GetFields for the list's target type — the same
-  // ones the body's conditions read (loopContext), so the two never disagree.
   const bound = useMemo(() => loopItemFields(step, ctx), [step, ctx]);
 
   return (
     <div className="flex flex-col gap-3">
-      {/* The sentence. Item name first, because that is the thing the body
-          refers to and the thing the author has to recognise later. */}
       <div className="flex flex-wrap items-end gap-2">
         <span className="pb-1.5 text-[11px]" style={{ color: CHROME.textMuted }}>For each</span>
 
@@ -69,11 +42,6 @@ export const ForEachEditor = memo(function ForEachEditor({ step, ctx, onChange }
         <span className="pb-1.5 text-[11px]" style={{ color: CHROME.textMuted }}>in</span>
 
         <div className="min-w-40 flex-1">
-          {/* A picker rather than a typed name: the lists available are the
-              workflow's list variables and every Find-records step's results,
-              and the author should choose one by its title rather than know
-              what it is called internally. Choosing one also names the item, so
-              the commonest path needs no typing at all. */}
           <select
             value={step.source ?? ''}
             onChange={(e) => {
@@ -111,8 +79,6 @@ export const ForEachEditor = memo(function ForEachEditor({ step, ctx, onChange }
         </Note>
       )}
 
-      {/* What is IN an item. Without this the loop is a black box: the author
-          can bind a name and has no way to learn what it can be asked for. */}
       {bound.length > 0 && (
         <div className="rounded-lg border border-[#f1f0ee] bg-[#fbfaf9] p-2.5">
           <p className="mb-1.5 text-[11px] font-medium" style={{ color: CHROME.textSecondary }}>
@@ -146,12 +112,6 @@ export const ForEachEditor = memo(function ForEachEditor({ step, ctx, onChange }
         </Note>
       )}
 
-      {/*
-        The one limitation worth stating on screen rather than discovering: an
-        activity inside the loop still acts on the RUN's target, not on the item
-        the loop bound. An action that sets a status in here will not do what it
-        appears to do. http.call is fine, because it can read the item's targetId.
-      */}
       <Note tone={STATUS.warning} icon={AlertTriangle}>
         Automated actions in here act on the <strong>run&rsquo;s own target</strong>, not on{' '}
         <code className="font-mono">{step.itemName || 'item'}</code>. Setting a status per item will

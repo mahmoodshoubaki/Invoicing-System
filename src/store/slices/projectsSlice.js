@@ -1,10 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { projectRepository } from '@/repositories/projectRepository';
 
-// ---------------------------------------------------------------------------
-// Async thunks
-// ---------------------------------------------------------------------------
-
 export const fetchProjects = createAsyncThunk(
   'projects/fetchProjects',
   async (filters = {}, { rejectWithValue }) => {
@@ -85,10 +81,6 @@ export const deleteProjectById = createAsyncThunk(
   }
 );
 
-// ---------------------------------------------------------------------------
-// Slice
-// ---------------------------------------------------------------------------
-
 const initialState = {
   items: [],
   selectedProject: null,
@@ -149,9 +141,6 @@ const projectsSlice = createSlice({
       state.isLoading = false;
     },
 
-    /**
-     * Payload: Partial<{ search: string, status: string, businessUnit: string }>
-     */
     setFilters(state, action) {
       state.filters = { ...state.filters, ...action.payload };
     },
@@ -162,7 +151,6 @@ const projectsSlice = createSlice({
   },
 
   extraReducers: (builder) => {
-    // fetchProjectById
     builder
       .addCase(fetchProjectById.pending, (state) => {
         state.isLoading = true;
@@ -178,7 +166,6 @@ const projectsSlice = createSlice({
         state.error = action.payload;
       });
 
-    // fetchMainProjectDetails
     builder
       .addCase(fetchMainProjectDetails.pending, (state) => {
         state.mainDetailsLoading = true;
@@ -194,7 +181,6 @@ const projectsSlice = createSlice({
         state.error = action.payload;
       });
 
-    // fetchSubProjectsSummary
     builder
       .addCase(fetchSubProjectsSummary.pending, (state) => {
         state.subProjectsLoading = true;
@@ -208,7 +194,6 @@ const projectsSlice = createSlice({
         state.error = action.payload;
       });
 
-    // fetchProjects
     builder
       .addCase(fetchProjects.pending, (state) => {
         state.isLoading = true;
@@ -223,7 +208,6 @@ const projectsSlice = createSlice({
         state.error = action.payload;
       });
 
-    // createProject
     builder
       .addCase(createProject.pending, (state) => {
         state.isLoading = true;
@@ -238,7 +222,6 @@ const projectsSlice = createSlice({
         state.error = action.payload;
       });
 
-    // updateProjectById
     builder
       .addCase(updateProjectById.pending, (state) => {
         state.isLoading = true;
@@ -259,7 +242,6 @@ const projectsSlice = createSlice({
         state.error = action.payload;
       });
 
-    // deleteProjectById
     builder
       .addCase(deleteProjectById.pending, (state) => {
         state.isLoading = true;
@@ -303,7 +285,6 @@ export const selectMainDetailsLoading = (state) => state.projects.mainDetailsLoa
 export const selectSubProjects = (state) => state.projects.subProjects;
 export const selectSubProjectsLoading = (state) => state.projects.subProjectsLoading;
 
-/** Returns projects filtered by the current filters state. */
 export const selectFilteredProjects = (state) => {
   const { items, filters } = state.projects;
   return items.filter((p) => {

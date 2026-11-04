@@ -13,9 +13,6 @@ const controlClass =
 const emptyOption = () => ({ key: '', label: '' });
 
 /**
- * A button's reasons drop-down: off, or a list of reasons that may be required.
- * Each key is made from its label, never `other`, which the task screen adds itself.
- *
  * @param {{ reasons: { required: boolean, options: Array<{ key: string, label: string }> }|null, onChange: (reasons) => void }} props
  */
 function ButtonReasonsEditor({ reasons, onChange }) {

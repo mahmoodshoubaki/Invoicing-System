@@ -18,13 +18,6 @@ import SettingValueCell from './SettingValueCell';
 const PAGE_SIZE = 10;
 
 /**
- * The engine's limits, editable without SQL, a page at a time (2026-10-13).
- * The list comes whole from the server — it is short — so the paging is here.
- * A change applies to the next thing that reads it; nothing is cached and
- * nothing needs restarting.
- *
- * Reading is `Workflows.Manage`; changing needs `Workflows.ManageSettings`.
- *
  * @param {{ canEdit: boolean }} props
  */
 export default function EngineLimitsTable({ canEdit }) {

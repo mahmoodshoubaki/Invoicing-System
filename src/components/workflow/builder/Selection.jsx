@@ -5,23 +5,6 @@ import { SELECTION_COLOR } from './canvasStyles';
 import { useListSorting } from './Sortable';
 
 /**
- * A "Paste here" line in the gap between two cards, for while something is
- * copied.
- *
- * It sits OVER the gap rather than in it — absolutely placed on the edge of the
- * card it is attached to — so having something copied never moves a single card
- * on the canvas. Hovering the gap (or tabbing to it) draws the line; clicking
- * pastes exactly there, with nothing to tick first, and above the first card too.
- *
- * `edge` says which edge of its card it hangs off: the top, for "before this
- * one", or the bottom of the last card, for "after everything".
- *
- * A paste that could never be accepted here — a delay into a parallel branch —
- * draws the line in red and says why instead of pasting.
- *
- * `verb` is "Paste" for a copy and "Move" for a cut — the line says which is about
- * to happen.
- *
  * @param {{ label: string, verb?: string, blockedReason?: string|null, onPaste: () => void, edge?: 'top'|'bottom' }} props
  */
 export function PasteSlot({ label, verb = 'Paste', blockedReason = null, onPaste, edge = 'top' }) {
@@ -57,14 +40,6 @@ export function PasteSlot({ label, verb = 'Paste', blockedReason = null, onPaste
 }
 
 /**
- * The tick box on a stage or step header, for copying.
- *
- * Always visible. A control revealed only on hover is one a mouse can miss
- * entirely — "Set as start" spent its whole life invisible that way.
- *
- * Shift-ticking selects everything between this box and the last one ticked in
- * the same list.
- *
  * @param {{ checked: boolean, label: string, onPick: (options: { range: boolean }) => void }} props
  */
 export function SelectBox({ checked, label, onPick }) {
@@ -72,8 +47,6 @@ export function SelectBox({ checked, label, onPick }) {
     <input
       type="checkbox"
       checked={checked}
-      // A checkbox's change event is fired by a click, so the click's own
-      // modifier keys are on the native event.
       onChange={(e) => onPick({ range: Boolean(e.nativeEvent?.shiftKey) })}
       aria-label={label}
       title="Select to copy. Shift selects a range."
@@ -84,14 +57,6 @@ export function SelectBox({ checked, label, onPick }) {
 }
 
 /**
- * Ctrl+click (⌘ on a Mac) or Shift+click anywhere on a header selects it.
- *
- * Handled on mouse DOWN so it can be taken before the title input grabs focus —
- * most of a header is that input, and Ctrl+clicking a name should select the
- * card, not put a caret in it. Buttons and the tick box keep their own meaning
- * — except the header's title button (`data-open`), which is most of the
- * header — and Shift inside a title already being typed in still selects text.
- *
  * @param {(options: { range: boolean }) => void} onPick
  */
 export function selectOnModifierClick(onPick) {

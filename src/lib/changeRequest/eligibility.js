@@ -1,9 +1,7 @@
 import { BOQ_STATUS } from '@/constants/statuses';
 
 /**
- * Why an item cannot be in a change request, as the server refuses it, or null.
- *
- * @param {Object} item         createBOQItem's
+ * @param {Object} item
  * @param {string|null} statusName
  * @returns {{ reason: string, short: string }|null}
  */

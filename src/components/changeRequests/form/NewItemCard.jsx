@@ -14,15 +14,7 @@ import { formatCurrency } from '@/utils';
 import { toISODate } from '@/utils/dateUtils';
 
 /**
- * A BOQ item the request adds. Its plan is generated from the baseline date
- * and the billing frequency, inside the contract dates the request leaves.
- *
- * @param {{
- *   draft: Object, problems: Object|null, plan: { busy?: boolean, error?: string|null }|undefined,
- *   window: { start: string, end: string }, locked?: boolean,
- *   onField: (key, field, value) => void, onCycles: (key, cycles) => void, onRemove: (key) => void,
- *   revealToken: number,
- * }} props
+ * @param {{ draft: Object, problems: Object|null, plan: { busy?: boolean, error?: string|null }|undefined, window: { start: string, end: string }, locked?: boolean, onField: (key, field, value) => void, onCycles: (key, cycles) => void, onRemove: (key) => void, revealToken: number, }} props
  */
 function NewItemCard({ draft, problems, plan, window, locked = false, onField, onCycles, onRemove, revealToken = 0 }) {
   const currency = useSelector((s) => s.ui.currency);

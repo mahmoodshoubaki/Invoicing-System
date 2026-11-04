@@ -8,10 +8,6 @@ import { withAlpha } from '@/utils/color';
 import { ccDeliveryProblems } from '@/lib/workflowBuilder/validation/steps/sendNotification';
 
 /**
- * What the people copied in get (2026-10-08): the email, with them on its CC
- * line, and/or an in-app notification of their own. Email starts ticked —
- * and a step saved before the boxes existed behaves as if it were.
- *
  * @param {{ step: Object, onChange: (patch: Object) => void }} props
  */
 function CcDelivery({ step, onChange }) {

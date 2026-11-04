@@ -13,7 +13,6 @@ import CategoryField from './CategoryField';
 
 const CODE_PATTERN = /^[A-Z0-9_]+$/;
 
-/** The documented priority keys, for when the lookup cannot be read. */
 const FALLBACK_PRIORITIES = [
   { key: PRIORITY.LOW, value: 'Low' },
   { key: PRIORITY.NORMAL, value: 'Normal' },
@@ -36,15 +35,7 @@ function Field({ label, hint, error, children }) {
 }
 
 /**
- * Adding or changing a notification type — what it is called, how loud it is,
- * where its link points and which sender its emails use. Its WORDS are edited
- * per channel on the type's own page.
- *
- * @param {{
- *   type: Object|null,  the details of the one being edited, or null to add
- *   categories: string[], priorities: Array, senders: Array|null,
- *   onClose: () => void, onSaved: (result: { notificationTypeId: string }) => void,
- * }} props
+ * @param {{ type: Object|null, the details of the one being edited, or null to add categories: string[], priorities: Array, senders: Array|null, onClose: () => void, onSaved: (result: { notificationTypeId: string }) => void, }} props
  */
 export default function TypeFormModal({ type, categories, priorities, senders, onClose, onSaved }) {
   const editing = Boolean(type);
@@ -62,13 +53,11 @@ export default function TypeFormModal({ type, categories, priorities, senders, o
   const [error, setError] = useState(null);
   const [touched, setTouched] = useState(false);
 
-  // Any edit clears a refusal that was about the previous values.
   const set = (patch) => {
     setError(null);
     setForm((prev) => ({ ...prev, ...patch }));
   };
 
-  // The server's own limits, checked as they are typed.
   const problems = {
     code: !form.code.trim() ? 'Needed.'
       : form.code.length > 20 ? 'At most 20 characters.'

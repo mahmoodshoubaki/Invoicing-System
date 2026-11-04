@@ -9,8 +9,6 @@ import MigrationCounts from './MigrationCounts';
 import MigrationProblems from './MigrationProblems';
 
 /**
- * Step 2: check the workbook and the file list — nothing is saved.
- *
  * @param {{ run: ReturnType<import('./useMigrationRun').useMigrationRun> }} props
  */
 export default function CheckSection({ run }) {

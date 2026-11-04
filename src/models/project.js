@@ -1,55 +1,45 @@
 /**
  * @typedef {Object} Project
- *
- * — Identity —
- * @property {string}      id
- * @property {string|null} projectName          - Display name (from EPM system)
- * @property {string|null} projectName_Focus    - Name in Focus system
+ * @property {string} id
+ * @property {string|null} projectName
+ * @property {string|null} projectName_Focus
  * @property {string|null} contractName
  * @property {string|null} clientName
  * @property {string|null} projectCode
  * @property {number|null} contractNumber
  * @property {string|null} poNumber
  * @property {string|null} invoicingPlatform
- *
- * — Classification —
  * @property {string|null} businessUnit
- * @property {string|null} status               - e.g. "In Progress", "Completed"
- *
- * — People —
- * @property {string|null} drm                  - Delivery / Project Manager
- * @property {string|null} crp                  - Client Relationship Partner
- * @property {string|null} buHead               - Business Unit Head
- * @property {string|null} bdm                  - Business Development Manager
- *
- * — Financials —
+ * @property {string|null} status
+ * @property {string|null} drm
+ * @property {string|null} crp
+ * @property {string|null} buHead
+ * @property {string|null} bdm
  * @property {number} projectValue
  * @property {number} vatPercentage
  * @property {number} vatValue
  * @property {number} totalRevenue
- * @property {number} revenuePS                 - Revenue: Professional Services
- * @property {number} revenueLogistics          - Revenue: Logistics
- * @property {number} revenueExternalSubs       - Revenue: External Sub-Contractors
- * @property {number} revenueTraining           - Revenue: Training
- * @property {number} revenueSWLicenses         - Revenue: SW Licenses
- * @property {number} wip                       - Work In Progress
+ * @property {number} revenuePS
+ * @property {number} revenueLogistics
+ * @property {number} revenueExternalSubs
+ * @property {number} revenueTraining
+ * @property {number} revenueSWLicenses
+ * @property {number} wip
  * @property {number} collectedValue
  * @property {number} nonCollectedValue
  * @property {number} totalInvoicesValue
- *
- * — Timeline —
- * @property {string|null} startDate            - Actual start date (ISO string)
- * @property {string|null} endDate              - (ISO string)
- * @property {number}      duration             - Duration in months
- * @property {string|null} poDate               - (ISO string)
- * @property {string|null} contractSignatureDate - (ISO string)
- * @property {string|null} siteReceiptDate     - (ISO string)
+ * @property {string|null} startDate
+ * @property {string|null} endDate
+ * @property {number} duration
+ * @property {string|null} poDate
+ * @property {string|null} contractSignatureDate
+ * @property {string|null} siteReceiptDate
  */
 
 /**
  * @typedef {Object} ProjectListItem
- * @property {string|null} projectName       - Display name (from EPM system)
- * @property {string|null} projectNameFocus  - Name in Focus system
+ * @property {string|null} projectName
+ * @property {string|null} projectNameFocus
  * @property {string|null} contractName
  * @property {number|null} contractNumber
  * @property {string|null} clientName
@@ -65,17 +55,12 @@
  */
 
 /**
- * Maps a raw `GetProjectsList` entry — which nests every field under
- * `projectInformation` and carries no id — to a ProjectListItem.
- *
  * @param {Object} raw
  * @returns {ProjectListItem}
  */
 export function mapProjectListItem(raw) {
   const info = raw.projectInformation ?? {};
   return {
-    // The EPM project's id (2026-10-19) — what a change request names when it
-    // changes a sub-project's value or contract dates.
     projectUID:            info.projectUID        ?? null,
     projectName:           info.projectName_EPM   ?? null,
     projectNameFocus:      info.projectName_Focus ?? null,
@@ -96,11 +81,7 @@ export function mapProjectListItem(raw) {
 }
 
 /**
- * Maps a raw API response to a Project model.
- * All numeric fields default to 0 and all nullable strings default to null
- * so consumers never need to guard against undefined.
- *
- * @param {Object} raw - Raw response from the projects API
+ * @param {Object} raw
  * @returns {Project}
  */
 export function createProject(raw) {
@@ -120,7 +101,6 @@ export function createProject(raw) {
     businessUnit:          raw.businessUnit       ?? null,
     status:                raw.projectStatus      ?? null,
 
-    // People
     drm:                   raw.drm    ?? null,
     crp:                   raw.crp    ?? null,
     buHead:                raw.buHead ?? null,
@@ -152,9 +132,6 @@ export function createProject(raw) {
 }
 
 /**
- * Maps a raw `GetMainProjectDetails` response. Currently only carries
- * ContractName — expand as the backend adds more fields.
- *
  * @param {Object} raw
  * @returns {{ contractName: string|null }}
  */
@@ -196,9 +173,6 @@ export function mapMainProjectDetails(raw) {
  */
 
 /**
- * Maps a raw `GetSubProjectsSummary` entry — projectInformation is the same
- * shape as GetProjectsList, plus a financialSummary block.
- *
  * @param {Object} raw
  * @returns {SubProjectSummary}
  */
@@ -220,11 +194,6 @@ export function mapSubProjectSummary(raw) {
     nonCollectedValue:     fin.invoicesNonCollectedValue               ?? 0,
     totalInvoicesValue:    fin.totalInvoicesValue                     ?? 0,
   };
-  // contractStartDate/contractFinishDate/contractSignatureDate/
-  // siteReceiptDate/contractDuration already flow through from
-  // mapProjectListItem's spread above — every sub-project under the same
-  // main project shares the same contract dates, so any one is a valid
-  // source for the invoicing tracker's min/max bounds.
 }
 
 const ZERO_SUB_PROJECT_TOTALS = {
@@ -243,10 +212,6 @@ const ZERO_SUB_PROJECT_TOTALS = {
 };
 
 /**
- * Sums the financial fields of a list of SubProjectSummary items — used to
- * derive the project detail page's header KPIs. vatPercentage is a rate, not
- * a summable amount, so it's intentionally left out.
- *
  * @param {SubProjectSummary[]} subProjects
  */
 export function aggregateSubProjectFinancials(subProjects) {
@@ -269,15 +234,8 @@ export function aggregateSubProjectFinancials(subProjects) {
 const dayOf = (value) => (value ? String(value).slice(0, 10) : null);
 
 /**
- * Maps `GetProjectHeader`.
- *
  * @param {Object} raw
- * @returns {{
- *   projectCode: string, projectName: string|null, contractName: string|null,
- *   contractStartDate: string|null, contractFinishDate: string|null, contractDuration: number|null,
- *   projectValue: number|null, bdm: string|null, bdmUsername: string|null, buHead: string|null,
- *   buHeadUsername: string|null, crp: string|null, crpUsername: string|null, hasMainProject: boolean,
- * }}
+ * @returns {{ projectCode: string, projectName: string|null, contractName: string|null, contractStartDate: string|null, contractFinishDate: string|null, contractDuration: number|null, projectValue: number|null, bdm: string|null, bdmUsername: string|null, buHead: string|null, buHeadUsername: string|null, crp: string|null, crpUsername: string|null, hasMainProject: boolean, }}
  */
 export function mapProjectHeader(raw) {
   return {

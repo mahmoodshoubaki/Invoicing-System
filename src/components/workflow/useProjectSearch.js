@@ -6,10 +6,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { projectRepository } from '@/repositories/projectRepository';
 
 /**
- * The first `take` projects matching `query`, searched by the server, and every
- * project seen so far by code (to name picked ones).
- *
- * @returns {{ projects: Object[]|null, known: Object<string, Object>, error: Error|null }}  projects: null while loading
+ * @returns {{ projects: Object[]|null, known: Object<string, Object>, error: Error|null }}
  */
 export function useProjectSearch(query, take) {
   const search = useDebounce(query.trim(), 250);

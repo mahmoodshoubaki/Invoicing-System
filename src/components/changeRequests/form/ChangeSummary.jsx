@@ -18,7 +18,6 @@ import { withAlpha } from '@/utils/color';
 import { formatCurrency, formatDate } from '@/utils';
 import ChangeProblemsPanel from './ChangeProblemsPanel';
 
-/** One change, as "Quantity: 10 → 12". */
 function ChangeLine({ label, from, to }) {
   return (
     <li className="text-xs" style={{ color: CHROME.textSecondary }}>
@@ -30,7 +29,6 @@ function ChangeLine({ label, from, to }) {
   );
 }
 
-/** "2 moved, 1 added" — a plan's changes, counted. */
 function planLine(changes) {
   const counts = ['Moved', 'Added', 'Removed']
     .map((kind) => [kind, changes.filter((c) => c.kind === kind).length])
@@ -40,10 +38,6 @@ function planLine(changes) {
 }
 
 /**
- * The request in one place, as the approver will read it: every change, the
- * BOQ's items added up against the project value as the request leaves them,
- * and what stops it.
- *
  * @param {{ form: Object, subProjects: Array, boqItems: Array }} props
  */
 export default function ChangeSummary({ form, subProjects, boqItems }) {

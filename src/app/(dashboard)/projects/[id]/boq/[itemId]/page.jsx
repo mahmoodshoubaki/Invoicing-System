@@ -40,21 +40,7 @@ import {
   fetchSubProjectsSummary, selectSubProjects, selectSubProjectsLoading,
 } from '@/store/slices/projectsSlice';
 
-/**
- * One BOQ item, read only.
- *
- * The same content as the edit page — details and the invoicing plan — with
- * nothing to type in. It exists because a BOQ item is something to LINK to: a
- * workflow run tracking BOQ items needs somewhere to send a reader, and sending
- * them to an edit form means only people who may change an item can look at
- * one. Editing is a button away for whoever holds `Boqs.Update`.
- *
- * A task the item's workflow is waiting on, when it is the signed-in person's
- * to answer, sits above the details (2026-10-13) — answering it can change the
- * item and its plan, so both are read again afterwards.
- */
 export default function ViewBOQItemPage() {
-  // See boq/page.jsx for why this is decoded defensively.
   const { id: rawId, itemId } = useParams();
   const projectCode = decodeURIComponent(rawId);
   const dispatch = useDispatch();
@@ -84,8 +70,6 @@ export default function ViewBOQItemPage() {
     dispatch(fetchBOQByProjectCode(projectCode));
   }, [dispatch, projectCode]);
 
-  // The item's saved plan. Read only here, so unlike the edit page there is no
-  // preview to regenerate — what is shown is what is stored.
   useEffect(() => {
     let cancelled = false;
     dispatch(fetchTrackerCycles(itemId)).unwrap()
@@ -98,8 +82,6 @@ export default function ViewBOQItemPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, itemId]);
 
-  // Every sub-project under the same main project shares the contract window;
-  // it bounds the plan's dates and is shown for the same reason as on the form.
   const contractStartDate = subProjects[0]?.contractStartDate ?? null;
   const contractFinishDate = subProjects[0]?.contractFinishDate ?? null;
 
@@ -163,7 +145,6 @@ export default function ViewBOQItemPage() {
         }
       />
 
-      {/* Where it is in its review and what comes next (2026-10-21), and who it waits on. */}
       <BoqItemStepper item={item} />
 
       <Reveal className="flex flex-col gap-5">
@@ -207,8 +188,6 @@ export default function ViewBOQItemPage() {
           subtitle="The cycles this item is scheduled to be invoiced in"
           icon={CalendarRange}
         >
-          {/* `disabled` is what makes every row read-only — the same tracker the
-              edit page uses, so a plan reads identically in both places. */}
           <InvoicingPlanTracker
             cycles={cycles}
             onChange={setCycles}

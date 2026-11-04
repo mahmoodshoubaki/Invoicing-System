@@ -1,7 +1,5 @@
 'use client';
 
-/** The email senders admin page. Its parts live in components/notifications/admin/senders/. */
-
 import { useCallback, useState } from 'react';
 import { AlertTriangle, Mail, Plus } from 'lucide-react';
 
@@ -25,10 +23,6 @@ import { SenderCard } from '@/components/notifications/admin/senders/SenderCard'
 import { SenderForm } from '@/components/notifications/admin/senders/SenderForm';
 import { TestEmail } from '@/components/notifications/admin/senders/TestEmail';
 
-/**
- * The accounts email goes out through. One is the default; a type can have its
- * own. Reading is `Notifications.Manage`; changing is `Manage Settings`.
- */
 export default function EmailSendersPage() {
   const toast = useToast();
   const { can } = usePermission();
@@ -42,9 +36,9 @@ export default function EmailSendersPage() {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(null);
   const [actionError, setActionError] = useState(null);
-  const [form, setForm] = useState(null); // { sender: Object|null }
+  const [form, setForm] = useState(null);
   const [testing, setTesting] = useState(null);
-  const [confirm, setConfirm] = useState(null); // { kind: 'delete'|'removeDefault', sender }
+  const [confirm, setConfirm] = useState(null);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {

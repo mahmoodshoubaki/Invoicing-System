@@ -9,7 +9,6 @@ import { SYSTEM_PERMISSIONS } from '@/constants/notifications';
 import { allow } from '@/constants/workflowPermissions';
 import { usePermission } from '@/hooks/usePermission';
 
-/** The jobs page's way into the Hangfire dashboard, for System.Administrator only. */
 export default function HangfireDashboardLink() {
   const { can } = usePermission();
   if (!allow(can, SYSTEM_PERMISSIONS.ADMINISTRATOR)) return null;

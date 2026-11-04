@@ -1,17 +1,6 @@
-/** What is ticked, in what order, where a paste would land, and how to say it. */
-
 import { CLIP_KIND } from './kinds';
 import { childLists, findStep, locateStep, stageOfStep } from './tree';
 
-/**
- * The selected stages or steps, in the order they appear in the workflow.
- *
- * Screen order, not click order: a paste should come out the way the author sees
- * the originals, whichever they ticked first.
- *
- * A step ticked INSIDE a block that is also ticked is dropped — copying the
- * block already copies it, and keeping both would paste it twice.
- */
 export function orderedSelection(graph, kind, ids = []) {
   const wanted = new Set(ids);
   if (wanted.size === 0) return [];
@@ -32,27 +21,11 @@ export function orderedSelection(graph, kind, ids = []) {
   return picked;
 }
 
-/**
- * Nothing ticked.
- *
- * `key` is the workflow a selection was made in. `anchor` is where a Shift
- * range starts. `last` is the item ticked most recently — the paste cursor.
- */
 export const NO_SELECTION = { key: null, kind: null, ids: [], anchor: null, last: null };
 
 /**
- * The selection after ticking or unticking one stage or step.
- *
- * Stages and steps are never selected together: they paste into different
- * places, so a mixed selection would have nowhere to go. Ticking the other kind,
- * or ticking in another workflow, starts over.
- *
- * With `range`, everything between the last item ticked and this one is ticked
- * too — but only when both are in `listIds`, the list the click happened in. A
- * range across two stages' step lists has no sensible "between".
- *
  * @param {Object} prev
- * @param {string} kind CLIP_KIND
+ * @param {string} kind
  * @param {string} id
  * @param {{ key: string|null, range?: boolean, listIds?: string[] }} options
  */
@@ -77,15 +50,6 @@ export function nextSelection(prev, kind, id, { key, range = false, listIds = []
 }
 
 /**
- * Where Ctrl+V puts the clipboard, read off the selection.
- *
- * The cursor is the item ticked LAST — the one just clicked, wherever it is on
- * the screen. Stages go after it (or after the stage holding it, when it is a
- * step), and at the end of the flow when nothing is ticked. Steps go after it in
- * its own list, or at the end of it when it is a stage. With nothing ticked,
- * steps have nowhere to go (null); the "Paste here" lines and each list's own
- * Paste button cover that.
- *
  * @returns {null | { index: number, where: string, stageId?: string, container?: Array, insideParallelBranch?: boolean }}
  */
 export function pasteTargetFor(graph, clipKind, selection) {
@@ -131,25 +95,15 @@ export function pasteTargetFor(graph, clipKind, selection) {
   return null;
 }
 
-/**
- * A detached copy for the clipboard.
- *
- * Taken at copy time, so editing or deleting the originals afterwards does not
- * change what gets pasted. A JSON round trip is enough — a definition is JSON on
- * the wire — and it keeps every object's key order, which matters: `type` must
- * stay the first key of a step.
- */
 export function copyItems(items) {
   return JSON.parse(JSON.stringify(items ?? []));
 }
 
-/** "1 stage", "3 steps". */
 export function describeClip(kind, count) {
   const noun = kind === CLIP_KIND.STAGE ? 'stage' : 'step';
   return `${count} ${noun}${count === 1 ? '' : 's'}`;
 }
 
-/** "A", "A and B", "A, B and C". */
 export function joinNames(names = []) {
   if (names.length <= 1) return names[0] ?? '';
   return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;

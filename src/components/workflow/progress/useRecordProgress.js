@@ -10,17 +10,8 @@ import { pickRun } from '@/lib/workflowProgress';
 const NOTHING = { run: null, history: [], graph: null };
 
 /**
- * What a record's stepper can know of the workflow deciding it (2026-10-21) —
- * a change request, an invoice or a BOQ item: its run (the live one, or the
- * latest), that run's history, and its workflow version's stages. Each only
- * for a reader who may see it: runs need WorkflowInstances.View, the workflow
- * Workflows.View. Without them the stepper still works from the record alone.
- *
- * Read again whenever the record is (a new object after a task is answered);
- * what was found stays on screen until the new answer lands.
- *
- * @param {number} targetTypeKey  TARGET_TYPE's
- * @param {Object|null} record  with an `id`; null when there is none yet
+ * @param {number} targetTypeKey
+ * @param {Object|null} record
  * @returns {{ ready: boolean, run: Object|null, history: Array, graph: Object|null }}
  */
 export function useRecordProgress(targetTypeKey, record) {
@@ -51,7 +42,7 @@ export function useRecordProgress(targetTypeKey, record) {
           found = { run, history, graph };
         }
       } catch {
-        // The record's own progress still shows.
+        // ignore
       }
       if (!cancelled) setLoaded({ for: record, ...found });
     })();

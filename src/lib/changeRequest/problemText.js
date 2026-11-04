@@ -1,14 +1,3 @@
-/**
- * What stops a change request, said the way a person reads it (2026-10-21).
- *
- * The server sends its rule problems as one flat list of sentences — six late
- * plan cycles are six sentences, each naming its item as 'Name': … and each
- * date as 2027-05-01. Shown as they come they are one red paragraph nobody
- * can act on. So they are grouped by the item they are about, a run of late
- * cycles on one item is said once, the dates are written the app's way, and
- * each group says what to do about it.
- */
-
 import { formatDate } from '@/utils/formatters';
 
 const ABOUT_ITEM = /^'(.+?)'( \(new item\))?(?::\s*|\s+)([\s\S]*)$/;
@@ -16,10 +5,8 @@ const LATE_CYCLE = /^plan cycle (\d+) on (\d{4}-\d{2}-\d{2}) would be after the 
 const NO_CYCLE = /^would have no invoicing plan cycle left\.?$/i;
 const ISO_DAY = /\b(\d{4}-\d{2}-\d{2})(?:T[\d:.]+)?\b/g;
 
-/** A sentence with its dates written the app's way. */
 const withDates = (text) => text.replace(ISO_DAY, (_, day) => formatDate(day) || day);
 
-/** "3, 4 and 5" */
 function listOf(numbers) {
   if (numbers.length <= 1) return numbers.join('');
   return `${numbers.slice(0, -1).join(', ')} and ${numbers.at(-1)}`;
@@ -35,8 +22,8 @@ function lateLine(cycles, finish) {
 }
 
 /**
- * @param {string[]} messages  the request's problems, as the server or the form's checks say them
- * @param {{ inRequest?: string[] }} [options]  the names of the items in the request
+ * @param {string[]} messages
+ * @param {{ inRequest?: string[] }} [options]
  * @returns {{ general: string[], items: Array<{ name: string, inRequest: boolean, lines: string[], hint: string|null }>, count: number }}
  */
 export function groupProblems(messages, { inRequest = [] } = {}) {

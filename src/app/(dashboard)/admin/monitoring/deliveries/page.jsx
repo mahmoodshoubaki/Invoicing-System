@@ -29,7 +29,6 @@ import { notificationRepository } from '@/repositories/notificationRepository';
 
 const PAGE_SIZE = 50;
 
-/** Every filter the list takes; the ones a link may pre-set are read from the URL. */
 const EMPTY_FILTERS = {
   statusKey: '', channelKey: '', typeKey: '', recipientEmail: '', fromDate: '', toDate: '',
   correlationId: '', workflowInstanceId: '', notificationId: '', targetTypeKey: '', targetId: '',
@@ -103,7 +102,6 @@ function MonitorContent() {
   });
   const [moreOpen, setMoreOpen] = useState(() => FROM_URL.slice(3).some((k) => params.get(k)));
   const [skip, setSkip] = useState(0);
-  // Rows a page, as the reader chooses (2026-10-21) — PAGE_SIZE to start with.
   const [take, setTake] = useState(PAGE_SIZE);
   const [data, setData] = useState({ items: [], total: 0 });
   const [loading, setLoading] = useState(true);
@@ -185,7 +183,6 @@ function MonitorContent() {
     setActionError(null);
     try {
       const done = await notificationRepository.requeue({ deliveryIds: requeueable.map((r) => r.deliveryId) });
-      // Anything not in a stopped state is skipped, not refused — say how many went.
       toast.success(`${done.length} of ${requeueable.length} sent again`, done.length < requeueable.length ? 'The rest were no longer stopped.' : undefined);
       setSelected(new Map());
       load();
@@ -378,7 +375,6 @@ function MonitorContent() {
   );
 }
 
-/** `useSearchParams` needs a Suspense boundary above it in the App Router. */
 export default function DeliveryMonitorPage() {
   return (
     <Suspense fallback={null}>

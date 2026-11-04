@@ -41,8 +41,6 @@ export default function ToastItem({ toast }) {
 
   useEffect(() => {
     const timer = setTimeout(() => dispatch(removeToast(toast.id)), duration);
-    // Start the transition on the next frame so the browser paints the bar
-    // at full width first — starting it in the same tick skips the animation.
     const raf = requestAnimationFrame(() => setShrink(true));
     return () => {
       clearTimeout(timer);

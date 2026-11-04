@@ -6,8 +6,6 @@ import { useServerPage } from '@/hooks/useServerPage';
 import { changeRequestRepository } from '@/repositories/changeRequestRepository';
 
 /**
- * A change request's earlier versions, a page at a time, and the one picked to read.
- *
  * @param {number|string} changeRequestId
  * @param {boolean} enabled
  */

@@ -7,7 +7,7 @@ import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 
 /**
- * @param {{ missing: string[], failed?: boolean }} props  failed: the project's details could not be read
+ * @param {{ missing: string[], failed?: boolean }} props
  */
 export default function ProjectNotReady({ missing, failed = false }) {
   return (

@@ -21,17 +21,13 @@ import { useToast } from '@/hooks/useToast';
 import { useLoadOnChange } from '@/hooks/useLoadOnChange';
 import { backgroundJobsRepository } from '@/repositories/backgroundJobsRepository';
 
-/** States a run has not finished in — "Run now" watches until it leaves them. */
 const RUNNING_STATES = ['Enqueued', 'Processing'];
-/** How often to look while a job someone just started is still going. */
 const WATCH_MS = 3000;
-/** And for how long at most, so a stuck job cannot poll for ever. */
 const WATCH_LIMIT_MS = 120_000;
 
 const STATE_LOOK = {
   Succeeded: { tone: STATUS.good, label: 'Succeeded' },
   Failed: { tone: STATUS.critical, label: 'Failed' },
-  // Hangfire will try again; `lastRunError` says why the last try failed.
   Scheduled: { tone: STATUS.warning, label: 'Retrying' },
   Enqueued: { tone: STATUS.info, label: 'Queued' },
   Processing: { tone: STATUS.info, label: 'Running' },
@@ -39,10 +35,8 @@ const STATE_LOOK = {
 
 const MODULE_ORDER = ['Workflow', 'Notifications'];
 
-// Module-level so PageHeader's memo holds across the page's polling re-renders.
 const HEADER_ACTIONS = <HangfireDashboardLink />;
 
-/** The schedule in words, with the raw expression beside it for whoever reads cron. */
 function Schedule({ schedule }) {
   const words = describeCron(schedule);
   return (
@@ -137,22 +131,12 @@ const JobRow = memo(function JobRow({ job, now, busy, onToggle, onRunNow, onEdit
   );
 });
 
-/**
- * Every background job the app runs: what it does, when, whether it is on and
- * how its last run went. `System.ManageJobs`.
- *
- * Off keeps the schedule and just stops; "Run now" works on a job that is off
- * too (it runs once and stays off). Switching one off asks first, quoting the
- * job's own description of what stops — some of these are the reason anything
- * happens at all (starting workflows from events, sending emails).
- */
 export default function BackgroundJobsPage() {
   const toast = useToast();
   const [jobs, setJobs] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(null);
   const [now, setNow] = useState(() => Date.now());
-  /** jobKey → 'run' | 'toggle' | 'schedule', while a change is in flight. */
   const [busy, setBusy] = useState({});
   const [confirmOff, setConfirmOff] = useState(null);
   const [editing, setEditing] = useState(null);
@@ -176,7 +160,6 @@ export default function BackgroundJobsPage() {
 
   useLoadOnChange(load);
 
-  // After "Run now": look again every few seconds until nothing is queued or running.
   const anyRunning = jobs.some((j) => RUNNING_STATES.includes(j.lastRunState));
   useEffect(() => {
     if (!anyRunning || Date.now() > watchUntil.current) return undefined;

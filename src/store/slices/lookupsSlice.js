@@ -2,10 +2,6 @@ import { createSlice, createAsyncThunk, createSelector } from '@reduxjs/toolkit'
 import { lookupsRepository } from '@/repositories/lookupsRepository';
 import { changeRequestRepository } from '@/repositories/changeRequestRepository';
 
-// ---------------------------------------------------------------------------
-// Async thunks
-// ---------------------------------------------------------------------------
-
 export const fetchBillingFrequencies = createAsyncThunk(
   'lookups/fetchBillingFrequencies',
   async (_, { rejectWithValue }) => {
@@ -50,7 +46,6 @@ export const fetchTrackerCycleStatuses = createAsyncThunk(
   }
 );
 
-// Change requests (2026-10-19): why a BOQ changes, and where a request stands.
 export const fetchChangeRequestReasons = createAsyncThunk(
   'lookups/fetchChangeRequestReasons',
   async (_, { rejectWithValue }) => {
@@ -95,10 +90,6 @@ export const fetchChangeRequestStatuses = createAsyncThunk(
   }
 );
 
-// ---------------------------------------------------------------------------
-// Slice
-// ---------------------------------------------------------------------------
-
 const initialState = {
   billingFrequencies: [],
   boqItemStatuses: [],
@@ -133,7 +124,6 @@ const lookupsSlice = createSlice({
         state.error = action.payload;
       });
       
-      // boq item statuses
       builder.addCase(fetchBoqItemStatuses.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -148,7 +138,6 @@ const lookupsSlice = createSlice({
       })
       ;
 
-      // invoice statuses
       builder.addCase(fetchInvoiceStatuses.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -163,7 +152,6 @@ const lookupsSlice = createSlice({
       })
       ;
 
-      // tracker cycle statuses
       builder.addCase(fetchTrackerCycleStatuses.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -176,7 +164,6 @@ const lookupsSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload;
       })
-      // change requests — no loading flag of their own: nothing waits on them to draw
       .addCase(fetchChangeRequestReasons.fulfilled, (state, action) => {
         state.changeRequestReasons = action.payload;
       })
@@ -200,10 +187,6 @@ const lookupsSlice = createSlice({
 
 });
 
-// ---------------------------------------------------------------------------
-// Selectors
-// ---------------------------------------------------------------------------
-
 export const selectBillingFrequencies = (state) => state.lookups.billingFrequencies;
 export const selectBoqItemStatuses = (state) => state.lookups.boqItemStatuses;
 export const selectInvoiceStatuses = (state) => state.lookups.invoiceStatuses;
@@ -212,47 +195,28 @@ export const selectChangeRequestReasons = (state) => state.lookups.changeRequest
 export const selectChangeRequestStatuses = (state) => state.lookups.changeRequestStatuses;
 export const selectChangeRequestTypes = (state) => state.lookups.changeRequestTypes;
 export const selectChangeRequestProjectEffects = (state) => state.lookups.changeRequestProjectEffects;
-/** Whether the type or project-effect list could not be read. */
 export const selectChangeRequestTypesFailed = (state) => state.lookups.changeRequestTypesFailed;
 
-/** Change request types by key → { label, requiresText }. */
 export const selectChangeRequestTypesMap = createSelector(
   [selectChangeRequestTypes],
   (types) => Object.fromEntries(types.map((t) => [t.key, t]))
 );
 
-/** Change request project effects by key → { label }. */
 export const selectChangeRequestProjectEffectsMap = createSelector(
   [selectChangeRequestProjectEffects],
   (effects) => Object.fromEntries(effects.map((e) => [e.key, e]))
 );
 
-/** Change request statuses by key → { label, colorHex }. */
 export const selectChangeRequestStatusesMap = createSelector(
   [selectChangeRequestStatuses],
   (statuses) => Object.fromEntries(statuses.map((s) => [s.key, s]))
 );
 
-/** Change request reasons by key → { label, justification }. */
 export const selectChangeRequestReasonsMap = createSelector(
   [selectChangeRequestReasons],
   (reasons) => Object.fromEntries(reasons.map((r) => [r.key, r]))
 );
 
-/**
- * Returns a plain object keyed by id for O(1) resolution.
- * Usage: const map = useSelector(selectBillingFrequenciesMap);
- *        map[item.billingFrequencyId] → "Monthly"
- *
- * Built with createSelector (not a plain `(state) => ...` function) so it
- * only recomputes — and only returns a new object — when
- * `state.lookups.billingFrequencies` itself changes. A plain function here
- * would call Object.fromEntries fresh on every single invocation, handing
- * out a new object reference to every render regardless of whether the data
- * actually changed, which silently defeats React.memo on any component that
- * receives it as a prop (memo's shallow-equality check sees "changed" every
- * time). Same reasoning for every other Map/color selector below.
- */
 export const selectBillingFrequenciesMap = createSelector(
   [selectBillingFrequencies],
   (billingFrequencies) => Object.fromEntries(billingFrequencies.map((f) => [f.id, f.label]))
@@ -270,33 +234,16 @@ export const selectTrackerCycleStatusesMap = createSelector(
   (trackerCycleStatuses) => Object.fromEntries(trackerCycleStatuses.map((s) => [s.id, s.label]))
 );
 
-/**
- * Returns a plain object keyed by id → hex color, for rendering StatusBadge
- * with the API-provided color instead of the static variant map.
- * Usage: const colors = useSelector(selectInvoiceStatusColorsMap);
- *        <StatusBadge status={label} colors={colors[item.statusId]} />
- */
 export const selectInvoiceStatusColorsMap = createSelector(
   [selectInvoiceStatuses],
   (invoiceStatuses) => Object.fromEntries(invoiceStatuses.map((s) => [s.id, s.colorHex]))
 );
 
-/**
- * Same as selectInvoiceStatusColorsMap but for BOQ item statuses — kept as
- * its own selector, not shared, since the two lookups are independent.
- * Usage: const colors = useSelector(selectBoqItemStatusColorsMap);
- *        <StatusBadge status={label} colors={colors[item.statusId]} />
- */
 export const selectBoqItemStatusColorsMap = createSelector(
   [selectBoqItemStatuses],
   (boqItemStatuses) => Object.fromEntries(boqItemStatuses.map((s) => [s.id, s.colorHex]))
 );
 
-/**
- * Same idea as selectBoqItemStatusColorsMap but for tracker cycle statuses.
- * Usage: const colors = useSelector(selectTrackerCycleStatusColorsMap);
- *        <StatusBadge status={label} colors={colors[cycle.statusId]} />
- */
 export const selectTrackerCycleStatusColorsMap = createSelector(
   [selectTrackerCycleStatuses],
   (trackerCycleStatuses) => Object.fromEntries(trackerCycleStatuses.map((s) => [s.id, s.colorHex]))

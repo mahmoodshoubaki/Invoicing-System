@@ -2,7 +2,6 @@ import { Info } from 'lucide-react';
 
 import { CHROME } from '@/theme/vizPalette';
 
-/** What the workbook must look like, as the server reads it. */
 export default function TemplateNote() {
   return (
     <div className="mb-5 flex items-start gap-2 rounded-xl bg-[#f6f5f3] px-4 py-3 text-xs leading-relaxed" style={{ color: CHROME.textSecondary }}>

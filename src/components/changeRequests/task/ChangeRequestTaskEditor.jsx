@@ -15,13 +15,11 @@ import { useScrollToProblem } from '@/components/changeRequests/form/useScrollTo
 import { asksForChanges, changeRequestTaskValues, splitChangeRequestErrors } from '@/lib/changeRequest/taskFields';
 import { CHROME } from '@/theme/vizPalette';
 
-/** Whether a mapped refusal put anything under a box. */
 const anyBox = (p) => Boolean(
   p.reasons || p.typeKeys || p.otherTypeText || p.projectEffectKey || p.details
   || Object.keys(p.project).length || Object.keys(p.items).length
 );
 
-/** What the task leaves as the request has it, said once above the changes. */
 function lockedNote(asks) {
   if (asks.fieldChanges && !asks.cycleChanges) return 'This task changes the item and project fields only — each item’s invoicing plan stays as the request has it.';
   if (asks.cycleChanges && !asks.fieldChanges) return 'This task changes the invoicing plans only — the item and project fields stay as the request has them.';
@@ -29,21 +27,7 @@ function lockedNote(asks) {
 }
 
 /**
- * A change request's parts in a workflow task (2026-10-20), drawn with the
- * create form's own sections and checked by its own rules — only the parts the
- * task asks for, the rest locked as the request has them.
- *
- * The task's buttons are the task form's, so the form is reached through
- * `handleRef`: `check()` shows what is wrong (scrolling to the first problem)
- * and says whether the answer may go; `values()` is what to send, by the
- * task's field names; `showRefusal(errors, sent)` puts the server's complaints
- * under their boxes and returns the ones about the request as a whole, and the
- * ones that are not the request's.
- *
- * @param {{
- *   parts: Object, asks: Object, reasons: Array, handleRef: { current: Object|null },
- *   data: { boqItems: Array, subProjects: Array, initial: Object, kept: Object, statusNameOf: (statusId) => string|null },
- * }} props
+ * @param {{ parts: Object, asks: Object, reasons: Array, handleRef: { current: Object|null }, data: { boqItems: Array, subProjects: Array, initial: Object, kept: Object, statusNameOf: (statusId) => string|null }, }} props
  */
 export default function ChangeRequestTaskEditor({ parts, asks, reasons, data, handleRef }) {
   const form = useChangeRequestForm({

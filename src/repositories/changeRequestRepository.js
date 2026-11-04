@@ -6,26 +6,15 @@ import {
 
 const api = createApiClient('/api/BoqChangeRequests');
 
-/**
- * Change requests on a BOQ (2026-10-19). Raising one and editing one that was
- * sent back are the only writes the front end makes — Returned, Rejected,
- * Cancelled and Approved are the workflow's to set.
- *
- * Refusals: BOQ-016 is the request itself, its `errors` keyed `fieldChanges[i]`,
- * `cycleChanges[i]`, `reasonKeys` or `changes`; BOQ-017 a request already open on
- * the BOQ; BOQ-018 the wrong status for the action; BOQ-019 an item locked by an
- * open request; PRJ-002 EPM refused the update.
- */
 export const changeRequestRepository = {
   /** @returns {Promise<{ changeRequestId: number, number: string }>} */
-  /** @param {Object} body  the request JSON  @param {Array} files  the uploader's entries */
+  /** @param {Object} body */
   async createChangeRequest(body, files) {
     const data = await api.post('/CreateChangeRequest', createChangeRequestFormData(body, files));
     return { changeRequestId: data?.changeRequestId ?? null, number: data?.number ?? '' };
   },
 
-  /** A returned request, sent again whole — what is left out is dropped. Only its requester may. */
-  /** @param {Object} body  with changeRequestId and attachmentIdsToDelete  @param {Array} files  new files */
+  /** @param {Object} body */
   async updateChangeRequest(body, files) {
     const data = await api.post('/UpdateChangeRequest', updateChangeRequestFormData(body, files));
     return { changeRequestId: data?.changeRequestId ?? null, number: data?.number ?? '' };
@@ -40,8 +29,7 @@ export const changeRequestRepository = {
   },
 
   /**
-   * One page of a change request's earlier versions, oldest first. The current version is getChangeRequestById.
-   * @returns {Promise<{ history: Object[], total: number }>}  mapChangeRequestVersion's
+   * @returns {Promise<{ history: Object[], total: number }>}
    */
   async getChangeRequestHistory(changeRequestId, { skip, take }) {
     const page = await api.get('/GetChangeRequestHistory', { changeRequestId, skip, take });

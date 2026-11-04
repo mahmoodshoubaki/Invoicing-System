@@ -1,16 +1,4 @@
 /**
- * Colour helpers for author-supplied hex values.
- *
- * Workflow outcome buttons carry a `colorHex` chosen by whoever drew the
- * workflow. We render it literally — that is the contract — but we still have
- * to put readable text on top of whatever they picked, which nothing in the
- * design system can predict.
- */
-
-/**
- * Parses `#rgb` or `#rrggbb` into components. Returns null for anything else,
- * including the null a workflow author leaves when they pick no colour.
- *
  * @param {string|null|undefined} hex
  * @returns {{r: number, g: number, b: number}|null}
  */
@@ -33,13 +21,8 @@ export function parseHex(hex) {
 }
 
 /**
- * Relative luminance per WCAG 2.x — the sRGB channels are linearised before
- * being weighted, which is why this is not a plain average. A mid green and a
- * mid blue of the same "brightness" by eye differ by a lot here, and that
- * difference is exactly what decides whether white text is legible.
- *
  * @param {string} hex
- * @returns {number} 0 (black) … 1 (white), or 1 when the colour is unparseable
+ * @returns {number}
  */
 export function luminance(hex) {
   const rgb = parseHex(hex);
@@ -54,14 +37,8 @@ export function luminance(hex) {
 }
 
 /**
- * Picks black or white text for a background, whichever contrasts more.
- *
- * The 0.45 threshold sits slightly below the midpoint on purpose: white text
- * on a mid-tone needs more headroom than black does, so the tie is broken
- * toward the darker foreground.
- *
  * @param {string|null|undefined} backgroundHex
- * @param {string} [fallback]  used when the colour cannot be parsed
+ * @param {string} [fallback]
  * @returns {string}
  */
 export function readableTextOn(backgroundHex, fallback = '#0b0b0b') {
@@ -70,11 +47,8 @@ export function readableTextOn(backgroundHex, fallback = '#0b0b0b') {
 }
 
 /**
- * `rgba()` string from a hex plus an alpha — for tinted backgrounds and rings
- * that have to sit on an author-chosen colour without a second hex from them.
- *
  * @param {string|null|undefined} hex
- * @param {number} alpha  0…1
+ * @param {number} alpha
  * @param {string} [fallback]
  * @returns {string}
  */

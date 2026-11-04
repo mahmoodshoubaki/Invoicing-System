@@ -18,14 +18,6 @@ const KINDS = {
 };
 
 /**
- * The head of the flow: what starts a run.
- *
- * Edited in the workflow's settings — clicking it opens them in the side
- * panel, and its menu reaches the workflow's notifications and variables too —
- * but it belongs on the canvas because a flow that begins at its first stage
- * never says *why* a run exists. Every workflow tool puts the trigger at the
- * top for the same reason.
- *
  * @param {{ trigger: Object, targetTypeKey: number, onOpen: (o: {focus: boolean}) => void, onMenu: (from) => void }} props
  */
 function TriggerNode({ trigger, targetTypeKey, onOpen, onMenu }) {

@@ -1,7 +1,5 @@
 'use client';
 
-/** Every request to send, from code or a workflow — including who got nothing, and why. */
-
 import { memo, useCallback, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ChevronDown, ChevronRight, Fingerprint, GitBranch, Send } from 'lucide-react';
@@ -27,7 +25,6 @@ const OUTCOME_TONE = {
   [REQUEST_OUTCOME.SKIPPED]: STATUS.warning,
 };
 
-/** One request to send, with what happened for each person it named. */
 const RequestRow = memo(function RequestRow({ request, now }) {
   const [open, setOpen] = useState(request.skippedCount > 0 && request.recipients.length <= 3);
   const created = request.recipients.filter((r) => r.outcomeKey === REQUEST_OUTCOME.CREATED).length;
@@ -97,11 +94,9 @@ const RequestRow = memo(function RequestRow({ request, now }) {
   );
 });
 
-/** Every request to send, from code or a workflow — including who got nothing, and why. */
 export function SendRequests({ types }) {
   const [filters, setFilters] = useState({ typeKey: '', recipientEmail: '', fromDate: '', toDate: '', correlationId: '', onlyWithSkipped: false });
   const [skip, setSkip] = useState(0);
-  // Rows a page, as the reader chooses (2026-10-21) — PAGE_SIZE to start with.
   const [take, setTake] = useState(PAGE_SIZE);
   const [data, setData] = useState({ items: [], total: 0 });
   const [loading, setLoading] = useState(true);

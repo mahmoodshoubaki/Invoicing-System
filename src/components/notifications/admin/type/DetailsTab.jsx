@@ -18,7 +18,6 @@ function Fact({ label, children, wide = false }) {
 
 const Muted = ({ children }) => <span style={{ color: CHROME.textMuted }}>{children}</span>;
 
-/** "date · by name", or just the date. */
 const when = (on, by) => (
   <>
     {formatDateTime(on) || '—'}
@@ -27,15 +26,7 @@ const when = (on, by) => (
 );
 
 /**
- * The type itself, all in one place: how it is named and found, how it is sent,
- * and its history. Edit opens the same form as the page header's button.
- *
- * @param {{
- *   type: Object,
- *   priority: { value: string, colorHex?: string } | undefined,
- *   senderName: string|null,  the type's own sender, when it has one and it could be read
- *   canManage: boolean, onEdit: () => void,
- * }} props
+ * @param {{ type: Object, priority: { value: string, colorHex?: string } | undefined, senderName: string|null, the type's own sender, when it has one and it could be read canManage: boolean, onEdit: () => void, }} props
  */
 export default function DetailsTab({ type, priority, senderName, canManage, onEdit }) {
   return (

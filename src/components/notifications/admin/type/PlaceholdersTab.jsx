@@ -8,16 +8,7 @@ import { withAlpha } from '@/utils/color';
 import { BUILT_IN_PLACEHOLDERS } from '@/lib/templatePlaceholders';
 
 /**
- * The values a version's text uses. The server refuses a save whose text uses
- * a value this list does not name (NTF-008), so names the text uses but the
- * list lacks are pointed out, with one click to add them.
- *
- * @param {{
- *   placeholders: Array<{ key: string, value: string }>,
- *   unlisted: string[],
- *   readOnly: boolean,
- *   onChange: (placeholders) => void,
- * }} props
+ * @param {{ placeholders: Array<{ key: string, value: string }>, unlisted: string[], readOnly: boolean, onChange: (placeholders) => void, }} props
  */
 export default function PlaceholdersTab({ placeholders, unlisted, readOnly, onChange }) {
   const edit = (i, patch) => onChange(placeholders.map((p, j) => (j === i ? { ...p, ...patch } : p)));

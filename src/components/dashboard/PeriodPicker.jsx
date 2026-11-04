@@ -5,8 +5,6 @@ import { controlClass } from '@/components/ui/kit';
 const MONTHS = Array.from({ length: 12 }, (_, i) => new Date(2000, i, 1).toLocaleDateString('en-GB', { month: 'long' }));
 
 /**
- * The month the monthly figures cover.
- *
  * @param {{ filters: ReturnType<import('./useDashboard').useDashboardFilters> }} props
  */
 export default function PeriodPicker({ filters }) {

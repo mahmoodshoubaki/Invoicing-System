@@ -4,9 +4,6 @@ import { controlClass } from '@/components/ui/kit';
 import { Field } from './senderShared';
 
 /**
- * An Amazon SES sender's region and keys. The secret key is never shown or
- * kept between saves, so it is asked for every time.
- *
  * @param {{ form: Object, set: (patch) => void, editing: boolean }} props
  */
 export default function SesFields({ form, set, editing }) {

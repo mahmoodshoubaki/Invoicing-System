@@ -2,10 +2,6 @@ import { createApiClient } from '@/lib/apiClient';
 
 const api = createApiClient('/api/auth');
 
-/**
- * Known test accounts, kept for manual testing against the backend.
- * Not used by the login flow itself — login always hits the real API.
- */
 export const TEST_USERS = [
   {
     id: '1',
@@ -83,25 +79,14 @@ export const TEST_USERS = [
 
 export const authService = {
   /**
-   * Authenticate against the real backend. Both the access and refresh
-   * tokens are set server-side as httpOnly cookies — the frontend never
-   * sees either, and the response body carries nothing to store. Whether
-   * login actually worked is confirmed separately, by calling Identity/me
-   * (see AuthContext) once this resolves without throwing.
-   *
    * @param {string} username
    * @param {string} password
    * @returns {Promise<void>}
    */
   async login(username, password) {
-    // The login call itself must go out unauthenticated — there's no session yet.
     await api.post('/Login', { username, password }, { skipRefresh: true });
   },
 
-  /**
-   * End the session. Both cookies are cleared server-side when the backend
-   * handles this call — there's nothing left for the frontend to delete.
-   */
   async logout() {
     try {
       await api.post('/Logout', undefined, { skipRefresh: true });

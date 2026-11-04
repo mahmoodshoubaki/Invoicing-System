@@ -10,7 +10,6 @@ import { useProjectStatuses } from './useProjectStatuses';
 const LIST_SHOWN = 5;
 export const TREND_MONTHS = 12;
 
-/** The dashboard's filters: a month (this one by default, never later) and an optional project status. */
 export function useDashboardFilters() {
   const now = new Date();
   const [period, setPeriodState] = useState({ month: now.getMonth() + 1, year: now.getFullYear() });
@@ -31,10 +30,6 @@ export function useDashboardFilters() {
   };
 }
 
-/**
- * The dashboard sources, loaded side by side. Each has its own status, so one
- * can load or fail without the others.
- */
 export function useDashboard({ month, year, projectStatus }) {
   const status = projectStatus || null;
   const fetchFinancial = useCallback(

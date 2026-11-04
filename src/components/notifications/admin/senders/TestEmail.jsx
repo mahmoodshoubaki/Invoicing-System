@@ -1,7 +1,5 @@
 'use client';
 
-/** Sending a sender's short check email. */
-
 import { useState } from 'react';
 import { Send } from 'lucide-react';
 
@@ -15,7 +13,6 @@ import { notificationRepository } from '@/repositories/notificationRepository';
 
 import { Field } from './senderShared';
 
-/** Sends a short check email now — or a template version, filled in. */
 export function TestEmail({ sender, faultReasons, onClose }) {
   const { user } = useAuth();
   const [to, setTo] = useState(user?.email ?? '');
@@ -53,7 +50,6 @@ export function TestEmail({ sender, faultReasons, onClose }) {
         <Field label="Send it to">
           <input type="email" value={to} onChange={(e) => setTo(e.target.value)} className={`${controlClass} w-full`} placeholder="me@example.com" />
         </Field>
-        {/* This short check email is not kept, so it has no monitor link. */}
         <TestEmailResult result={result} faultReasons={faultReasons} />
         <ErrorNote error={error} compact />
       </div>

@@ -8,10 +8,6 @@ import { isOpenChangeRequest } from '@/constants/changeRequests';
 const NONE = [];
 
 /**
- * A BOQ's change requests (2026-10-19) — GetChangeRequestsByBoqId, which
- * ChangeRequests.View reads. `enabled` is false without it, or before the BOQ
- * is known: then nothing is asked.
- *
  * @param {string|null} boqId
  * @param {boolean} enabled
  */
@@ -36,7 +32,6 @@ export function useBoqChangeRequests(boqId, enabled) {
     ready,
     rows,
     error: loaded.boqId === boqId ? loaded.error : null,
-    // Only one may be open on a BOQ at a time.
     open: rows.find((r) => isOpenChangeRequest(r.statusId)) ?? null,
     reload,
   };

@@ -1,7 +1,5 @@
 'use client';
 
-/** Inputs for an action that does not describe its own — plain name / value rows. */
-
 import { memo } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 
@@ -10,7 +8,6 @@ import { CHROME } from '@/theme/vizPalette';
 import { controlClass, Label } from './shared';
 import { TokenField } from './TokenField';
 
-/** Free-form key/value inputs, for an action that describes none of its own. */
 export const SimpleInputs = memo(function SimpleInputs({ inputs, fields, onChange }) {
   const entries = Object.entries(inputs);
 

@@ -6,14 +6,7 @@ import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 
 /**
- * A small row of filter pills — the same control the run page's task filter
- * uses, so a filter looks like a filter everywhere.
- *
- * @param {{
- *   tabs: Array<{ key: string, label: string, count?: number|null, tone?: string }>,
- *   value: string,
- *   onChange: (key: string) => void,
- * }} props
+ * @param {{ tabs: Array<{ key: string, label: string, count?: number|null, tone?: string }>, value: string, onChange: (key: string) => void, }} props
  */
 function PillTabs({ tabs, value, onChange }) {
   return (

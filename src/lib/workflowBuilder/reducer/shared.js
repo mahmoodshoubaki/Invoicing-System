@@ -1,15 +1,3 @@
-/** Helpers every group of reducer handlers uses. */
-
-/**
- * Rebuilds the state around one changed stage — and returns the SAME state when
- * the updater declines to change anything.
- *
- * Several updaters refuse their action (a drag that would displace the
- * otherwise arm, a title commit that resolves to the id it already has). Those
- * used to allocate a fresh state object anyway, which the undo stack could not
- * tell apart from a real edit: Ctrl+Z would consume a step and appear to do
- * nothing. Identity is the signal, so it has to be preserved.
- */
 export function replaceStage(state, stageId, updater) {
   let changed = false;
 

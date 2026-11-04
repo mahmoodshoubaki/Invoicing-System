@@ -1,19 +1,3 @@
-/** Engine limits and approved API hosts: their mappers and request bodies. */
-
-/**
- * One engine limit from GetSettings.
- *
- * `type` decides the control, NOT `key` — all eight are `positiveInteger`
- * today and a future one will not be, so a screen that switches on the key
- * would render the wrong box the day that happens.
- *
- * `description` is the label. Keeping a local copy of what each key means would
- * drift from the engine the moment a limit is reworded.
- *
- * `isKnown: false` is a row the engine no longer reads — shown, never edited.
- *
- * Values travel as strings whatever the type.
- */
 export function mapWorkflowSetting(raw) {
   return {
     key:         raw.key,
@@ -24,15 +8,6 @@ export function mapWorkflowSetting(raw) {
   };
 }
 
-/**
- * One field on the Workflow fields admin page (2026-10-13): what the builder
- * shows it as, whether it shows at all, and whether a task can fill it.
- * `name` never changes — saved workflows hold it. The "a task can fill it"
- * switch is open only when `cannotFillReason` is null, and "a person" only
- * when `cannotBePersonReason` is (2026-10-13); either reason is shown beside
- * its locked switch. `historyWarning` is a warning only — filling the field is
- * still allowed, its old value is just not kept anywhere.
- */
 export function mapFieldSetting(raw) {
   return {
     name:             raw.name,
@@ -49,10 +24,6 @@ export function mapFieldSetting(raw) {
   };
 }
 
-/**
- * Body for SaveFieldSettings: only the rows that changed, but each with all four
- * values, because a row is replaced whole.
- */
 export function createSaveFieldSettingsPayload(targetTypeKey, rows) {
   return {
     targetTypeKey,
@@ -62,12 +33,10 @@ export function createSaveFieldSettingsPayload(targetTypeKey, rows) {
   };
 }
 
-/** Body for UpdateSetting. The value is a string whatever the declared type. */
 export function createUpdateSettingPayload({ key, value }) {
   return { key, value: value == null ? '' : String(value) };
 }
 
-/** One approved host from GetApiDomains. */
 export function mapApiDomain(raw) {
   return {
     id:          raw.id,
@@ -78,17 +47,10 @@ export function mapApiDomain(raw) {
   };
 }
 
-/**
- * Body for ApproveApiDomain.
- *
- * `host` must be a **bare host** — `api.example.com`, with no scheme, port or
- * path. Anything else is WF-032. Approving a withdrawn host re-enables it.
- */
 export function createApproveApiDomainPayload({ host, description = '' }) {
   return { host, description };
 }
 
-/** Body for SetApiDomainEnabled. */
 export function createSetApiDomainEnabledPayload({ domainId, isEnabled }) {
   return { domainId, isEnabled };
 }

@@ -6,9 +6,6 @@ import { MoreHorizontal } from 'lucide-react';
 import { CHROME } from '@/theme/vizPalette';
 
 /**
- * The ⋯ on a card: the same menu as a right-click, for anybody who would never
- * think to right-click — and for keyboards and touch screens, which cannot.
- *
  * @param {{ label: string, onOpen: (button: HTMLElement) => void }} props
  */
 function MenuButton({ label, onOpen }) {

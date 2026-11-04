@@ -1,9 +1,3 @@
-/**
- * Where a change request is, as steps (2026-10-21): raised, the workflow
- * deciding it (see lib/workflowProgress), and the decision. A request still
- * being written is the first step of its own.
- */
-
 import { CR_STATUS } from '@/constants/changeRequests';
 import { STEP, TONE, assembleSteps, workflowSteps } from '@/lib/workflowProgress';
 import { formatDate } from '@/utils/formatters';
@@ -14,7 +8,6 @@ const DECISION = {
   [CR_STATUS.CANCELLED]: { title: 'Cancelled', tone: TONE.NEUTRAL },
 };
 
-/** The steps of a request still being written. */
 function draftSteps() {
   return {
     steps: [
@@ -28,10 +21,7 @@ function draftSteps() {
 }
 
 /**
- * @param {{
- *   changeRequest: Object|null,  mapChangeRequest's; null while it is being written
- *   run?: Object|null, history?: Array, graph?: Object|null,  see useRecordProgress
- * }} input
+ * @param {{ changeRequest: Object|null, mapChangeRequest's; null while it is being written run?: Object|null, history?: Array, graph?: Object|null, see useRecordProgress }} input
  * @returns {{ steps: Array, next: string|null }}
  */
 export function changeRequestSteps({ changeRequest, run = null, history = [], graph = null }) {

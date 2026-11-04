@@ -1,20 +1,13 @@
 import { isEmailOrPlaceholder } from '@/lib/workflowNotifications';
 import { readPlaceholder } from '@/utils/workflowPlaceholder';
 
-/** A Send notification step's rules: its type, its recipients, its CC, and the task it is about. */
-
 const TO_LISTS = ['toUserIds', 'toRoleIds', 'toGroupIds', 'toExpressions', 'toEmails'];
 const CC_LISTS = ['ccUserIds', 'ccRoleIds', 'ccGroupIds', 'ccExpressions', 'ccEmails'];
 
-/** Whether the step copies anybody in — people, roles, person fields or addresses. */
 export function copiesAnyone(step) {
   return CC_LISTS.some((k) => (step?.[k] ?? []).length > 0);
 }
 
-/**
- * The two CC boxes, as the server judges them. A step saved before the boxes
- * existed has no `ccGetsEmail`, which means true.
- */
 export function ccDeliveryProblems(step) {
   const email = step?.ccGetsEmail !== false;
   const inApp = step?.ccGetsInApp === true;
@@ -28,7 +21,6 @@ export function ccDeliveryProblems(step) {
   return problems;
 }
 
-/** `{{field}}` recipients: each must be a `{{name}}`, and a known one must hold a person (WF-038). */
 function checkExpressions(expressions, { where, fields, errors, line }) {
   for (const expression of expressions ?? []) {
     const parsed = readPlaceholder(expression);
@@ -43,16 +35,10 @@ function checkExpressions(expressions, { where, fields, errors, line }) {
   }
 }
 
-/*
- * Tells people, then walks on (2026-10-07; CC like To, 2026-10-08). The save
- * refuses each of these with the server's own words; checked here so nobody
- * learns them that way. Placeholder values are never refused.
- */
 export function checkSendNotification(step, { where, fields, humanTaskIds, notificationTypeKeys, errors }) {
   if (step.notificationTypeKey == null) {
     errors.push(`${where} sends a notification without saying which type.`);
   } else if (notificationTypeKeys && !notificationTypeKeys.has(step.notificationTypeKey)) {
-    // WF-050.
     errors.push(`${where} sends notification type ${step.notificationTypeKey}, which does not exist or was deleted.`);
   }
 
@@ -77,8 +63,6 @@ export function checkSendNotification(step, { where, fields, humanTaskIds, notif
   checkExpressions(step.toExpressions, { where, fields, errors, line: 'recipient' });
   checkExpressions(step.ccExpressions, { where, fields, errors, line: 'CC' });
 
-  // Only checkable when the caller knows the workflow's tasks — a step
-  // validated alone passes an empty set and must not report every link.
   if (step.taskStepId && humanTaskIds.size > 0 && !humanTaskIds.has(step.taskStepId)) {
     errors.push(`${where} is about "${step.taskStepId}", which is not a human task in this workflow.`);
   }

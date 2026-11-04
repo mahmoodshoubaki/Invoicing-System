@@ -10,12 +10,6 @@ import { relativeTime } from '@/utils/relativeTime';
 import { notificationText } from '@/utils/notificationText';
 import { PRIORITY } from '@/constants/notifications';
 
-/**
- * Priority, as a colour on the row's edge. Kept here rather than read from
- * GetPriorities: that lookup needs a Notifications permission most people do
- * not have, and every signed-in user has a bell. Low and Normal stay quiet —
- * only what is genuinely louder earns a colour.
- */
 const PRIORITY_TONE = {
   [PRIORITY.HIGH]: STATUS.warning,
   [PRIORITY.URGENT]: STATUS.serious,
@@ -29,17 +23,7 @@ const PRIORITY_LABEL = {
 };
 
 /**
- * One notification, for the bell panel and the inbox page alike.
- *
- * Unread reads as unread three ways at once — a dot, bolder text, a faintly
- * tinted background — so it survives a glance and colour blindness both. The
- * body is plain text (HTML is reduced to its words, never rendered), clamped
- * to two lines in the panel and shown whole on the page.
- *
- * @param {{
- *   notification: Object, language: 'en'|'ar', now: number,
- *   onOpen: (n: Object) => void, full?: boolean,
- * }} props
+ * @param {{ notification: Object, language: 'en'|'ar', now: number, onOpen: (n: Object) => void, full?: boolean, }} props
  */
 function NotificationItem({ notification, language, now, onOpen, full = false }) {
   const { subject, body, dir } = notificationText(notification, language);

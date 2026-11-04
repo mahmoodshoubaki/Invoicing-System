@@ -10,27 +10,9 @@ import { END_RUN, IconButton } from './stageParts';
 
 const ordinal = (n) => `${n}${n === 2 ? 'nd' : n === 3 ? 'rd' : 'th'}`;
 
-/**
- * One CONDITIONAL transition out of a stage — an `if` or an `else if`.
- *
- * Order is meaningful — the engine takes the FIRST whose condition matches — so
- * these are numbered and movable rather than rendered as an unordered set.
- *
- * The otherwise arm is deliberately NOT one of these. A transition with an
- * empty condition matches everything, so rendering it in this list as though it
- * were an ordinary row is what allowed a stage to hold an unconditional "go to
- * Stage 1" with more transitions underneath that could never be taken. It gets
- * its own row at the bottom instead (OtherwiseRow), where it cannot be
- * reordered or repeated.
- *
- * Two lines, so it fits the side panel: the condition, then where it goes.
- */
 function TransitionRow({ transition, index, total, stages, currentStageId, fields, onUpdate, onRemove, onMove }) {
   const [editingCondition, setEditingCondition] = useState(false);
 
-  // A stage cannot transition back to itself, so it is not offered. A loaded
-  // definition that already contains one keeps it visible and flagged rather
-  // than having the select silently coerce it to some other stage.
   const targets = stages.filter((s) => s.id !== currentStageId);
   const isSelfLoop = transition.toStageId === currentStageId;
 
@@ -48,9 +30,6 @@ function TransitionRow({ transition, index, total, stages, currentStageId, field
           {index === 0 ? 'If' : 'Else if'}
         </span>
 
-        {/* The condition as a sentence, and a real control. It reads far more
-            often than it is edited, so it stays a summary — but it has to LOOK
-            clickable, or the condition editor goes unnoticed. */}
         <button
           type="button"
           onClick={() => setEditingCondition((v) => !v)}

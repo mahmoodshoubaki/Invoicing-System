@@ -13,19 +13,7 @@ import { saveBlob } from '@/utils/saveBlob';
 import { toggleRemoval } from '@/lib/taskFileValue';
 
 /**
- * An invoice's attachments, asked for by a task (2026-10-13): the files on it
- * now — each can be downloaded, or marked to be removed — and new ones to add,
- * with the same picker and limits as the invoice's own form.
- *
- * Downloading needs the invoice's id, which the invoice's own page has
- * (`context.invoiceId`); My Tasks does not, so there the files are listed only.
- * Nothing changes until a button that saves the fields is pressed.
- *
- * @param {{
- *   field: Object, value: { existing: Array, deleteIds: string[], added: Array },
- *   onChange: (next: Object | ((prev: Object) => Object)) => void,
- *   error?: string|null, disabled?: boolean, context?: { invoiceId?: string }|null,
- * }} props
+ * @param {{ field: Object, value: { existing: Array, deleteIds: string[], added: Array }, onChange: (next: Object | ((prev: Object) => Object)) => void, error?: string|null, disabled?: boolean, context?: { invoiceId?: string }|null, }} props
  */
 function TaskFilesField({ field, value, onChange, error = null, disabled = false, context = null }) {
   const toast = useToast();

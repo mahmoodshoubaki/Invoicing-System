@@ -14,7 +14,6 @@ import { ROUTES } from '@/constants/routes';
 import { TASK_STATUS, TASK_STATUS_COLORS } from '@/constants/workflow';
 import RunTaskItem from './RunTaskItem';
 
-/** The engine's four task statuses, by their own names, plus everything. */
 const TASK_TABS = [
   { key: 'all', label: 'All', statusKey: null },
   { key: 'pending', label: 'Pending', statusKey: TASK_STATUS.PENDING },
@@ -24,31 +23,14 @@ const TASK_TABS = [
 ];
 
 /**
- * EVERY task this run created, not just the open ones — `GetInstanceTasks`
- * since 2026-09-13. Before it, a screen could say what a run was waiting for
- * but never what anybody had already decided, and a to-do cancelled by a stage
- * deadline vanished without trace.
- *
- * @param {{
- *   grouped: { open: Array, settled: Array, total: number },  from groupTasks
- *   loaded: boolean,
- *   onReassign: (task) => void,
- * }} props
+ * @param {{ grouped: { open: Array, settled: Array, total: number }, from groupTasks loaded: boolean, onReassign: (task) => void, }} props
  */
 export default function RunTasksPanel({ grouped, loaded, onReassign }) {
   const { can } = usePermission();
-  /*
-   * Handing on a pending to-do from here. Its own permission with no ownership
-   * check behind it, so somebody covering for a colleague can pass on a task
-   * that is not in their own list — which is the only way to reach the live
-   * copy of a to-do that was already reassigned once.
-   */
   const canReassign = allow(can, WORKFLOW_TASK_PERMISSIONS.REASSIGN);
-  /** Which task status the panel is filtered to. */
   const [taskTab, setTaskTab] = useState('all');
 
   const { open: openTasks, settled: settledTasks, total: taskCount } = grouped;
-  // Open first, then settled newest-first — the order holds inside every tab.
   const orderedTasks = [...openTasks, ...settledTasks];
   const statusCounts = orderedTasks.reduce((acc, t) => {
     acc[t.statusKey] = (acc[t.statusKey] ?? 0) + 1;
@@ -73,12 +55,6 @@ export default function RunTasksPanel({ grouped, loaded, onReassign }) {
         )}
       </div>
 
-      {/*
-        The engine's four task statuses, each with its count — including the
-        ones at zero, so "nothing was cancelled" is something the screen says
-        rather than something a reader has to infer from an absence. Filtering
-        is local: `GetInstanceTasks` already returned all of them.
-      */}
       {loaded && taskCount > 0 && (
         <div className="mb-2.5 flex flex-wrap gap-1">
           {TASK_TABS.map((tab) => {
@@ -123,9 +99,6 @@ export default function RunTasksPanel({ grouped, loaded, onReassign }) {
         </ul>
       )}
 
-      {/* Answering happens where a person's own queue is, not here — this
-          screen is for watching a run, and acting on somebody else's to-do
-          needs `WorkflowTasks.ActAll` anyway. */}
       {openTasks.length > 0 && (
         <Link
           href={ROUTES.WORKFLOW_TASKS}

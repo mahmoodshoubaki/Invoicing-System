@@ -4,9 +4,6 @@ import Link from 'next/link';
 import { AlertTriangle, CheckCircle, ArrowRight } from 'lucide-react';
 import Badge from '@/components/common/Badge';
 
-/**
- * Returns the badge variant and label colour based on SLA level.
- */
 function getLevelConfig(level) {
   if (level >= 3) {
     return { variant: 'danger', label: `Level ${level}`, dotClass: 'bg-red-700' };
@@ -18,18 +15,7 @@ function getLevelConfig(level) {
 }
 
 /**
- * SLAViolationWidget — shows a compact list of active SLA violations.
- *
- * @param {{
- *   violations: Array<{
- *     id: string,
- *     projectName: string,
- *     boqItem: string,
- *     daysOverdue: number,
- *     level: number
- *   }>,
- *   viewAllHref?: string
- * }} props
+ * @param {{ violations: Array<{ id: string, projectName: string, boqItem: string, daysOverdue: number, level: number }>, viewAllHref?: string }} props
  */
 export default function SLAViolationWidget({ violations = [], viewAllHref = '/projects' }) {
   const visible = violations.slice(0, 5);

@@ -26,16 +26,6 @@ import {
   selectVersionsLoading,
 } from '@/store/slices/workflowSlice';
 
-/**
- * Version history for one workflow: its draft (2026-10-11), if any, and every
- * numbered version — one of which can be made live again from here.
- *
- * Publishing lives here rather than on the card because `GetDefinitions` only
- * carries `activeDefinitionId` — the id of what is *already* live. To activate
- * anything else you need that version's own `definitionId`, which only
- * `GetDefinitionVersions` returns. A "publish latest" button on the card would
- * have nothing to send.
- */
 export default function VersionHistoryModal({ workflow, open, onClose, onDuplicateVersion = null }) {
   const dispatch = useDispatch();
   const toast = useToast();
@@ -49,12 +39,8 @@ export default function VersionHistoryModal({ workflow, open, onClose, onDuplica
 
   const code = workflow?.code;
 
-  // Which version the Publish button is waiting on. Publishing is one click
-  // away from changing what every run follows — running ones included, since a
-  // successful publish moves them all — and none of that is visible from the row.
   const [pendingPublish, setPendingPublish] = useState(null);
   const [publishing, setPublishing] = useState(false);
-  // The runs that refused the last try (409 WF-024), listed in the dialog.
   const [blockedRuns, setBlockedRuns] = useState([]);
   const [discarding, setDiscarding] = useState(false);
 
@@ -72,8 +58,6 @@ export default function VersionHistoryModal({ workflow, open, onClose, onDuplica
       const version = pendingPublish;
       if (!version) return;
 
-      // Read BEFORE publishing: afterwards the list is refetched and every run
-      // is on the new version, so this is the only moment the answer is known.
       const runsMoved = versionsWithRunsToMove(versions, version).length > 0;
 
       setPublishing(true);
@@ -81,9 +65,6 @@ export default function VersionHistoryModal({ workflow, open, onClose, onDuplica
       setPublishing(false);
 
       if (activateDefinition.rejected.match(result)) {
-        // WF-024 lands here: a running workflow is in a stage that changed.
-        // Nothing moved and the old version is still live, so the dialog stays
-        // open and lists the runs in the way.
         if (result.payload?.blockedRuns?.length) {
           setBlockedRuns(result.payload.blockedRuns);
           return;
@@ -94,10 +75,7 @@ export default function VersionHistoryModal({ workflow, open, onClose, onDuplica
 
       setPendingPublish(null);
       setBlockedRuns([]);
-      // A successful publish always moved every running workflow — said as fact.
       toast.success(`Version ${version.version} is live`, publishedMessage(runsMoved));
-      // Both lists move: this version becomes active and the previous one
-      // stands down, so refetch rather than patching two rows by hand.
       dispatch(fetchDefinitionVersions(code));
       dispatch(fetchDefinitions());
     },

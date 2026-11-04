@@ -12,19 +12,8 @@ import UserPicker from './UserPicker';
 
 const TYPE_OPTIONS = Object.values(VARIABLE_TYPE);
 
-/** Stable identity for "nobody picked". */
 const NO_IDS = [];
 
-/**
- * What the run starts with.
- *
- * Left blank, the variable still exists — it holds its type's empty value — so
- * the placeholder says which one rather than leaving the field looking unset
- * and implying the variable is absent until something writes it.
- *
- * A person is picked, never typed: the picker shows the name and the user id is
- * what is saved, because the engine refuses anything that is not a user id.
- */
 const DefaultValueRow = memo(function DefaultValueRow({ variable, resolvedById, onChange }) {
   const problems = defaultValueErrors(variable);
   const empty = emptyForType(variable.type);
@@ -66,16 +55,6 @@ const DefaultValueRow = memo(function DefaultValueRow({ variable, resolvedById, 
   );
 });
 
-/**
- * The workflow's variables.
- *
- * These are the names a run carries and conditions can read, and the names an
- * `http.call` fills in as `{{placeholders}}`. On a manual trigger the ones
- * marked required are what the starter is asked for.
- *
- * `resolvedById` is the builder's directory cache, so a person variable's
- * starting value shows a name.
- */
 function VariablesPanel({ variables, dispatch, actions, resolvedById }) {
   return (
     <div>
@@ -110,9 +89,6 @@ function VariablesPanel({ variables, dispatch, actions, resolvedById }) {
               <div className="flex items-center gap-2">
                 <input
                   value={variable.name}
-                  // Variable names are referenced as {{name}} in step inputs and
-                  // by `field` in conditions, so spaces would silently produce a
-                  // placeholder nothing can resolve.
                   onChange={(e) =>
                     dispatch({
                       type: actions.UPDATE_VARIABLE,
@@ -129,9 +105,6 @@ function VariablesPanel({ variables, dispatch, actions, resolvedById }) {
                   value={variable.type}
                   onChange={(e) => {
                     const type = e.target.value;
-                    // A starting value written for one type rarely fits another,
-                    // and a guid typed into a number box helps nobody — so moving
-                    // to or from a person clears it.
                     const crossesPerson = (type === VARIABLE_TYPE.USER) !== (variable.type === VARIABLE_TYPE.USER);
                     dispatch({
                       type: actions.UPDATE_VARIABLE,
@@ -183,13 +156,6 @@ function VariablesPanel({ variables, dispatch, actions, resolvedById }) {
                 </label>
               </div>
 
-              {/*
-                A default now applies whatever starts the run — event, schedule
-                or manual — so a variable is never "not there yet" and this is
-                what a run genuinely begins with. It is a string on the wire
-                whatever the type, and the server parses it; a value that will
-                not parse is refused at save (WF-044), so it is checked here.
-              */}
               <DefaultValueRow
                 variable={variable}
                 resolvedById={resolvedById}

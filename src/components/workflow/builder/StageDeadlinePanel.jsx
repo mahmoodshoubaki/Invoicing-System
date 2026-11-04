@@ -10,19 +10,6 @@ import DurationFields from './DurationFields';
 const controlClass =
   'rounded-md border border-gray-200 bg-white px-2 py-1 text-xs outline-none focus:border-primary';
 
-/**
- * What happens if nobody ever acts.
- *
- * A stage-level panel, not a step, and deliberately not a transition:
- * transitions are read once a stage's steps have run out, while a deadline
- * fires **while the stage is still waiting**. It is armed on entry and thrown
- * away on exit, so normally it never fires at all.
- *
- * `toStageId` is required here, unlike a transition's — a stage nobody answered
- * in time must not finish quietly. And unlike a transition it MAY point back at
- * its own stage, which means "start this stage over" — the steps run again and
- * the clock is re-armed. That is the one place a self-reference is legal.
- */
 function StageDeadlinePanel({ stage, stages, onChange }) {
   const deadline = stage.deadline;
   const enabled = Boolean(deadline);

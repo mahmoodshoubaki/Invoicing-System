@@ -7,16 +7,6 @@ import { ChangesButton, NoAccessNote, ReadOnlyPill } from '@/components/workflow
 import { usePermission } from '@/hooks/usePermission';
 import { allow, WORKFLOW_PERMISSIONS } from '@/constants/workflowPermissions';
 
-/**
- * Admin › Workflow › Approved domains (2026-10-13, split from the engine page):
- * where a workflow's API calls may go — this application's own API as well as
- * anybody else's. A step pointed anywhere else saves fine and then fails when
- * it runs.
- *
- * Reading is `Workflows.Manage`; approving and withdrawing need
- * `Workflows.ManageApiDomains` — somebody who may draw a workflow does not
- * thereby decide what the server may talk to.
- */
 export default function ApprovedDomainsPage() {
   const { can } = usePermission();
   const canView = allow(can, WORKFLOW_PERMISSIONS.MANAGE);

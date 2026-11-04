@@ -13,12 +13,6 @@ import { draftFrom, draftRequest } from '@/components/notifications/admin/type/t
 const CHANNEL_NAMES = { [CHANNEL.EMAIL]: 'email', [CHANNEL.IN_APP]: 'in-app' };
 const channelName = (key) => CHANNEL_NAMES[key] ?? `channel ${key}`;
 
-/**
- * Copying a notification type: add it, pause it at once, then copy each
- * channel's words (live, or else newest) as unpublished versions. Not one
- * request, so a failure after the type exists opens the paused copy and says
- * which step failed.
- */
 export function useDuplicateType() {
   const router = useRouter();
   const toast = useToast();

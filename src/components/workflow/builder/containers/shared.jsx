@@ -1,13 +1,10 @@
 'use client';
 
-/** Pieces every container-step editor uses: the field look, labels, notes, and the nested step list. */
-
 import { Info } from 'lucide-react';
 
 import { CHROME } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 
-/** Shared empty list so an absent catalog keeps a stable identity. */
 export const EMPTY_LISTS = [];
 
 export const EMPTY_FIELDS = [];
@@ -36,7 +33,6 @@ export function Note({ tone = CHROME.textMuted, icon: Icon = Info, children }) {
   );
 }
 
-/** Shared props every nested StepList needs. */
 export function nested(props, list, extra = {}) {
   const { stageId, container, index, ctx, insideParallelBranch, insideCut } = props;
   return {
@@ -44,7 +40,6 @@ export function nested(props, list, extra = {}) {
     container: [...container, { index, list, ...extra }],
     ctx,
     insideParallelBranch,
-    // Inside a step being moved, at any depth — not a place it can move to.
     insideCut,
     compact: true,
   };

@@ -8,11 +8,6 @@ import {
   fetchInvoiceStatuses, fetchTrackerCycleStatuses,
 } from '@/store/slices/lookupsSlice';
 
-/**
- * Renderless component — dispatches all lookup fetches once on app mount.
- * Place inside <Provider> in the dashboard layout.
- * Add new fetchX() calls here as new lookup endpoints are wired up.
- */
 export default function LookupsSync() {
   const dispatch = useDispatch();
 

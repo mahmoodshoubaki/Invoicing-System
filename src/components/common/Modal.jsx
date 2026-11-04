@@ -12,12 +12,6 @@ const SIZE_MAP = {
   full: 'max-w-screen-xl mx-4',
 };
 
-/**
- * A dialog over the page. It closes only from its × (2026-10-20) — and from
- * whatever buttons the caller puts in it. A click outside it or Escape does
- * nothing: either one used to throw away a half-filled form, and Escape meant
- * for a dropdown inside the dialog closed the dialog too.
- */
 export default function Modal({
   open,
   onClose,

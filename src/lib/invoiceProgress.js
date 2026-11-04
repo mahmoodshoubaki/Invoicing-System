@@ -1,10 +1,3 @@
-/**
- * Where an invoice is, as steps (2026-10-21): submitted, the workflow taking
- * it through (see lib/workflowProgress), and where it ends — collected, or
- * rejected or cancelled on the way. Invoiced is a status on the way, not an
- * end: the money is still to come in.
- */
-
 import { INVOICE_STATUS_ID } from '@/constants/statuses';
 import { STEP, TONE, assembleSteps, workflowSteps } from '@/lib/workflowProgress';
 import { formatDate } from '@/utils/formatters';

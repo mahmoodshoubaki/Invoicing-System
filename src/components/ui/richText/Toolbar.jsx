@@ -1,11 +1,5 @@
 'use client';
 
-/**
- * The rich text editor's toolbar: text style and size, formatting, colours,
- * alignment, lists, links, buttons, images, tables and values — plus, while
- * the cursor is in a table, its own row of table actions.
- */
-
 import { useEffect, useRef, useState } from 'react';
 import {
   AlignCenter,
@@ -73,7 +67,6 @@ export function Toolbar({ editor, valueNames }) {
         content: [{ type: 'text', text: bar.text.trim(), marks: [{ type: 'link', attrs: { href: url, style: BUTTON_STYLE } }, { type: 'bold' }] }],
       }).run();
     } else if (editor.state.selection.empty && !s.link) {
-      // Nothing selected: the address itself becomes the link's text.
       chain().insertContent({ type: 'text', text: url, marks: [{ type: 'link', attrs: { href: url } }] }).run();
     } else {
       chain().extendMarkRange('link').setLink({ href: url }).run();

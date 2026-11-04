@@ -1,7 +1,3 @@
-// REAL INTEGRATION POINT: Replace mock import and all method bodies with real
-// API calls to your backend or Azure Functions endpoints.
-import { mockInvoices } from '@/mock/invoices';
-import { INVOICE_STATUS } from '@/constants/statuses';
 import { createApiClient } from '@/lib/apiClient';
 import { fetchAllPages } from '@/lib/fetchAllPages';
 import { createInvoiceableBOQItem } from '@/models/boq';
@@ -11,59 +7,12 @@ import {
 
 const api = createApiClient('/api/Invoices');
 
-/** In-memory mutable store — reset on each server/module reload. */
-let invoices = [...mockInvoices];
-
-const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
-
-/** A project with no invoiceable items yet is a valid empty state, not a failure. */
 function isNotFound(err) {
   return err.status === 404;
 }
 
 export const invoiceRepository = {
   /**
-   * Return invoices, optionally filtered.
-   * Supported filters: projectId, status, submittedBy
-   *
-   * @param {object} filters
-   * @returns {Promise<object[]>}
-   */
-  async getInvoices(filters = {}) {
-    await delay(300);
-
-    let result = [...invoices];
-
-    if (filters.projectId) {
-      result = result.filter((inv) => inv.projectId === filters.projectId);
-    }
-    if (filters.status) {
-      result = result.filter((inv) => inv.status === filters.status);
-    }
-    if (filters.submittedBy) {
-      result = result.filter((inv) => inv.submittedBy === filters.submittedBy);
-    }
-
-    // Sort: newest first
-    result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    return result;
-  },
-
-  /**
-   * Find a single invoice by id.
-   * @param {string} id
-   * @returns {Promise<object>}
-   */
-  async getInvoice(id) {
-    await delay(200);
-    const invoice = invoices.find((inv) => inv.id === id);
-    if (!invoice) throw new Error(`Invoice not found: ${id}`);
-    return { ...invoice };
-  },
-
-  // REAL API
-  /**
-   * Return a single invoice by id, including its lines and attachments.
    * @param {string} id
    * @returns {Promise<object>}
    */
@@ -72,9 +21,7 @@ export const invoiceRepository = {
     return mapInvoice(raw);
   },
 
-  // REAL API
   /**
-   * Create and submit a new invoice request.
    * @param {object} data
    * @returns {Promise<object>}
    */
@@ -82,10 +29,7 @@ export const invoiceRepository = {
     return await api.post('/CreateInvoice', createInvoiceFormData(data));
   },
 
-  // REAL API
   /**
-   * Update an invoice's reason/expected invoicing date and attachments.
-   * Every other invoice field is read-only once created.
    * @param {object} data
    * @returns {Promise<object>}
    */
@@ -93,15 +37,10 @@ export const invoiceRepository = {
     return await api.post('/UpdateInvoice', createUpdateInvoiceFormData(data));
   },
 
-  // REAL API
   /**
-   * Add files to an invoice at any stage while it is open (2026-10-11) —
-   * refused with INV-013 once it is Collected or Cancelled. Same file limits
-   * as creating one. Needs Invoices.AddAttachments.
-   *
    * @param {string} invoiceId
-   * @param {Array<{file: File, name: string, status: string}>} attachments  AttachmentUploader's entries
-   * @returns {Promise<string[]>} the new attachments' ids
+   * @param {Array<{file: File, name: string, status: string}>} attachments
+   * @returns {Promise<string[]>}
    */
   async addInvoiceAttachments(invoiceId, attachments) {
     const data = await api.post('/AddInvoiceAttachments', createAddAttachmentsFormData(invoiceId, attachments));
@@ -109,117 +48,6 @@ export const invoiceRepository = {
   },
 
   /**
-   * Transition a draft/rejected invoice to Submitted status.
-   * @param {string} id
-   * @returns {Promise<object>}
-   */
-  async submitInvoice(id) {
-    await delay(350);
-
-    const idx = invoices.findIndex((inv) => inv.id === id);
-    if (idx === -1) throw new Error(`Invoice not found: ${id}`);
-
-    const invoice = invoices[idx];
-    const allowedStatuses = [INVOICE_STATUS.DRAFT, INVOICE_STATUS.REJECTED];
-    if (!allowedStatuses.includes(invoice.status)) {
-      throw new Error(
-        `Cannot submit invoice with status "${invoice.status}". Only Draft or Rejected invoices can be submitted.`
-      );
-    }
-
-    invoices[idx] = {
-      ...invoice,
-      status: INVOICE_STATUS.SUBMITTED,
-      submittedAt: new Date().toISOString(),
-      rejectedBy: null,
-      rejectedAt: null,
-      updatedAt: new Date().toISOString(),
-    };
-
-    return { ...invoices[idx] };
-  },
-
-  /**
-   * Approve an invoice (Submitted → Approved).
-   * @param {string} id
-   * @param {string} userId  The approving user's id.
-   * @returns {Promise<object>}
-   */
-  async approveInvoice(id, userId) {
-    await delay(350);
-
-    const idx = invoices.findIndex((inv) => inv.id === id);
-    if (idx === -1) throw new Error(`Invoice not found: ${id}`);
-
-    const invoice = invoices[idx];
-    const approvableStatuses = [INVOICE_STATUS.SUBMITTED, INVOICE_STATUS.UNDER_REVIEW];
-    if (!approvableStatuses.includes(invoice.status)) {
-      throw new Error(
-        `Cannot approve invoice with status "${invoice.status}".`
-      );
-    }
-
-    invoices[idx] = {
-      ...invoice,
-      status: INVOICE_STATUS.APPROVED,
-      approvedBy: userId,
-      approvedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    return { ...invoices[idx] };
-  },
-
-  /**
-   * Reject an invoice (Submitted | Under Review → Rejected).
-   * @param {string} id
-   * @param {string} userId
-   * @param {string} reason
-   * @returns {Promise<object>}
-   */
-  async rejectInvoice(id, userId, reason) {
-    await delay(350);
-
-    if (!reason || !reason.trim()) {
-      throw new Error('A rejection reason is required.');
-    }
-
-    const idx = invoices.findIndex((inv) => inv.id === id);
-    if (idx === -1) throw new Error(`Invoice not found: ${id}`);
-
-    const invoice = invoices[idx];
-    const rejectableStatuses = [INVOICE_STATUS.SUBMITTED, INVOICE_STATUS.UNDER_REVIEW];
-    if (!rejectableStatuses.includes(invoice.status)) {
-      throw new Error(
-        `Cannot reject invoice with status "${invoice.status}".`
-      );
-    }
-
-    invoices[idx] = {
-      ...invoice,
-      status: INVOICE_STATUS.REJECTED,
-      rejectedBy: userId,
-      rejectedAt: new Date().toISOString(),
-      comments: reason,
-      updatedAt: new Date().toISOString(),
-    };
-
-    return { ...invoices[idx] };
-  },
-
-  /**
-   * Return all invoices for a given project.
-   * @param {string} projectId
-   * @returns {Promise<object[]>}
-   */
-  async getInvoicesByProject(projectId) {
-    return invoiceRepository.getInvoices({ projectId });
-  },
-
-  // REAL API
-  /**
-   * Return BOQ items currently eligible to be invoiced for a project, with
-   * committed/available quantity already resolved server-side.
    * @param {string} projectCode
    * @returns {Promise<object[]>}
    */
@@ -233,9 +61,7 @@ export const invoiceRepository = {
     }
   },
 
-  // REAL API
   /**
-   * Return all invoices submitted for a project.
    * @param {string} projectCode
    * @returns {Promise<object[]>}
    */
@@ -253,8 +79,6 @@ export const invoiceRepository = {
   },
 
   /**
-   * One page of every invoice the user can see, newest first.
-   *
    * @param {{ statusId?: number|null, skip: number, take: number }} query
    * @returns {Promise<{ invoices: object[], total: number }>}
    */
@@ -264,12 +88,10 @@ export const invoiceRepository = {
     return { invoices: (page?.invoices ?? []).map(mapInvoice), total: page?.total ?? 0 };
   },
 
-  // REAL API
   /**
-   * Download a single invoice attachment.
    * @param {string} invoiceId
-   * @param {string} contentId - the attachment's contentId, not its record id.
-   * @param {string} fallbackFileName - used if the response has no filename header.
+   * @param {string} contentId
+   * @param {string} fallbackFileName
    * @returns {Promise<{blob: Blob, fileName: string}>}
    */
   async downloadAttachment(invoiceId, contentId, fallbackFileName) {
@@ -279,10 +101,7 @@ export const invoiceRepository = {
     }, fallbackFileName);
   },
 
-  // REAL API
   /**
-   * Return the revision history for an invoice — each entry is a full
-   * snapshot with the same shape as getInvoiceById's response.
    * @param {string} invoiceId
    * @returns {Promise<object[]>}
    */
@@ -295,15 +114,8 @@ export const invoiceRepository = {
   },
 
   /**
-   * Delete one or many invoices — `Invoices.Delete`, added 2026-10-07.
-   *
-   * **All or nothing:** if any one cannot go (Invoiced or Collected), none
-   * does, and the INV-010 message names every one. A soft delete: the invoice
-   * leaves every list, its running workflows are cancelled, and an
-   * `InvoiceDeleted` event is raised.
-   *
    * @param {string[]} invoiceIds
-   * @returns {Promise<string[]>} the ids deleted
+   * @returns {Promise<string[]>}
    */
   async deleteInvoices(invoiceIds) {
     const data = await api.post('/DeleteInvoices', { invoiceIds });

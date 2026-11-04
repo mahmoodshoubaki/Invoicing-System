@@ -17,10 +17,6 @@ function VersionTag({ tag }) {
   );
 }
 
-/**
- * The version being edited, with every other one a click away — who wrote each
- * and who published it. Live = what is sent now; Draft = newer than live.
- */
 export default function VersionPicker({ versions, live, selected, dirty, canManage, onPick, onBlank }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);

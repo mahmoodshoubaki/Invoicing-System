@@ -1,7 +1,6 @@
 import { StatusBadge } from '@/components/common/Badge';
 import { CHROME } from '@/theme/vizPalette';
 
-/** The Projects page's table columns. */
 export const PROJECT_COLUMNS = [
   {
     key: 'contractName',

@@ -8,15 +8,6 @@ import { usePermission } from '@/hooks/usePermission';
 import { ROUTES } from '@/constants/routes';
 import { canOpenWorkflowTab, WORKFLOW_ADMIN_TABS } from '@/components/workflow/admin/workflowAdminTabs';
 
-/**
- * Admin › Workflow (2026-10-13): one tab bar over the workflows, the fields and
- * the engine, showing only the pages this person may open. Each page still
- * checks its own permission (the route guard does too) — the bar only decides
- * what is offered.
- *
- * The builder lives here too but draws no bar: it is a whole-screen editor
- * sized to the window, opened from the Workflows tab and left by its Back.
- */
 export default function WorkflowAdminLayout({ children }) {
   const pathname = usePathname();
   const { can } = usePermission();

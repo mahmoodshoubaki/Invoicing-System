@@ -7,9 +7,6 @@ import { formatDate } from '@/utils';
 const KIND_COLORS = { Added: STATUS.good, Moved: STATUS.info, Removed: STATUS.critical };
 
 /**
- * The invoicing plan changes of a request, cycle by cycle: each one Added,
- * Moved or Removed, with its old and new planned dates.
- *
  * @param {{ changes: Array }} props
  */
 export default function CycleChangesTable({ changes }) {

@@ -6,13 +6,7 @@ import { Search, X } from 'lucide-react';
 import Button from '@/components/common/Button';
 
 /**
- * The search box and status pills of the Projects page. Both filter on the server.
- *
- * @param {{
- *   search: string, onSearch: (text: string) => void,
- *   status: string, onStatus: (status: string) => void, statuses: string[],
- *   filtered: boolean, onClear: () => void,
- * }} props
+ * @param {{ search: string, onSearch: (text: string) => void, status: string, onStatus: (status: string) => void, statuses: string[], filtered: boolean, onClear: () => void, }} props
  */
 export default function ProjectFilters({ search, onSearch, status, onStatus, statuses, filtered, onClear }) {
   const options = [{ label: 'All statuses', value: '' }, ...statuses.map((s) => ({ label: s, value: s }))];

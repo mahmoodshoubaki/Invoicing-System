@@ -1,9 +1,6 @@
-/** The largest page every list endpoint accepts. */
 export const MAX_TAKE = 200;
 
 /**
- * Every row of a paged list endpoint: the first page, then the rest at once.
- *
  * @param {(skip: number, take: number) => Promise<{ rows: Array, total: number }>} fetchPage
  * @returns {Promise<Array>}
  */
@@ -19,7 +16,6 @@ export async function fetchAllPages(fetchPage, take = MAX_TAKE) {
   return rows.concat(...rest.map((page) => page?.rows ?? []));
 }
 
-/** `{ skip, take }` for a 1-based page. */
 export function pageParams(page, pageSize) {
   return { skip: Math.max(0, (page - 1) * pageSize), take: pageSize };
 }

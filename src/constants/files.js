@@ -1,4 +1,3 @@
-/** File rules for BOQs and change requests, as the server checks them (BOQ-020). */
 export const BOQ_FILE_LIMITS = {
   perFileMb: 20,
   totalMb: 50,
@@ -8,6 +7,5 @@ export const BOQ_FILE_LIMITS = {
   label: 'PDF, Word (.docx), Excel (.xlsx) or image',
 };
 
-/** A file the server refused, and one it could not find. */
 export const FILE_REFUSED = 'BOQ-020';
 export const FILE_NOT_FOUND = 'BOQ-021';

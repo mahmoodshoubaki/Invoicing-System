@@ -18,10 +18,6 @@ function Count({ value, label }) {
 }
 
 /**
- * What a reviewer reads first (2026-10-19): what the request touches, how much
- * of it, who raised it and when, why — each reason with its fixed justification
- * — and the requester's own words.
- *
  * @param {{ changeRequest: Object }} props
  */
 export default function ChangeRequestOverview({ changeRequest: cr }) {

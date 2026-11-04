@@ -7,7 +7,6 @@ import { usePermission } from '@/hooks/usePermission';
 import { allow } from '@/constants/workflowPermissions';
 import { NOTIFICATION_ADMIN_TABS } from '@/components/notifications/admin/adminTabs';
 
-/** The area's landing route: on to the first page this person may read. */
 export default function NotificationsAdminLanding() {
   const router = useRouter();
   const { can } = usePermission();

@@ -1,11 +1,8 @@
 'use client';
 
-/** Shared by the sender screens: the SMTP security fallbacks, blank forms, and a labelled field. */
-
 import { labelClass } from '@/components/ui/kit';
 import { CHROME } from '@/theme/vizPalette';
 
-/** The documented keys, for when the lookup cannot be read. */
 export const FALLBACK_SECURITY = [
   { key: 1, value: 'Auto' },
   { key: 2, value: 'None' },

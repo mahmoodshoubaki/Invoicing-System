@@ -17,17 +17,6 @@ import ReminderTiming from './notifications/ReminderTiming';
 import { taskNotificationTokens } from './notifications/notificationTokens';
 
 /**
- * Who a human task tells, and when (2026-10-07) — the task's Notifications tab.
- *
- * A step saved before this has no block, which the engine reads as the four
- * standard notifications on and no reminder — so that is what is shown, and
- * the first change writes the whole block out before applying it. From then
- * on an unticked box means "send nothing".
- *
- * Every picked type takes values for its words (2026-10-08). They can use the
- * run's variables and the task's own details, but not the record's fields —
- * a task's notifications are not sent with them.
- *
  * @param {{ step: Object, types: Array|null, fields: Array, onChange: (patch: Object) => void }} props
  */
 function TaskNotificationsPanel({ step, types, fields, onChange }) {
@@ -72,7 +61,6 @@ function TaskNotificationsPanel({ step, types, fields, onChange }) {
         );
       })}
 
-      {/* The reminder: off until ticked, because it needs a due date and a period. */}
       <div className="border-t border-[#f1f0ee] pt-3">
         <NotificationChoice
           label={REMINDER_ENTRY.label}

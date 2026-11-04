@@ -1,23 +1,3 @@
-/**
- * Which values a template's text uses — so the placeholder list (which the
- * server requires to name every one, NTF-008) can be filled from the text
- * rather than typed twice.
- *
- * The text is Scriban: `{{ InvoiceNumber }}`, `{{ for invoice in Invoices }}…
- * {{ invoice.Number }}…{{ end }}`. What counts as a value the SENDER supplies:
- *   - a bare name at the top level            → `InvoiceNumber`
- *   - the list a `for` walks                  → `Invoices`
- * and what does not:
- *   - the loop's own item and its fields      → `invoice`, `invoice.Number`
- *   - the built-ins                           → RecipientName, ActionUrl
- *   - Scriban's own words                     → end, else, if…
- */
-
-/**
- * The values the module fills in itself — the server's BuiltInPlaceholders.All.
- * Anything else must be listed on the version, or the save is refused.
- * (`Name` used to be one; the server no longer treats it as special.)
- */
 export const BUILT_IN_PLACEHOLDERS = ['RecipientName', 'ActionUrl'];
 
 const KEYWORDS = new Set([
@@ -26,8 +6,8 @@ const KEYWORDS = new Set([
 ]);
 
 /**
- * @param {string[]} texts every subject and body
- * @returns {string[]} the names, in the order first used
+ * @param {string[]} texts
+ * @returns {string[]}
  */
 export function findPlaceholders(texts) {
   const found = [];
@@ -39,7 +19,6 @@ export function findPlaceholders(texts) {
 
   for (const text of texts) {
     const source = String(text ?? '');
-    // Loop variables first, so `invoice` inside its own loop is not taken for a value.
     for (const m of source.matchAll(/\{\{-?\s*for\s+([A-Za-z_]\w*)\s+in\s+([A-Za-z_]\w*)/g)) {
       loopVars.add(m[1]);
     }

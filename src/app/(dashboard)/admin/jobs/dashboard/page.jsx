@@ -6,6 +6,7 @@ import PageHeader from '@/components/common/PageHeader';
 import Button from '@/components/common/Button';
 import HangfireFrame from '@/components/admin/jobs/HangfireFrame';
 import { ROUTES } from '@/constants/routes';
+import { withBasePath } from '@/constants/appConfig';
 
 const BREADCRUMBS = [
   { label: 'Home', href: '/' },
@@ -14,14 +15,12 @@ const BREADCRUMBS = [
   { label: 'Hangfire dashboard' },
 ];
 
-// A plain <a>: /hangfire is not an app route.
 const ACTIONS = (
-  <a href={ROUTES.HANGFIRE} target="_blank" rel="noopener noreferrer">
+  <a href={withBasePath(ROUTES.HANGFIRE)} target="_blank" rel="noopener noreferrer">
     <Button variant="outline" size="sm" icon={ExternalLink}>Open in a new tab</Button>
   </a>
 );
 
-/** The API's Hangfire dashboard (System.Administrator). */
 export default function HangfireDashboardPage() {
   return (
     <div>

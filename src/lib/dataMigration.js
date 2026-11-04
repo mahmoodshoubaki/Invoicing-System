@@ -1,19 +1,15 @@
-/** The most one import may upload. */
 export const MIGRATION_MAX_BYTES = 2 * 1024 ** 3;
 
 const TOP_FOLDERS = ['boqs', 'invoices'];
 const SYSTEM_FILES = new Set(['thumbs.db', 'desktop.ini', '.ds_store']);
 
-/** A picked file's path inside the folder, like "Migrations/Invoices/INV-0001/signed.pdf". */
 export const pathOf = (file) => (file.webkitRelativePath || file.name).replace(/\\/g, '/');
 
-/** The path's parts, without the picked folder's own name. */
 function partsOf(path) {
   const parts = path.split('/').map((p) => p.trim()).filter(Boolean);
   return parts.length > 0 && !TOP_FOLDERS.includes(parts[0].toLowerCase()) ? parts.slice(1) : parts;
 }
 
-/** Why the server skips this path, or null when it reads it. */
 export function skipReason(path) {
   const parts = partsOf(path);
   const name = parts.at(-1) ?? '';
@@ -23,16 +19,12 @@ export function skipReason(path) {
   return null;
 }
 
-/** Whether a file at the top of the folder could be the workbook. */
 export function isWorkbookCandidate(file) {
   const parts = partsOf(pathOf(file));
   return parts.length === 1 && /\.xlsx$/i.test(parts[0]) && !parts[0].startsWith('~$');
 }
 
 /**
- * What one folder pick holds: the workbook candidates, the files the server
- * reads, and the ones it skips (with why).
- *
  * @param {File[]} files
  */
 export function readSelection(files) {
@@ -56,13 +48,11 @@ export function readSelection(files) {
   };
 }
 
-/** One string that changes whenever the picked files do. */
 export function selectionSignature(workbook, included) {
   const head = workbook ? `${workbook.name}:${workbook.size}:${workbook.lastModified}` : '-';
   return `${head}|${included.map((f) => `${f.path}:${f.size}:${f.file.lastModified}`).join('|')}`;
 }
 
-/** CheckHistoricalData's body: the workbook, and the files listed without their content. */
 export function checkFormData(workbook, included) {
   const form = new FormData();
   form.append('workbook', workbook, workbook.name);
@@ -70,7 +60,6 @@ export function checkFormData(workbook, included) {
   return form;
 }
 
-/** ImportHistoricalData's body: the workbook, every file, and their paths in the same order. */
 export function importFormData(workbook, included) {
   const form = new FormData();
   form.append('workbook', workbook, workbook.name);
@@ -81,7 +70,6 @@ export function importFormData(workbook, included) {
 
 const COUNT_KEYS = ['boqItems', 'planDates', 'invoices', 'invoiceLines', 'boqFiles', 'invoiceFiles'];
 
-/** Check's and import's answer. `saved` is only ever true on an import. */
 export function mapMigrationResult(raw) {
   const counts = raw?.counts ?? {};
   return {
@@ -97,7 +85,6 @@ export function mapMigrationResult(raw) {
   };
 }
 
-/** "1.4 GB", "820 KB". */
 export function formatBytes(bytes) {
   if (!bytes) return '0 B';
   const units = ['B', 'KB', 'MB', 'GB'];

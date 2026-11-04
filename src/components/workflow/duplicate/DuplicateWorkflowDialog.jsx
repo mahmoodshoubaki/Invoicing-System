@@ -10,13 +10,7 @@ import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 
 /**
- * Names the copy of a workflow and says what a copy is: a draft until it is
- * published, on the same trigger as the original.
- *
- * @param {{
- *   workflow: Object, version: number|null, busy: boolean, error: string|null,
- *   onClose: () => void, onConfirm: (name: string) => void,
- * }} props
+ * @param {{ workflow: Object, version: number|null, busy: boolean, error: string|null, onClose: () => void, onConfirm: (name: string) => void, }} props
  */
 export default function DuplicateWorkflowDialog({ workflow, version, busy, error, onClose, onConfirm }) {
   const [name, setName] = useState(() => copyName(workflow.name));

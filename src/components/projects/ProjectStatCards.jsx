@@ -7,11 +7,6 @@ import Reveal from '@/components/motion/Reveal';
 import { SERIES_ROLE, STATUS } from '@/theme/vizPalette';
 import { formatCurrency } from '@/utils/formatters';
 
-/**
- * The aggregated stat row at the top of the project detail page — pulled
- * out so it doesn't re-render on every tab switch or modal open/close, only
- * when `totals`/`currency` actually change.
- */
 function ProjectStatCards({ totals, currency }) {
   const money = (v) => formatCurrency(v, currency);
   const collectionRate = totals.totalInvoicesValue > 0
@@ -43,8 +38,6 @@ function ProjectStatCards({ totals, currency }) {
       format: money,
       icon: FileText,
       accent: SERIES_ROLE.wip,
-      // Says what is left out, because a total that quietly drops rows is a
-      // total nobody can reconcile against the Invoices tab.
       footnote: 'Excludes rejected and cancelled',
     },
     {
@@ -63,8 +56,6 @@ function ProjectStatCards({ totals, currency }) {
       format: money,
       icon: Clock,
       accent: STATUS.warning,
-      //delta: totals.nonCollectedValue > 0 ? 'Outstanding' : 'All settled',
-      //deltaType: totals.nonCollectedValue > 0 ? 'negative' : 'positive',
       footnote: 'Awaiting collection',
     },
   ];

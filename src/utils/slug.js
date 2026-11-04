@@ -1,19 +1,6 @@
 /**
- * Slugs for workflow stage and step ids.
- *
- * These ids are not cosmetic. They are written into the saved definition, they
- * are what transitions point at, and the engine reports them back in
- * `currentStageId`, `currentStepId`, `failureReason` and a parallel step's
- * `branches` map. A readable id is the difference between a run that says
- * "waiting at qs-review" and one that says "waiting at stg_8f3a2c".
- */
-
-/**
- * "QS Review" → "qs-review". Strips accents, collapses anything that is not a
- * letter, digit or hyphen, and trims stray hyphens from the ends.
- *
  * @param {string} value
- * @returns {string} possibly empty, if `value` had nothing slug-worthy in it
+ * @returns {string}
  */
 export function slugify(value) {
   return String(value ?? '')
@@ -26,15 +13,6 @@ export function slugify(value) {
 }
 
 /**
- * Sanitises an id **while it is being typed**, which is not the same job as
- * `slugify`.
- *
- * `slugify` trims trailing hyphens, so running it on every keystroke makes the
- * field unusable: typing "qs " gives "qs", and the next character lands as
- * "qsr" instead of "qs-r". This keeps a single trailing hyphen so a space can
- * become the separator the author clearly intended, and defers the trimming to
- * `slugify` on blur.
- *
  * @param {string} value
  * @returns {string}
  */
@@ -54,11 +32,8 @@ export function sanitizeSlugInput(value) {
 }
 
 /**
- * Why an id is not usable, or null when it is fine. Mirrors what the backend
- * would reject, so nobody learns these from a failed save.
- *
  * @param {string} id
- * @param {Iterable<string>} takenByOthers  every other id in the definition
+ * @param {Iterable<string>} takenByOthers
  * @returns {string|null}
  */
 export function validateSlug(id, takenByOthers = []) {
@@ -77,15 +52,9 @@ export function validateSlug(id, takenByOthers = []) {
 }
 
 /**
- * A slug guaranteed not to collide with `taken`, by appending -2, -3, …
- *
- * Step ids must be unique across the ENTIRE definition — branches included —
- * not merely within their stage, so callers must pass every id in the
- * definition, not just the neighbouring ones.
- *
  * @param {string} desired
  * @param {Iterable<string>} taken
- * @param {string} [fallback] used when `desired` slugifies to nothing
+ * @param {string} [fallback]
  * @returns {string}
  */
 export function uniqueSlug(desired, taken, fallback = 'item') {

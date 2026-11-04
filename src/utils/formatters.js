@@ -1,17 +1,10 @@
 import { Currencies_LIST } from "@/constants";
 
 /**
- * Format a numeric amount as a currency string.
- * Defaults to SAR (Saudi Arabian Riyal) with Arabic-Gulf locale.
- *
  * @param {number} amount
- * @param {string} currency - ISO 4217 currency code (default: 'SAR')
- * @param {string} locale  - BCP 47 locale tag (default: 'en-SA')
+ * @param {string} currency
+ * @param {string} locale
  * @returns {string}
- *
- * @example
- * formatCurrency(250000) // => 'SAR 250,000.00'
- * formatCurrency(75000, 'USD', 'en-US') // => '$75,000.00'
  */
 export function formatCurrency(amount,currency ='USD',locale = 'en-SA') {
   const currencySymbol = Currencies_LIST.find(c => c.Key === currency)?.symbol || '';
@@ -26,8 +19,6 @@ export function formatCurrency(amount,currency ='USD',locale = 'en-SA') {
 }
 
 /**
- * Format a large number with a display unit (K -> thousands, M -> millions).
- *
  * @param {number} amount
  * @returns {string}
  */
@@ -39,14 +30,9 @@ function formatDisplayUnit(amount) {
 }
 
 /**
- * Format a Date or ISO date string as DD/MM/YYYY.
- *
  * @param {Date|string|number} date
- * @param {string} locale - BCP 47 locale tag (default: 'en-GB' to get DD/MM/YYYY)
+ * @param {string} locale
  * @returns {string}
- *
- * @example
- * formatDate('2025-03-15') // => '15/03/2025'
  */
 export function formatDate(date, locale = 'en-GB') {
   if (!date) return '';
@@ -60,14 +46,9 @@ export function formatDate(date, locale = 'en-GB') {
 }
 
 /**
- * Format a datetime value as a human-readable date and time string.
- *
  * @param {Date|string|number} date
  * @param {string} locale
  * @returns {string}
- *
- * @example
- * formatDateTime('2025-03-15T10:30:00Z') // => '15/03/2025, 10:30'
  */
 export function formatDateTime(date, locale = 'en-GB') {
   if (!date) return '';
@@ -83,15 +64,9 @@ export function formatDateTime(date, locale = 'en-GB') {
 }
 
 /**
- * Format a decimal value as a percentage string.
- *
- * @param {number} value - e.g. 0.15 for 15% or 15 for 15%
- * @param {number} decimalPlaces - number of decimal places (default: 1)
+ * @param {number} value
+ * @param {number} decimalPlaces
  * @returns {string}
- *
- * @example
- * formatPercentage(0.15) // => '15.0%'
- * formatPercentage(87.5) // => '87.5%'
  */
 export function formatPercentage(value, decimalPlaces = 1) {
   if (value === null || value === undefined || isNaN(Number(value))) return '0%';
@@ -102,15 +77,10 @@ export function formatPercentage(value, decimalPlaces = 1) {
 }
 
 /**
- * Truncate a string to a maximum length, appending an ellipsis if trimmed.
- *
  * @param {string} text
  * @param {number} maxLength
  * @param {string} ellipsis
  * @returns {string}
- *
- * @example
- * truncateText('This is a long description', 15) // => 'This is a long...'
  */
 export function truncateText(text, maxLength = 50, ellipsis = '...') {
   if (!text) return '';
@@ -119,14 +89,8 @@ export function truncateText(text, maxLength = 50, ellipsis = '...') {
 }
 
 /**
- * Extract initials from a full name (up to 2 characters).
- *
  * @param {string} name
  * @returns {string}
- *
- * @example
- * getInitials('Ahmed Al-Rashidi') // => 'AA'
- * getInitials('Mohammed') // => 'M'
  */
 export function getInitials(name) {
   if (!name || typeof name !== 'string') return '';
@@ -137,14 +101,9 @@ export function getInitials(name) {
 }
 
 /**
- * Format a large number with compact notation (K, M, B).
- *
  * @param {number} value
  * @param {string} locale
  * @returns {string}
- *
- * @example
- * formatCompactNumber(1500000) // => '1.5M'
  */
 export function formatCompactNumber(value, locale = 'en-SA') {
   if (value === null || value === undefined || isNaN(Number(value))) return '0';
@@ -156,13 +115,8 @@ export function formatCompactNumber(value, locale = 'en-SA') {
 }
 
 /**
- * Format a byte count as a human-readable file size (B, KB, MB, GB).
- *
  * @param {number} bytes
  * @returns {string}
- *
- * @example
- * formatFileSize(15_728_640) // => '15.0 MB'
  */
 export function formatFileSize(bytes) {
   if (bytes === null || bytes === undefined || isNaN(Number(bytes))) return '0 B';
@@ -177,8 +131,6 @@ export function formatFileSize(bytes) {
 }
 
 /**
- * Format a plain number with thousands separators.
- *
  * @param {number} value
  * @param {number} decimalPlaces
  * @returns {string}

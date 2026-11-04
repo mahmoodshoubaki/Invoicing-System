@@ -15,21 +15,7 @@ import BodyTab from './BodyTab';
 import PreviewTab from './PreviewTab';
 
 /**
- * One channel's words, as three tabs under one version bar. The draft lives
- * here (in its hooks), not in the tabs, so it survives switching tabs; the page
- * keeps this mounted while hidden, so it survives switching channels too.
- *
- * @param {{
- *   typeId: string, channelKey: number, channelLabel: string,
- *   languages: Array, priorities: Array,
- *   canManage: boolean, canPublish: boolean,
- *   canSendTest: boolean,  may send a saved email version as a test (Manage Settings)
- *   senders: Array|null,   the email senders to test through
- *   preferredSenderId: string|null,  the type's own sender, picked first
- *   tab: 'placeholders'|'body'|'preview'|null,  which tab to draw (null: none, while hidden)
- *   onStatus?: (channelKey, { dirty, placeholderIssues, bodyIssues }) => void,
- *   onChanged: () => void,  the type's live/latest versions moved
- * }} props
+ * @param {{ typeId: string, channelKey: number, channelLabel: string, languages: Array, priorities: Array, canManage: boolean, canPublish: boolean, canSendTest: boolean, may send a saved email version as a test (Manage Settings) senders: Array|null, the email senders to test through preferredSenderId: string|null, the type's own sender, picked first tab: 'placeholders'|'body'|'preview'|null, which tab to draw (null: none, while hidden) onStatus?: (channelKey, { dirty, placeholderIssues, bodyIssues }) => void, onChanged: () => void, the type's live/latest versions moved }} props
  */
 function TemplateWorkbench({
   typeId, channelKey, channelLabel, languages, priorities, canManage, canPublish,
@@ -46,7 +32,6 @@ function TemplateWorkbench({
   // What the visual editor's "Value" menu offers: this text's values, then the built-ins.
   const valueNames = [...new Set([...checks.listed, ...BUILT_IN_PLACEHOLDERS])];
 
-  // A test sends a saved email version; why it cannot right now, if it cannot.
   const test = canSendTest && channelKey === CHANNEL.EMAIL && Array.isArray(senders)
     ? {
         version: selected?.version ?? null,

@@ -2,41 +2,28 @@ import { createWaitingTask } from '@/models/waitingTask';
 
 /**
  * @typedef {Object} BOQItem
- *
- * — Identity —
- * @property {string}      id                    - boqId from API
+ * @property {string} id
  * @property {string|null} projectCode
- *
- * — Description —
  * @property {string|null} englishName
  * @property {string|null} arabicName
  * @property {string|null} notes
- *
- * — Quantities & Costs —
- * @property {number}      quantity
- * @property {number}      unitCost
- * @property {number}      totalCost             - computed: quantity × unitCost
- *
- * — Schedule —
- * @property {string|null} expectedInvoicingDate  - ISO string
- * @property {string|null} baselineInvoicingDate  - ISO string
+ * @property {number} quantity
+ * @property {number} unitCost
+ * @property {number} totalCost
+ * @property {string|null} expectedInvoicingDate
+ * @property {string|null} baselineInvoicingDate
  * @property {number|null} billingFrequencyId
- *
- * — Status —
  * @property {number|null} statusId
  */
 
 /**
  * @typedef {Object} BOQ
- * @property {string}      projectCode
- * @property {BOQItem[]}   boqItems
+ * @property {string} projectCode
+ * @property {BOQItem[]} boqItems
  */
 
 /**
- * Maps a raw API BOQ item to the BOQItem model.
- * totalCost is derived here so consumers always have it without recomputing.
- *
- * @param {Object} raw - Single entry from the boqItems array in the API response
+ * @param {Object} raw
  * @returns {BOQItem}
  */
 export function createBOQItem(raw) {
@@ -57,23 +44,15 @@ export function createBOQItem(raw) {
     baselineInvoicingDate: raw.baselineInvoicingDate   ?? null,
     billingFrequencyId:    raw.billingFrequencyId      ?? null,
     statusId:              raw.statusId                ?? null,
-    // The submitter's user id, set by the backend from whoever was signed in —
-    // never sent by us on insert or update.
     submittedBy:           raw.submittedBy             ?? null,
-    // What screens show. Null for items created before 2026-10-01, or when the
-    // user is gone.
     submittedByName:       raw.submittedByName         ?? null,
-    // The to-dos its workflow is waiting on, and who holds each (2026-10-21) —
-    // on every item row of GetBoqById and GetBoqByProjectCode.
     waitingOn:             (raw.waitingOn ?? []).map(createWaitingTask),
     hasInProgressInvoices: raw.hasInProgressInvoices === true,
   };
 }
 
 /**
- * Maps the outer API response to a BOQ model, mapping each item through createBOQItem.
- *
- * @param {Object} raw - Root API response: { projectCode, boqItems: [...] }
+ * @param {Object} raw
  * @returns {BOQ}
  */
 export function createBOQ(raw) {
@@ -86,7 +65,6 @@ export function createBOQ(raw) {
   };
 }
 
-/** A file on a BOQ. */
 export function createBoqAttachment(raw) {
   return {
     id:         raw?.id ?? raw?.ID ?? null,
@@ -99,7 +77,6 @@ export function createBoqAttachment(raw) {
   };
 }
 
-/** AddBoqAttachments' multipart body. */
 export function createBoqAttachmentsFormData(boqId, files) {
   const formData = new FormData();
   formData.append('BoqId', boqId);
@@ -108,10 +85,7 @@ export function createBoqAttachmentsFormData(boqId, files) {
 }
 
 /**
- * Maps a raw API BOQ item history entry (a past revision of a BOQ item) to a
- * consistent model, mirroring createBOQItem plus the fields unique to history.
- *
- * @param {Object} raw - Single entry from the GetBoqItemHistory response
+ * @param {Object} raw
  * @returns {Object}
  */
 export function createBOQItemHistoryEntry(raw) {
@@ -140,10 +114,6 @@ export function createBOQItemHistoryEntry(raw) {
 }
 
 /**
- * Maps a raw API entry from GetInvoiceableBoqItemsByProjectCode — a BOQ item
- * that is currently eligible to be invoiced, with quantity availability
- * already resolved server-side (no status filtering needed on the client).
- *
  * @param {Object} raw
  * @returns {Object}
  */
@@ -162,9 +132,6 @@ export function createInvoiceableBOQItem(raw) {
     unitCost,
     totalCost:         raw.totalCost ?? quantity * unitCost,
     billingFrequencyId: raw.billingFrequencyId ?? null,
-    // The item's next upcoming tracker cycle — null when it has no tracker
-    // plan at all. Lets the invoice picker show whether submitting now
-    // would be on schedule, ahead, or already behind.
     trackerCycleNumber:   raw.trackerCycleNumber   ?? null,
     trackerCycleStatusId: raw.trackerCycleStatusId ?? null,
     varianceDays:         raw.varianceDays         ?? null,
@@ -172,10 +139,6 @@ export function createInvoiceableBOQItem(raw) {
 }
 
 /**
- * Returns the default empty form state for a new BOQ item.
- * Import this wherever a "new item" form is initialised — the shape here
- * is the single source of truth for which fields the form owns.
- *
  * @returns {Object}
  */
 export function createBOQItemForm() {
@@ -184,7 +147,7 @@ export function createBOQItemForm() {
     arabicName:            '',
     quantity:              '',
     unitCost:              '',
-    totalCost:             '',   // derived display-only field, not sent to API
+    totalCost:             '',
     expectedInvoicingDate: '',
     baselineInvoicingDate: '',
     billingFrequencyId:    '',
@@ -193,10 +156,6 @@ export function createBOQItemForm() {
 }
 
 /**
- * Maps a single raw entry from PreviewInvoicingPlan (TrackerCyclePreviewResponse)
- * into a consistent model. `isCommitted` rows already have an invoice
- * submitted against them and are read-only in the UI.
- *
  * @param {Object} raw
  * @returns {Object}
  */
@@ -208,20 +167,11 @@ export function createTrackerCycle(raw) {
     plannedDate:  raw.plannedDate ?? null,
     isCommitted:  raw.isCommitted ?? false,
     statusId:     raw.statusId ?? null,
-    // How many days late (positive) / early (negative) the invoice against
-    // this cycle was submitted; 0 = exactly on time. Only meaningful once
-    // the cycle is actually invoiced — null otherwise.
     varianceDays: raw.varianceDays ?? null,
   };
 }
 
 /**
- * Builds the InsertBoqItem request body from the Add BOQ Item form plus the
- * user's current tracker cycle list. Only non-committed cycles are ever
- * sent — there's nothing to send for committed ones on create anyway, since
- * a brand-new item can't have committed cycles yet, but the filter is kept
- * here so this stays in lockstep with updateBOQItemPayload's rule.
- *
  * @param {Object} form
  * @param {Object} boq
  * @param {Array} cycles
@@ -247,9 +197,6 @@ export function createBOQItemPayload(form, boq, cycles = []) {
 }
 
 /**
- * Builds the UpdateBoqItem request body, same idea as createBOQItemPayload
- * — committed cycles are excluded since the backend already owns them.
- *
  * @param {number} id
  * @param {Object} data
  * @param {Array} cycles
@@ -275,11 +222,6 @@ export function updateBOQItemPayload(id, data, cycles = []) {
 }
 
 /**
- * Reduces the full (committed + non-committed) cycle list down to the
- * non-committed ones, in the shape the backend expects for TrackerCycles.
- * Committed cycles already have a real invoice against them and are
- * managed entirely by the backend — never sent back.
- *
  * @param {Array} cycles
  * @returns {Array}
  */

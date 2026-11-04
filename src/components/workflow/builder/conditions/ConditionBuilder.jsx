@@ -1,7 +1,5 @@
 'use client';
 
-/** A condition group, its rows and its nested groups — what transitions, branches and loops decide by. */
-
 import { memo, useCallback, useMemo } from 'react';
 import { CornerDownRight, Info, Plus, Trash2 } from 'lucide-react';
 
@@ -14,53 +12,19 @@ import { withAlpha } from '@/utils/color';
 import { ConditionRow } from './ConditionRow';
 import { EMPTY, railColor, someField } from './conditionStyles';
 
-/**
- * A FilterGroup editor, recursive.
- *
- * One component behind six call sites — transition conditions, `branch`,
- * `repeat.until`, `parallel.joinWhen`, `query.filter` and a schedule trigger's
- * `scan`. They differ only in the props: `filterableOnly` for the two that
- * *search* rather than read, and unknown fields being expected for `joinWhen`.
- *
- * ## Why it looks the way it does
- *
- * A group is brackets: it exists so `a and (b or c)` can be said, which means
- * nothing unless a reader can SEE what is bracketed. So containment is drawn,
- * not described — a rail runs down the left of a group's members with the
- * joining word repeated on it, the way a query builder or a filter panel does
- * it. An earlier version relied on a nested box with an alternating background,
- * which left "what does Group even do?" as something you found out by clicking
- * it and guessing.
- *
- * The root also carries a live plain-English reading of the whole expression,
- * so the structure being built and its meaning are visible at the same time.
- *
- * `valueFields` is for a search, whose two sides come from different places:
- * the left names a field of the records being SEARCHED, the right may name
- * one of the RUN's own values (`{{projectCode}}`), filled in once before the
- * search runs. Left out, both sides use `fields`. `recordLabel` renames the
- * "This record" group for the same reason.
- */
 function ConditionBuilder({
   value, onChange, fields = EMPTY, depth = 0, filterableOnly = false, builtinsOnly = false,
   valueFields = null, recordLabel = null,
 }) {
-  // Each `?? []` fallback would otherwise mint a fresh array on every render,
-  // changing the identity of everything memoised below it — the exact way a
-  // useCallback quietly stops memoising anything.
   const group = useMemo(() => value ?? createFilterGroup(), [value]);
   const conditions = useMemo(() => group.conditions ?? EMPTY, [group]);
   const groups = useMemo(() => group.groups ?? EMPTY, [group]);
 
-  // What a new condition starts on. In a search an unsearchable field is
-  // listed, greyed out, but never picked for the author.
   const usableFields = useMemo(
     () => (filterableOnly ? fields.filter((f) => f.filterable) : fields),
     [fields, filterableOnly]
   );
 
-  // Somebody reading a record field on a manual workflow: fine when the run is
-  // started on one record, empty when it is started on several.
   const readsRecordOfManyTargets = depth === 0 && someField(group, fields, (f) => f?.emptyOnManyTargets);
 
   const patch = useCallback((next) => onChange({ ...group, ...next }), [group, onChange]);
@@ -85,11 +49,6 @@ function ConditionBuilder({
     });
   }, [conditions, fields, patch, usableFields]);
 
-  /**
-   * Conditions and nested groups as one ordered list, so the rail can join them
-   * with a single sequence of "and"s rather than two separate runs that read as
-   * though the groups were somehow separate from the conditions.
-   */
   const members = useMemo(
     () => [
       ...conditions.map((data, index) => ({ kind: 'condition', data, index })),
@@ -107,8 +66,6 @@ function ConditionBuilder({
       className="rounded-lg border p-2.5"
       style={{ borderColor: '#f1f0ee', backgroundColor: depth === 0 ? '#fbfaf9' : '#ffffff' }}
     >
-      {/* Reads as a sentence: "Match ALL of the following" — the toggle is the
-          verb of that sentence rather than a pair of unexplained chips. */}
       <div className="mb-2 flex flex-wrap items-center gap-1.5">
         <span className="text-[11px]" style={{ color: CHROME.textMuted }}>Match</span>
 
@@ -138,8 +95,6 @@ function ConditionBuilder({
             Condition
           </button>
 
-          {/* Depth is unlimited in the contract; three levels is where a
-              bracketed expression stops being readable on screen. */}
           {depth < 3 && (
             <button
               type="button"
@@ -173,8 +128,6 @@ function ConditionBuilder({
           </button>
         </div>
       ) : (
-        /* The rail. Everything to the right of this line is inside this group,
-           and the repeated joining word says how the members combine. */
         <div className="relative pl-5">
           <div
             className="absolute bottom-2 left-1.5 top-2 w-px"
@@ -251,8 +204,6 @@ function ConditionBuilder({
         </div>
       )}
 
-      {/* Only at the root: the whole expression as a sentence, so what is being
-          built and what it means are on screen together. */}
       {depth === 0 && !isEmpty && (
         <div className="mt-2.5 flex items-start gap-1.5 border-t border-[#f1f0ee] pt-2.5">
           <CornerDownRight
@@ -274,9 +225,6 @@ function ConditionBuilder({
         </p>
       )}
 
-      {/* The backend's wording, close to: a run started on several records
-          reads none of their fields at the top level. Said once, at the root,
-          rather than under every row that reads one. */}
       {readsRecordOfManyTargets && (
         <p
           className="mt-2 flex items-start gap-1.5 rounded-md px-2 py-1.5 text-[11px] leading-snug"
