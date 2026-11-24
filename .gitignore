@@ -97,3 +97,5 @@ logs/
 
 # AI assistant local settings
 .claude/settings.local.json
+
+*.zip
