@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import { ChevronDown, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
@@ -9,7 +10,8 @@ import { withAlpha } from '@/utils/color';
 /**
  * @param {{ options: Array<{ value: string|number, label: string, description?: string }>, selected: Array<string|number>, onToggle: (value) => void, placeholder?: string, error?: string|null, label?: string, compact?: boolean, }} props
  */
-export default function CheckboxDropdown({ options, selected, onToggle, placeholder = 'Choose…', error = null, label, compact = false }) {
+export default function CheckboxDropdown({ options, selected, onToggle, placeholder, error = null, label, compact = false }) {
+  const t = useTranslations('common');
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
   const listId = useId();
@@ -51,16 +53,16 @@ export default function CheckboxDropdown({ options, selected, onToggle, placehol
       >
         {compact ? (
           <span className={`min-w-0 flex-1 truncate ${picked.length ? '' : 'text-gray-400'}`} style={picked.length ? { color: CHROME.textPrimary } : undefined}>
-            {picked.length ? summary : placeholder}
+            {picked.length ? summary : (placeholder ?? t('choose'))}
           </span>
         ) : (
           <span className="flex min-w-0 flex-1 flex-wrap gap-1">
             {picked.length === 0 ? (
-              <span className="py-1 text-gray-400">{placeholder}</span>
+              <span className="py-1 text-gray-400">{placeholder ?? t('choose')}</span>
             ) : picked.map((o) => (
               <span
                 key={o.value}
-                className="inline-flex items-center gap-1 rounded-full py-0.5 pl-2 pr-1 text-xs"
+                className="inline-flex items-center gap-1 rounded-full py-0.5 ps-2 pe-1 text-xs"
                 style={{ backgroundColor: withAlpha(STATUS.info, 0.1), color: CHROME.textPrimary }}
               >
                 {o.label}
@@ -68,7 +70,7 @@ export default function CheckboxDropdown({ options, selected, onToggle, placehol
                   type="button"
                   onClick={(e) => { e.stopPropagation(); onToggle(o.value); }}
                   className="rounded-full p-0.5 hover:bg-white/70"
-                  aria-label={`Remove ${o.label}`}
+                  aria-label={t('remove', { label: o.label })}
                   style={{ color: CHROME.textMuted }}
                 >
                   <X size={10} aria-hidden="true" />

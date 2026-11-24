@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Calendar, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 import { formatDate } from '@/utils/formatters';
 
 export function FormField({ label, required, error, hint, children, className = '' }) {
@@ -11,7 +12,7 @@ export function FormField({ label, required, error, hint, children, className = 
       {label && (
         <label className="text-sm font-medium text-gray-700">
           {label}
-          {required && <span className="text-primary ml-0.5">*</span>}
+          {required && <span className="text-primary ms-0.5">*</span>}
         </label>
       )}
       {children}
@@ -85,11 +86,10 @@ export function NumberInput({
   );
 }
 
-const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
-const MONTH_LABELS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
+function monthLabels(locale) {
+  const format = new Intl.DateTimeFormat(locale, { month: 'long' });
+  return Array.from({ length: 12 }, (_, i) => format.format(new Date(2000, i, 1)));
+}
 
 function toIsoDate(d) {
   const y = d.getFullYear();
@@ -130,8 +130,10 @@ const POPOVER_WIDTH = 288;
 const POPOVER_HEIGHT_ESTIMATE = 340;
 
 export function DatePicker({
-  label, required, error, hint, value, onChange, min, max, disabled, className = '', placeholder = 'DD/MM/YYYY',
+  label, required, error, hint, value, onChange, min, max, disabled, className = '', placeholder,
 }) {
+  const t = useTranslations('datePicker');
+  const locale = useLocale();
   const [open, setOpen] = useState(false);
   const [viewDate, setViewDate] = useState(() => parseIsoDate(initialViewIso(value, min, max)) ?? new Date());
   const [coords, setCoords] = useState(null);
@@ -141,10 +143,11 @@ export function DatePicker({
   useLayoutEffect(() => {
     if (!open || !triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
+    const rtl = getComputedStyle(triggerRef.current).direction === 'rtl';
     const spaceBelow = window.innerHeight - rect.bottom;
     const openUpward = spaceBelow < POPOVER_HEIGHT_ESTIMATE && rect.top > spaceBelow;
     const left = Math.min(
-      Math.max(rect.left, 8),
+      Math.max(rtl ? rect.right - POPOVER_WIDTH : rect.left, 8),
       window.innerWidth - POPOVER_WIDTH - 8
     );
     setCoords({
@@ -230,7 +233,7 @@ export function DatePicker({
         `}
       >
         <span className={value ? 'text-gray-800' : 'text-gray-400'}>
-          {value ? formatDate(value) : placeholder}
+          {value ? formatDate(value) : (placeholder ?? t('placeholder'))}
         </span>
         <span className="flex items-center gap-1.5 shrink-0">
           {value && !disabled && (
@@ -238,7 +241,8 @@ export function DatePicker({
               type="button"
               onClick={(e) => { e.stopPropagation(); emit(''); }}
               className="text-gray-300 hover:text-gray-500"
-              title="Clear date"
+              title={t('clearDate')}
+              aria-label={t('clearDate')}
             >
               <X size={13} />
             </button>
@@ -262,9 +266,10 @@ export function DatePicker({
               type="button"
               onClick={() => setViewDate(new Date(year, month - 1, 1))}
               className="p-1 rounded-md hover:bg-gray-100 text-gray-500 shrink-0"
-              title="Previous month"
+              title={t('previousMonth')}
+              aria-label={t('previousMonth')}
             >
-              <ChevronLeft size={16} />
+              <ChevronLeft size={16} className="rtl:-scale-x-100" />
             </button>
             <div className="flex items-center gap-1 min-w-0">
               <select
@@ -272,7 +277,7 @@ export function DatePicker({
                 onChange={(e) => setViewDate(new Date(year, Number(e.target.value), 1))}
                 className="text-sm font-semibold text-gray-700 bg-transparent border-none rounded-md px-1 py-0.5 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 cursor-pointer"
               >
-                {MONTH_LABELS.map((label, i) => (
+                {monthLabels(locale).map((label, i) => (
                   <option key={label} value={i}>{label}</option>
                 ))}
               </select>
@@ -290,14 +295,15 @@ export function DatePicker({
               type="button"
               onClick={() => setViewDate(new Date(year, month + 1, 1))}
               className="p-1 rounded-md hover:bg-gray-100 text-gray-500 shrink-0"
-              title="Next month"
+              title={t('nextMonth')}
+              aria-label={t('nextMonth')}
             >
-              <ChevronRight size={16} />
+              <ChevronRight size={16} className="rtl:-scale-x-100" />
             </button>
           </div>
 
           <div className="grid grid-cols-7 gap-1 mb-1">
-            {WEEKDAYS.map((w) => (
+            {t.raw('weekdays').map((w) => (
               <span key={w} className="text-[11px] font-medium text-gray-400 text-center py-1">{w}</span>
             ))}
           </div>
@@ -335,14 +341,14 @@ export function DatePicker({
               onClick={() => { emit(''); setOpen(false); }}
               className="text-xs text-gray-400 hover:text-gray-600"
             >
-              Clear
+              {t('clear')}
             </button>
             <button
               type="button"
               onClick={() => { if (!isOutOfRange(todayIso)) { emit(todayIso); setOpen(false); } }}
               className="text-xs text-primary font-medium hover:underline"
             >
-              Today
+              {t('today')}
             </button>
           </div>
         </div>,

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import ErrorNote from '@/components/ui/ErrorNote';
 import Skeleton from '@/components/ui/Skeleton';
@@ -16,6 +17,7 @@ import NotAvailable from './NotAvailable';
 export default function DashboardListCard({
   title, icon: Icon = null, subtitle, source, isEmpty, forbiddenText, emptyTitle, emptyText, children, href = null,
 }) {
+  const t = useTranslations('dashboard.lists');
   let body;
   if (source.status === 'loading') body = <div className="p-5"><Skeleton rows={4} height={52} /></div>;
   else if (source.status === 'forbidden') body = <div className="p-5"><NotAvailable text={forbiddenText} /></div>;
@@ -42,7 +44,7 @@ export default function DashboardListCard({
         </div>
         {href && source.status !== 'forbidden' && (
           <Link href={href} className="flex shrink-0 items-center gap-1 text-xs font-semibold text-[#f8485e] hover:opacity-80">
-            View all <ArrowRight size={12} />
+            {t('viewAll')} <ArrowRight size={12} className="rtl:-scale-x-100" />
           </Link>
         )}
       </header>

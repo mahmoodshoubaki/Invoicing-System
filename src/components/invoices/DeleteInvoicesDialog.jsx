@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { AlertTriangle, Trash2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import Modal from '@/components/common/Modal';
 import Button from '@/components/common/Button';
@@ -14,11 +15,12 @@ import { invoiceRepository } from '@/repositories/invoiceRepository';
  * @param {{ open: boolean, invoices: Array<{ id: string, invoiceNumber?: string }>, onClose: () => void, onDeleted: (deletedIds: string[]) => void, }} props
  */
 export default function DeleteInvoicesDialog({ open, invoices, onClose, onDeleted }) {
+  const t = useTranslations('invoices.delete');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
   const count = invoices.length;
-  const names = invoices.map((i) => i.invoiceNumber || 'an invoice with no number yet');
+  const names = invoices.map((i) => i.invoiceNumber || t('noNumber'));
 
   const close = () => {
     if (busy) return;
@@ -43,13 +45,13 @@ export default function DeleteInvoicesDialog({ open, invoices, onClose, onDelete
     <Modal
       open={open}
       onClose={close}
-      title={count === 1 ? 'Delete this invoice?' : `Delete ${count} invoices?`}
+      title={t('title', { count })}
       size="sm"
       footer={
         <>
-          <Button variant="outline" onClick={close} disabled={busy}>Keep {count === 1 ? 'it' : 'them'}</Button>
+          <Button variant="outline" onClick={close} disabled={busy}>{t('keep', { count })}</Button>
           <Button variant="danger" icon={Trash2} onClick={confirm} loading={busy} disabled={count === 0}>
-            Delete
+            {t('delete')}
           </Button>
         </>
       }
@@ -59,6 +61,7 @@ export default function DeleteInvoicesDialog({ open, invoices, onClose, onDelete
           {names.slice(0, 12).map((name, i) => (
             <li
               key={`${name}-${i}`}
+              dir="auto"
               className="rounded-md px-2 py-0.5 font-mono text-[11px]"
               style={{ backgroundColor: '#f6f5f3', color: CHROME.textPrimary }}
             >
@@ -66,7 +69,7 @@ export default function DeleteInvoicesDialog({ open, invoices, onClose, onDelete
             </li>
           ))}
           {names.length > 12 && (
-            <li className="px-1 text-[11px]" style={{ color: CHROME.textMuted }}>and {names.length - 12} more</li>
+            <li className="px-1 text-[11px]" style={{ color: CHROME.textMuted }}>{t('more', { count: names.length - 12 })}</li>
           )}
         </ul>
 
@@ -76,9 +79,7 @@ export default function DeleteInvoicesDialog({ open, invoices, onClose, onDelete
         >
           <AlertTriangle size={13} className="mt-0.5 shrink-0" style={{ color: STATUS.warning }} aria-hidden="true" />
           <span>
-            {count === 1 ? 'It disappears' : 'They disappear'} from every list and screen, and any workflow
-            running on {count === 1 ? 'it' : 'them'} is cancelled. An In Progress invoice also stops blocking
-            edits to the BOQ items it bills.
+            {t('warning', { count })}
           </span>
         </p>
 

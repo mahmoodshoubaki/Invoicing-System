@@ -3,19 +3,31 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Banknote, Clock, Edit2, Eye, FileText, History, Plus, Trash2 } from 'lucide-react';
+import { Banknote, CheckCircle2, Clock, Edit2, Eye, FileText, History, Plus, Trash2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useLocaleFormat } from '@/hooks/useLocaleFormat';
 import Button from '@/components/common/Button';
 import Table from '@/components/common/Table';
 import { StatusBadge } from '@/components/common/Badge';
 import InvoiceHistoryModal from '@/components/invoices/InvoiceHistoryModal';
 import DeleteInvoicesDialog from '@/components/invoices/DeleteInvoicesDialog';
+import MarkCollectedDialog from '@/components/invoices/collect/MarkCollectedDialog';
 import TabToolbar from './TabToolbar';
 import { CHROME, SERIES_ROLE, STATUS } from '@/theme/vizPalette';
-import { formatCurrency, formatDateTime } from '@/utils/formatters';
+import { formatCurrency } from '@/utils/formatters';
 import { usePermission } from '@/hooks/usePermission';
 import { useToast } from '@/hooks/useToast';
-import { DELETABLE_INVOICE_STATUS_IDS, INVOICE_STATUS } from '@/constants/statuses';
-import { PENDING_LABEL } from '@/utils/invoiceDisplay';
+import { DELETABLE_INVOICE_STATUS_IDS, INVOICE_STATUS_ID } from '@/constants/statuses';
+import { INVOICE_PERMISSIONS } from '@/constants/invoicePermissions';
+import { allow } from '@/constants/workflowPermissions';
+import { isPartiallyCollected } from '@/lib/markCollectedForm';
+import CollectedAmountCell from '@/components/invoices/list/CollectedAmountCell';
+
+const CLOSED_INVOICE_STATUS_IDS = [
+  INVOICE_STATUS_ID.COLLECTED,
+  INVOICE_STATUS_ID.REJECTED,
+  INVOICE_STATUS_ID.CANCELLED,
+];
 
 const isDeletable = (invoice) => DELETABLE_INVOICE_STATUS_IDS.includes(invoice.statusId);
 
@@ -23,11 +35,14 @@ function InvoicesTab({
   projectCode, invoices, invoicesLoading, invoiceStatusesMap, invoiceStatusColorsMap, currency, onInvoicesChanged,
 }) {
   const router = useRouter();
+  const t = useTranslations('invoices.tab');
+  const format = useLocaleFormat();
   const { can } = usePermission();
   const toast = useToast();
   const money = (v) => formatCurrency(v, currency);
   const encoded = encodeURIComponent(projectCode);
   const canDelete = can('Invoices', 'Delete');
+  const canMarkCollected = allow(can, INVOICE_PERMISSIONS.MARK_COLLECTED);
 
   const [tickedIds, setTickedIds] = useState(() => new Set());
   const deletableRows = useMemo(() => invoices.filter(isDeletable), [invoices]);
@@ -35,6 +50,7 @@ function InvoicesTab({
   const allTicked = deletableRows.length > 0 && selected.length === deletableRows.length;
 
   const [pendingDelete, setPendingDelete] = useState(null);
+  const [collecting, setCollecting] = useState(null);
 
   const toggle = useCallback((id) => {
     setTickedIds((prev) => {
@@ -52,42 +68,44 @@ function InvoicesTab({
     const count = deletedIds.length;
     setPendingDelete(null);
     setTickedIds(new Set());
-    toast.success(count === 1 ? 'Invoice deleted' : `${count} invoices deleted`, 'Any workflow running on them was cancelled.');
+    toast.success(t('deleted', { count }), t('deletedBody'));
     onInvoicesChanged?.();
-  }, [onInvoicesChanged, toast]);
+  }, [onInvoicesChanged, toast, t]);
+
+  const handleCollected = useCallback(() => {
+    setCollecting(null);
+    onInvoicesChanged?.();
+  }, [onInvoicesChanged]);
 
   const [historyInvoiceId, setHistoryInvoiceId] = useState(null);
   const summary = useMemo(() => {
     const totalAmount = invoices.reduce((sum, i) => sum + (i.totalAmount || 0), 0);
-    const pending = invoices.filter((i) => {
-      const label = invoiceStatusesMap[i.statusId];
-      return label === INVOICE_STATUS.SUBMITTED || label === INVOICE_STATUS.UNDER_REVIEW;
-    }).length;
+    const pending = invoices.filter((i) => !CLOSED_INVOICE_STATUS_IDS.includes(i.statusId)).length;
     return { totalAmount, pending };
-  }, [invoices, invoiceStatusesMap]);
+  }, [invoices]);
 
   const stats = useMemo(() => [
     {
-      label: 'Invoices',
+      label: t('stats.invoices'),
       value: invoices.length,
       icon: FileText,
       accent: SERIES_ROLE.invoiced,
     },
     {
-      label: 'Total raised',
+      label: t('stats.totalRaised'),
       value: money(summary.totalAmount),
       icon: Banknote,
       accent: SERIES_ROLE.revenue,
     },
     {
-      label: 'Awaiting action',
+      label: t('stats.awaiting'),
       value: summary.pending,
       icon: Clock,
       accent: STATUS.warning,
       valueColor: summary.pending > 0 ? '#b07800' : undefined,
     },
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [invoices.length, summary, currency]);
+  ], [invoices.length, summary, currency, t]);
 
   const columns = useMemo(() => [
     ...(canDelete ? [{
@@ -99,8 +117,8 @@ function InvoicesTab({
           disabled={deletableRows.length === 0}
           onChange={toggleAll}
           onClick={(e) => e.stopPropagation()}
-          aria-label="Select every invoice that can be deleted"
-          title="Only In Progress, Rejected and Cancelled invoices can be deleted"
+          aria-label={t('selectAll')}
+          title={t('selectHint')}
           style={{ accentColor: '#d03b3b' }}
         />
       ),
@@ -113,23 +131,23 @@ function InvoicesTab({
           checked={tickedIds.has(row.id)}
           onChange={() => toggle(row.id)}
           onClick={(e) => e.stopPropagation()}
-          aria-label={`Select ${row.invoiceNumber ?? 'this invoice'}`}
+          aria-label={t('selectOne', { name: row.invoiceNumber ?? t('thisInvoice') })}
           style={{ accentColor: '#d03b3b' }}
         />
       ) : null),
     }] : []),
     {
       key: 'invoiceNumber',
-      label: 'Invoice #',
+      label: t('columns.invoiceNumber'),
       render: (val) => (
-        <span className="font-mono text-xs font-semibold" style={{ color: CHROME.textPrimary }}>
-          {val || PENDING_LABEL}
+        <span dir="auto" className="font-mono text-xs font-semibold" style={{ color: CHROME.textPrimary }}>
+          {val || t('pendingNumber')}
         </span>
       ),
     },
     {
       key: 'totalAmount',
-      label: 'Amount',
+      label: t('columns.amount'),
       align: 'right',
       render: (val) => (
         <span className="text-sm font-semibold tabular-nums" style={{ color: CHROME.textPrimary }}>
@@ -138,8 +156,14 @@ function InvoicesTab({
       ),
     },
     {
+      key: 'collectedAmount',
+      label: t('columns.collected'),
+      align: 'right',
+      render: (_, row) => <CollectedAmountCell invoice={row} currency={currency} />,
+    },
+    {
       key: 'statusId',
-      label: 'Status',
+      label: t('columns.status'),
       sortable: false,
       render: (val) => (
         <StatusBadge status={invoiceStatusesMap[val] ?? '—'} colors={invoiceStatusColorsMap[val]} />
@@ -147,16 +171,16 @@ function InvoicesTab({
     },
     {
       key: 'submittedByName',
-      label: 'Submitted By',
+      label: t('columns.submittedBy'),
       render: (val) => (
         <span className="text-sm" style={{ color: CHROME.textSecondary }}>{val || '—'}</span>
       ),
     },
     {
       key: 'submissionDate',
-      label: 'Submitted',
+      label: t('columns.submitted'),
       render: (val) => (
-        <span className="text-sm" style={{ color: CHROME.textMuted }}>{formatDateTime(val) || '—'}</span>
+        <span className="text-sm" style={{ color: CHROME.textMuted }}>{format.dateTime(val) || '—'}</span>
       ),
     },
     {
@@ -171,41 +195,52 @@ function InvoicesTab({
             size="xs"
             icon={History}
             onClick={() => setHistoryInvoiceId(row.id)}
-            title="Revision history"
+            title={t('revisionHistory')}
           />
           {can('System', 'Administrator') && (
             <Link href={`/projects/${encoded}/invoices/${row.id}/edit`}>
-              <Button variant="ghost" size="xs" icon={Edit2} title="Edit invoice" />
+              <Button variant="ghost" size="xs" icon={Edit2} title={t('editInvoice')} />
             </Link>
           )}
           <Link href={`/invoices/${row.id}?projectCode=${encoded}`}>
-            <Button variant="ghost" size="xs" icon={Eye} title="View invoice" />
+            <Button variant="ghost" size="xs" icon={Eye} title={t('viewInvoice')} />
           </Link>
+          {canMarkCollected && isPartiallyCollected(row) && (
+            <Button
+              variant="ghost"
+              size="xs"
+              icon={CheckCircle2}
+              className="text-green-600 hover:bg-green-50 hover:text-green-700"
+              onClick={() => setCollecting(row)}
+              title={t('markCollected')}
+              aria-label={t('markOne', { name: row.invoiceNumber ?? t('thisInvoice') })}
+            />
+          )}
           {canDelete && isDeletable(row) && (
             <Button
               variant="ghost"
               size="xs"
               icon={Trash2}
               onClick={() => setPendingDelete([row])}
-              title="Delete invoice"
+              title={t('deleteInvoice')}
             />
           )}
         </div>
       ),
     },
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [currency, invoiceStatusesMap, invoiceStatusColorsMap, can, canDelete, encoded, tickedIds, allTicked, deletableRows, toggle, toggleAll]);
+  ], [currency, invoiceStatusesMap, invoiceStatusColorsMap, can, canDelete, canMarkCollected, encoded, tickedIds, allTicked, deletableRows, toggle, toggleAll, t, format]);
 
   const actions = (
     <div className="flex items-center gap-2">
       {selected.length > 0 && (
         <Button size="sm" variant="danger" icon={Trash2} onClick={() => setPendingDelete(selected)}>
-          Delete {selected.length} selected
+          {t('deleteSelected', { count: selected.length })}
         </Button>
       )}
       {can('Invoices', 'Create') && (
         <Link href={`/projects/${encoded}/invoices/new`}>
-          <Button size="sm" icon={Plus}>New invoice request</Button>
+          <Button size="sm" icon={Plus}>{t('newRequest')}</Button>
         </Link>
       )}
     </div>
@@ -221,7 +256,7 @@ function InvoicesTab({
         isLoading={invoicesLoading}
         rowKey="id"
         onRowClick={(row) => router.push(`/invoices/${row.id}?projectCode=${encoded}`)}
-        emptyMessage="No invoice requests have been raised for this project yet."
+        emptyMessage={t('empty')}
       />
 
       <InvoiceHistoryModal
@@ -230,6 +265,14 @@ function InvoicesTab({
         currency={currency}
         onClose={() => setHistoryInvoiceId(null)}
       />
+
+      {collecting && (
+        <MarkCollectedDialog
+          invoice={collecting}
+          onClose={() => setCollecting(null)}
+          onCollected={handleCollected}
+        />
+      )}
 
       {pendingDelete && (
         <DeleteInvoicesDialog

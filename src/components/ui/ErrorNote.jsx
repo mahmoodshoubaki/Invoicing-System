@@ -3,6 +3,7 @@
 import { memo, useState } from 'react';
 import Link from 'next/link';
 import { AlertTriangle, Check, Copy, RotateCcw } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
@@ -14,11 +15,12 @@ import { allow, WORKFLOW_INSTANCE_PERMISSIONS } from '@/constants/workflowPermis
  * @param {{ error: Error|string|null, onRetry?: () => void, compact?: boolean }} props
  */
 function ErrorNote({ error, onRetry, compact = false }) {
+  const t = useTranslations('common');
   const { can } = usePermission();
   const [copied, setCopied] = useState(false);
   if (!error) return null;
 
-  const message = typeof error === 'string' ? error : (error.message || 'Something went wrong.');
+  const message = typeof error === 'string' ? error : (error.message || t('somethingWentWrong'));
   const reference = typeof error === 'string' ? null : (error.traceId ?? null);
   const canTrace = allow(can, WORKFLOW_INSTANCE_PERMISSIONS.VIEW);
 
@@ -44,16 +46,16 @@ function ErrorNote({ error, onRetry, compact = false }) {
         {reference && (
           <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px]" style={{ color: CHROME.textMuted }}>
             <span>
-              Reference <code className="font-mono" style={{ color: CHROME.textSecondary }}>{reference}</code>
+              {t('reference')} <code className="font-mono" style={{ color: CHROME.textSecondary }}>{reference}</code>
             </span>
             <button
               type="button"
               onClick={copy}
               className="inline-flex items-center gap-0.5 rounded px-1 transition-colors hover:bg-black/5"
-              aria-label="Copy the reference"
+              aria-label={t('copyReference')}
             >
               {copied ? <Check size={11} aria-hidden="true" /> : <Copy size={11} aria-hidden="true" />}
-              {copied ? 'Copied' : 'Copy'}
+              {copied ? t('copied') : t('copy')}
             </button>
             {canTrace && (
               <Link
@@ -61,7 +63,7 @@ function ErrorNote({ error, onRetry, compact = false }) {
                 className="underline-offset-2 hover:underline"
                 style={{ color: STATUS.info }}
               >
-                See what happened
+                {t('seeWhatHappened')}
               </Link>
             )}
           </p>
@@ -75,7 +77,7 @@ function ErrorNote({ error, onRetry, compact = false }) {
           style={{ color: CHROME.textSecondary }}
         >
           <RotateCcw size={11} aria-hidden="true" />
-          Try again
+          {t('tryAgain')}
         </button>
       )}
     </div>

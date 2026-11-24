@@ -50,23 +50,23 @@ export function newItemTotal(values) {
   return Number.isFinite(total) ? total : 0;
 }
 
-export function newItemProblems(draft, window, today = toISODate(new Date())) {
+export function newItemProblems(draft, window, t, today = toISODate(new Date())) {
   const v = draft.values;
   const problems = {};
-  if (blank(v.englishName)) problems.englishName = 'English description is required.';
-  if (blank(v.arabicName)) problems.arabicName = 'Arabic description is required.';
-  if (!isNumber(v.quantity) || Number(v.quantity) <= 0) problems.quantity = 'A quantity above 0 is required.';
-  if (!isNumber(v.unitCost) || Number(v.unitCost) <= 0) problems.unitCost = 'A unit cost above 0 is required.';
-  if (!v.baselineInvoicingDate) problems.baselineInvoicingDate = 'Baseline expected invoicing date is required.';
-  else if (v.baselineInvoicingDate < today) problems.baselineInvoicingDate = 'The baseline expected invoicing date can’t be in the past.';
+  if (blank(v.englishName)) problems.englishName = t('englishRequired');
+  if (blank(v.arabicName)) problems.arabicName = t('arabicRequired');
+  if (!isNumber(v.quantity) || Number(v.quantity) <= 0) problems.quantity = t('quantityAboveZero');
+  if (!isNumber(v.unitCost) || Number(v.unitCost) <= 0) problems.unitCost = t('unitCostAboveZero');
+  if (!v.baselineInvoicingDate) problems.baselineInvoicingDate = t('baselineRequired');
+  else if (v.baselineInvoicingDate < today) problems.baselineInvoicingDate = t('baselinePast');
   else if (window.start && window.end && (v.baselineInvoicingDate < window.start || v.baselineInvoicingDate > window.end)) {
-    problems.baselineInvoicingDate = 'The baseline expected invoicing date must be within the contract dates.';
+    problems.baselineInvoicingDate = t('baselineRange');
   }
-  if (!v.billingFrequencyId) problems.billingFrequencyId = 'Billing frequency is required.';
-  if (draft.cycles.length === 0) problems.cycles = 'At least one invoicing plan cycle is required.';
-  else if (draft.cycles.some((c) => !c.plannedDate)) problems.cycles = 'Every cycle needs a planned date.';
+  if (!v.billingFrequencyId) problems.billingFrequencyId = t('frequencyRequired');
+  if (draft.cycles.length === 0) problems.cycles = t('oneCycle');
+  else if (draft.cycles.some((c) => !c.plannedDate)) problems.cycles = t('cycleDate');
   else if (window.start && window.end && draft.cycles.some((c) => c.plannedDate < window.start || c.plannedDate > window.end)) {
-    problems.cycles = 'Every cycle needs a planned date between the contract start and end dates.';
+    problems.cycles = t('cycleRange');
   }
   return problems;
 }

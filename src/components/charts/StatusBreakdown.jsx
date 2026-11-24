@@ -1,12 +1,14 @@
 'use client';
 
 import { motion } from 'motion/react';
+import { useTranslations } from 'next-intl';
 import { CHROME } from '@/theme/vizPalette';
 
 /**
  * @param {{data: Array<{name: string, value: number, color: string, icon: Function, detail?: string}>}} props
  */
 export default function StatusBreakdown({ data = [] }) {
+  const t = useTranslations('dashboard.pipeline');
   const total = data.reduce((sum, d) => sum + d.value, 0);
   const max = Math.max(...data.map((d) => d.value), 1);
   const ranked = [...data].sort((a, b) => b.value - a.value);
@@ -14,7 +16,7 @@ export default function StatusBreakdown({ data = [] }) {
   if (total === 0) {
     return (
       <p className="py-10 text-center text-sm" style={{ color: CHROME.textMuted }}>
-        No invoices to break down yet.
+        {t('nothingToBreakDown')}
       </p>
     );
   }
@@ -44,12 +46,12 @@ export default function StatusBreakdown({ data = [] }) {
               )}
               <span className="flex-1 text-xs font-medium" style={{ color: CHROME.textSecondary }}>
                 {item.name}
-                {item.detail && <span className="ml-1.5 font-normal tabular-nums" style={{ color: CHROME.textMuted }}>{item.detail}</span>}
+                {item.detail && <span className="ms-1.5 font-normal tabular-nums" style={{ color: CHROME.textMuted }}><span dir="ltr">{item.detail}</span></span>}
               </span>
               <span className="text-xs font-bold tabular-nums" style={{ color: CHROME.textPrimary }}>
                 {item.value}
               </span>
-              <span className="w-9 text-right text-xs tabular-nums" style={{ color: CHROME.textMuted }}>
+              <span className="w-9 text-end text-xs tabular-nums" style={{ color: CHROME.textMuted }}>
                 {pct}%
               </span>
             </div>

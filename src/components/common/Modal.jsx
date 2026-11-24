@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Button from './Button';
 
 const SIZE_MAP = {
@@ -21,6 +23,7 @@ export default function Modal({
   size = 'md',
   showClose = true,
 }) {
+  const t = useTranslations('common');
 
   useEffect(() => {
     if (open) {
@@ -31,9 +34,10 @@ export default function Modal({
     return () => { document.body.style.overflow = ''; };
   }, [open]);
 
-  if (!open) return null;
+  if (!open || typeof document === 'undefined') return null;
 
-  return (
+  // Rendered into body so no card's stacking context can paint over it.
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
@@ -56,9 +60,9 @@ export default function Modal({
               <button
                 type="button"
                 onClick={onClose}
-                aria-label="Close"
-                title="Close"
-                className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors ml-auto"
+                aria-label={t('close')}
+                title={t('close')}
+                className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors ms-auto"
               >
                 <X size={16} />
               </button>
@@ -78,17 +82,19 @@ export default function Modal({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
-export function ConfirmModal({ open, onClose, onConfirm, title, message, confirmLabel = 'Confirm', confirmVariant = 'danger', loading = false }) {
+export function ConfirmModal({ open, onClose, onConfirm, title, message, confirmLabel, confirmVariant = 'danger', loading = false }) {
+  const t = useTranslations('common');
   return (
     <Modal open={open} onClose={onClose} title={title} size="sm"
       footer={
         <>
-          <Button variant="outline" onClick={onClose} disabled={loading}>Cancel</Button>
-          <Button variant={confirmVariant} onClick={onConfirm} loading={loading}>{confirmLabel}</Button>
+          <Button variant="outline" onClick={onClose} disabled={loading}>{t('cancel')}</Button>
+          <Button variant={confirmVariant} onClick={onConfirm} loading={loading}>{confirmLabel ?? t('confirm')}</Button>
         </>
       }
     >

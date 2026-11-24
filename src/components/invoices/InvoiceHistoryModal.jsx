@@ -3,13 +3,15 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { ChevronDown, DollarSign, User, Calendar, Percent, Paperclip, Download, BadgeQuestionMarkIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useLocaleFormat } from '@/hooks/useLocaleFormat';
 
 import Modal from '@/components/common/Modal';
 import Button from '@/components/common/Button';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { StatusBadge } from '@/components/common/Badge';
 import VarianceBadge from '@/components/common/VarianceBadge';
-import { formatCurrency, formatDateTime, formatDate, formatPercentage, formatFileSize } from '@/utils/formatters';
+import { formatCurrency, formatPercentage, formatFileSize } from '@/utils/formatters';
 import { iconForFileName } from '@/utils/attachmentIcon';
 import { saveBlob } from '@/utils/saveBlob';
 import { invoiceRepository } from '@/repositories/invoiceRepository';
@@ -21,11 +23,14 @@ import {
   selectInvoiceHistoryLoading,
 } from '@/store/slices/invoicesSlice';
 import { selectInvoiceStatusesMap, selectInvoiceStatusColorsMap } from '@/store/slices/lookupsSlice';
+import { collectedSoFar, hasCollection } from '@/models/invoice';
 
 function HistoryEntry({ entry, isLatest, currency, invoiceId, invoiceStatusesMap, invoiceStatusColorsMap }) {
   const [expanded, setExpanded] = useState(false);
   const [downloadingIds, setDownloadingIds] = useState(new Set());
   const toast = useToast();
+  const t = useTranslations('invoices.history');
+  const format = useLocaleFormat();
 
   const handleDownload = async (attachment) => {
     setDownloadingIds((prev) => new Set(prev).add(attachment.id));
@@ -35,7 +40,7 @@ function HistoryEntry({ entry, isLatest, currency, invoiceId, invoiceStatusesMap
       );
       saveBlob(blob, fileName);
     } catch (err) {
-      toast.error('Download failed', err?.message ?? 'This file may no longer be available.');
+      toast.error(t('downloadFailed'), err?.message ?? t('fileGone'));
     } finally {
       setDownloadingIds((prev) => {
         const next = new Set(prev);
@@ -46,26 +51,26 @@ function HistoryEntry({ entry, isLatest, currency, invoiceId, invoiceStatusesMap
   };
 
   return (
-    <div className="relative pl-9">
+    <div className="relative ps-9">
       {/* Timeline rail */}
-      <div className={`absolute left-2.25 top-1 w-2.5 h-2.5 rounded-full ring-4 ring-white ${isLatest ? 'bg-primary' : 'bg-gray-300'}`} />
-      <div className="absolute left-3.5 top-4 bottom-0 w-px bg-gray-200 last:hidden" />
+      <div className={`absolute inset-s-2.25 top-1 w-2.5 h-2.5 rounded-full ring-4 ring-white ${isLatest ? 'bg-primary' : 'bg-gray-300'}`} />
+      <div className="absolute inset-s-3.5 top-4 bottom-0 w-px bg-gray-200 last:hidden" />
 
       <div className="rounded-xl border border-gray-100 overflow-hidden mb-4">
         <button
           type="button"
           onClick={() => setExpanded((e) => !e)}
-          className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-gray-50/70 hover:bg-gray-50 transition-colors text-left"
+          className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-gray-50/70 hover:bg-gray-50 transition-colors text-start"
         >
           <div className="min-w-0 flex items-center gap-3">
             <StatusBadge
               status={invoiceStatusesMap[entry.statusId] ?? '—'}
               colors={invoiceStatusColorsMap[entry.statusId]}
             />
-            <p className="text-xs text-gray-500 truncate">{formatDateTime(entry.submissionDate)}</p>
+            <p className="text-xs text-gray-500 truncate">{format.dateTime(entry.submissionDate)}</p>
             {isLatest && (
               <span className="text-[10px] font-semibold uppercase tracking-wide text-primary bg-primary/10 px-1.5 py-0.5 rounded">
-                Latest
+                {t('latest')}
               </span>
             )}
           </div>
@@ -79,35 +84,45 @@ function HistoryEntry({ entry, isLatest, currency, invoiceId, invoiceStatusesMap
           <div className="px-4 py-4 border-t border-gray-100 flex flex-col gap-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
               <div>
-                <p className="text-gray-400 flex items-center gap-1"><DollarSign size={11} /> Revenue</p>
+                <p className="text-gray-400 flex items-center gap-1"><DollarSign size={11} /> {t('revenue')}</p>
                 <p className="font-semibold text-gray-700 mt-0.5">{formatCurrency(entry.revenue, currency)}</p>
               </div>
               <div>
-                <p className="text-gray-400 flex items-center gap-1"><DollarSign size={11} /> WIP</p>
+                <p className="text-gray-400 flex items-center gap-1"><DollarSign size={11} /> {t('wip')}</p>
                 <p className="font-semibold text-gray-700 mt-0.5">{formatCurrency(entry.wip, currency)}</p>
               </div>
               <div>
-                <p className="text-gray-400 flex items-center gap-1"><Percent size={11} /> VAT</p>
+                <p className="text-gray-400 flex items-center gap-1"><Percent size={11} /> {t('vat')}</p>
                 <p className="font-semibold text-gray-700 mt-0.5">{formatPercentage(entry.vat)}</p>
               </div>
               <div>
-                <p className="text-gray-400 flex items-center gap-1"><User size={11} /> Submitted By</p>
+                <p className="text-gray-400 flex items-center gap-1"><User size={11} /> {t('submittedBy')}</p>
                 <p className="font-semibold text-gray-700 mt-0.5 truncate">{entry.submittedByName || '—'}</p>
               </div>
               <div>
-                <p className="text-gray-400 flex items-center gap-1"><Calendar size={11} /> Baseline Collection</p>
-                <p className="font-semibold text-gray-700 mt-0.5">{entry.baselineCollectionDate ? formatDate(entry.baselineCollectionDate) : 'Pending'}</p>
+                <p className="text-gray-400 flex items-center gap-1"><Calendar size={11} /> {t('baselineCollection')}</p>
+                <p className="font-semibold text-gray-700 mt-0.5">{entry.baselineCollectionDate ? format.date(entry.baselineCollectionDate) : t('pending')}</p>
               </div>
               <div>
-                <p className="text-gray-400 flex items-center gap-1"><Calendar size={11} /> Expected Collection</p>
-                <p className="font-semibold text-gray-700 mt-0.5">{formatDate(entry.expectedCollectionDate) || '—'}</p>
+                <p className="text-gray-400 flex items-center gap-1"><Calendar size={11} /> {t('expectedCollection')}</p>
+                <p className="font-semibold text-gray-700 mt-0.5">{format.date(entry.expectedCollectionDate) || '—'}</p>
               </div>
               <div>
-                <p className="text-gray-400 flex items-center gap-1"><Calendar size={11} /> Receipt Issued</p>
-                <p className="font-semibold text-gray-700 mt-0.5">{formatDate(entry.receiptIssueDate) || '—'}</p>
+                <p className="text-gray-400 flex items-center gap-1"><Calendar size={11} /> {t('receiptIssued')}</p>
+                <p className="font-semibold text-gray-700 mt-0.5">{format.date(entry.receiptIssueDate) || '—'}</p>
               </div>
               <div>
-                <p className="text-gray-400 flex items-center gap-1"><BadgeQuestionMarkIcon size={11} /> Reasons For Update</p>
+                <p className="text-gray-400 flex items-center gap-1"><DollarSign size={11} /> {t('collected')}</p>
+                <p className="font-semibold text-gray-700 mt-0.5">
+                  {hasCollection(entry) ? formatCurrency(collectedSoFar(entry), currency) : '—'}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-400 flex items-center gap-1"><Calendar size={11} /> {t('lastCollected')}</p>
+                <p className="font-semibold text-gray-700 mt-0.5">{format.date(entry.collectedDate) || '—'}</p>
+              </div>
+              <div>
+                <p className="text-gray-400 flex items-center gap-1"><BadgeQuestionMarkIcon size={11} /> {t('reasons')}</p>
                 <p className="font-semibold text-gray-700 mt-0.5">{entry.reasonsForUpdate || '—'}</p>
               </div>
             </div>
@@ -115,17 +130,17 @@ function HistoryEntry({ entry, isLatest, currency, invoiceId, invoiceStatusesMap
             {entry.lines.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                  BOQ Line Items ({entry.lines.length})
+                  {t('lineItems', { count: entry.lines.length })}
                 </p>
                 <div className="flex flex-col gap-2">
                   {entry.lines.map((line) => (
                     <div key={line.id} className="p-2.5 bg-gray-50 rounded-lg text-xs">
                       <p className="font-medium text-gray-800">{line.itemTitleEnSnapshot}</p>
                       <div className="flex items-center gap-3 mt-1 text-gray-500">
-                        <span>Qty: {line.quantity}</span>
-                        <span>Unit: {formatCurrency(line.billedUnitPrice, currency)}</span>
+                        <span>{t('qty', { value: line.quantity })}</span>
+                        <span>{t.rich('unit', { value: formatCurrency(line.billedUnitPrice, currency), amount: (chunks) => <span dir="ltr">{chunks}</span> })}</span>
                         <span className="font-semibold text-primary">
-                          Total: {formatCurrency(line.billedUnitPrice * line.quantity, currency)}
+                          {t.rich('lineTotal', { value: formatCurrency(line.billedUnitPrice * line.quantity, currency), amount: (chunks) => <span dir="ltr">{chunks}</span> })}
                         </span>
                       </div>
                       {line.varianceDays != null && (
@@ -140,7 +155,7 @@ function HistoryEntry({ entry, isLatest, currency, invoiceId, invoiceStatusesMap
             {entry.attachments.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1">
-                  <Paperclip size={11} /> Attachments ({entry.attachments.length})
+                  <Paperclip size={11} /> {t('attachments', { count: entry.attachments.length })}
                 </p>
                 <div className="flex flex-col gap-1.5">
                   {entry.attachments.map((attachment) => {
@@ -148,7 +163,7 @@ function HistoryEntry({ entry, isLatest, currency, invoiceId, invoiceStatusesMap
                     return (
                       <div key={attachment.id} className="flex items-center gap-2 text-xs text-gray-600">
                         <Icon size={13} className="text-gray-400 shrink-0" />
-                        <span className="truncate flex-1">{attachment.fileName}</span>
+                        <span className="truncate flex-1"><bdi>{attachment.fileName}</bdi></span>
                         <span className="text-gray-400 shrink-0">{formatFileSize(attachment.fileSize)}</span>
                         <Button
                           type="button"
@@ -157,7 +172,7 @@ function HistoryEntry({ entry, isLatest, currency, invoiceId, invoiceStatusesMap
                           icon={Download}
                           loading={downloadingIds.has(attachment.id)}
                           onClick={() => handleDownload(attachment)}
-                          title="Download"
+                          title={t('download')}
                         />
                       </div>
                     );
@@ -173,6 +188,7 @@ function HistoryEntry({ entry, isLatest, currency, invoiceId, invoiceStatusesMap
 }
 
 export default function InvoiceHistoryModal({ open, onClose, invoiceId, currency }) {
+  const t = useTranslations('invoices.history');
   const dispatch = useDispatch();
   const history = useSelector(selectInvoiceHistory);
   const isLoading = useSelector(selectInvoiceHistoryLoading);
@@ -192,13 +208,13 @@ export default function InvoiceHistoryModal({ open, onClose, invoiceId, currency
     (a, b) => new Date(b.submissionDate ?? 0) - new Date(a.submissionDate ?? 0)
   );
   return (
-    <Modal open={open} onClose={onClose} title="Invoice History" size="xl">
+    <Modal open={open} onClose={onClose} title={t('title')} size="xl">
       {isLoading ? (
         <div className="flex items-center justify-center py-16">
           <LoadingSpinner />
         </div>
       ) : sorted.length === 0 ? (
-        <p className="text-sm text-gray-400 text-center py-16">No history recorded for this invoice yet.</p>
+        <p className="text-sm text-gray-400 text-center py-16">{t('empty')}</p>
       ) : (
         <div className="flex flex-col">
           {sorted.map((entry, i) => (

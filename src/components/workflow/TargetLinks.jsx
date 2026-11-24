@@ -2,10 +2,20 @@
 
 import Link from 'next/link';
 import { ExternalLink, FileDiff, FileText, FolderKanban, LayoutList } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import { CHROME, STATUS } from '@/theme/vizPalette';
 import { ROUTES } from '@/constants/routes';
-import { TARGET_TYPE, TARGET_TYPE_LABELS } from '@/constants/workflow';
+import { TARGET_TYPE } from '@/constants/workflow';
+
+const TARGET_LABEL_KEYS = {
+  [TARGET_TYPE.NONE]: 'none',
+  [TARGET_TYPE.INVOICE]: 'invoice',
+  [TARGET_TYPE.BOQ_ITEM]: 'boqItem',
+  [TARGET_TYPE.PROJECT]: 'project',
+  [TARGET_TYPE.INVOICING_PLAN_CYCLE]: 'cycle',
+  [TARGET_TYPE.BOQ_CHANGE_REQUEST]: 'changeRequest',
+};
 
 function shortId(id) {
   const text = String(id ?? '');
@@ -16,11 +26,12 @@ function shortId(id) {
  * @param {{ targetTypeKey: number|null, targetIds: string[], projectCode: string|null, size?: 'xs'|'sm', newTab?: boolean }} props
  */
 export default function TargetLinks({ targetTypeKey, targetIds = [], projectCode = null, size = 'sm', newTab = false }) {
+  const t = useTranslations('tasks.target');
   if (targetIds.length === 0) return null;
 
   const text = size === 'xs' ? 'text-[11px]' : 'text-xs';
   const iconSize = size === 'xs' ? 10 : 12;
-  const label = TARGET_TYPE_LABELS[targetTypeKey] ?? 'Record';
+  const label = t(TARGET_LABEL_KEYS[targetTypeKey] ?? 'record');
 
   const hrefFor = (id) => {
     if (targetTypeKey === TARGET_TYPE.INVOICE) return ROUTES.INVOICE_DETAIL(id);
@@ -46,7 +57,7 @@ export default function TargetLinks({ targetTypeKey, targetIds = [], projectCode
         const body = (
           <>
             <Icon size={iconSize} style={{ color: CHROME.textMuted }} aria-hidden="true" />
-            View {label}
+            {t('view', { label })}
           </>
         );
 
@@ -71,7 +82,7 @@ export default function TargetLinks({ targetTypeKey, targetIds = [], projectCode
             {...(newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
             className={`relative z-20 inline-flex items-center gap-1 underline-offset-2 hover:underline ${text}`}
             style={{ color: STATUS.info }}
-            title={newTab ? `Open ${label.toLowerCase()} in a new tab` : `Open ${label.toLowerCase()}`}
+            title={t(newTab ? 'openNewTab' : 'open', { label: label.toLowerCase() })}
           >
             {body}
             {newTab && <ExternalLink size={iconSize} aria-hidden="true" />}

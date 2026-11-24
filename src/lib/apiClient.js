@@ -1,16 +1,17 @@
 import { withBasePath } from '@/constants/appConfig';
 import { ROUTES } from '@/constants/routes';
+import { localizeBackendErrors, localizeBackendMessage } from '@/i18n/backendErrors';
 
 const BASE_URL = withBasePath(ROUTES.BACKEND_PROXY);
 
 export class ApiError extends Error {
   constructor(message, { code = null, traceId = null, status = null, errors = null, body = null } = {}) {
-    super(message);
+    super(localizeBackendMessage(message));
     this.name = 'ApiError';
     this.code = code;
     this.traceId = traceId;
     this.status = status;
-    this.errors = errors;
+    this.errors = localizeBackendErrors(errors);
     this.body = body;
   }
 }

@@ -1,16 +1,18 @@
 'use client';
 
 import { ChevronDown, LogOut, User, Settings } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Avatar from '@/components/common/Avatar';
 import Menu from './Menu';
 
 export default function UserMenu({ user, onLogout }) {
+  const t = useTranslations('header');
   return (
     <Menu
       menuButtonElement={
         <>
           <Avatar name={user?.displayName} size={32} />
-          <div className="hidden md:block text-left">
+          <div className="hidden md:block text-start">
             <p className="text-sm font-semibold text-gray-800 leading-tight">
               {user?.displayName}
             </p>
@@ -32,7 +34,7 @@ export default function UserMenu({ user, onLogout }) {
           onClick={onLogout}
           className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
         >
-          <LogOut size={14} /> Sign Out
+          <LogOut size={14} className="rtl:-scale-x-100" /> {t('signOut')}
         </button>
       </div>
     </Menu>

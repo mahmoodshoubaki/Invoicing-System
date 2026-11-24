@@ -4,8 +4,11 @@ import { memo } from 'react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import { ChevronLeft, ChevronRight, FileText, LayoutList } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 function ProjectDetailHeader({ project, projectCode }) {
+  const t = useTranslations('projects');
+  const tn = useTranslations('nav');
   const encoded = encodeURIComponent(projectCode);
 
   return (
@@ -16,8 +19,8 @@ function ProjectDetailHeader({ project, projectCode }) {
       className="relative isolate mb-6 overflow-hidden rounded-3xl bg-[#17161c] px-6 py-7 sm:px-8"
     >
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-        <div className="absolute -left-20 -top-24 h-64 w-64 rounded-full bg-[#f8485e] opacity-40 blur-[90px]" />
-        <div className="absolute -bottom-24 right-4 h-64 w-64 rounded-full bg-[#4a3aa7] opacity-35 blur-[95px]" />
+        <div className="absolute -inset-s-20 -top-24 h-64 w-64 rounded-full bg-[#f8485e] opacity-40 blur-[90px]" />
+        <div className="absolute -bottom-24 inset-e-4 h-64 w-64 rounded-full bg-[#4a3aa7] opacity-35 blur-[95px]" />
         <div
           className="absolute inset-0 opacity-[0.05]"
           style={{
@@ -31,20 +34,20 @@ function ProjectDetailHeader({ project, projectCode }) {
       <div className="relative">
         {/* Breadcrumbs */}
         <nav className="flex items-center gap-1 text-xs text-white/40">
-          <Link href="/" className="transition-colors hover:text-white/70">Home</Link>
-          <ChevronRight size={11} />
-          <Link href="/projects" className="transition-colors hover:text-white/70">Projects</Link>
-          <ChevronRight size={11} />
+          <Link href="/" className="transition-colors hover:text-white/70">{t('home')}</Link>
+          <ChevronRight size={11} className="rtl:-scale-x-100" />
+          <Link href="/projects" className="transition-colors hover:text-white/70">{tn('projects')}</Link>
+          <ChevronRight size={11} className="rtl:-scale-x-100" />
           <span className="truncate font-medium text-white/70">{project.contractName ?? projectCode}</span>
         </nav>
 
         <div className="mt-4 flex flex-wrap items-end justify-between gap-5">
           <div className="min-w-0">
-            <span className="inline-block rounded-md bg-white/10 px-2 py-1 font-mono text-[11px] font-semibold text-white/70 ring-1 ring-white/10">
+            <span dir="ltr" className="inline-block rounded-md bg-white/10 px-2 py-1 font-mono text-[11px] font-semibold text-white/70 ring-1 ring-white/10">
               {projectCode}
             </span>
             <h1 className="mt-2.5 text-2xl font-bold tracking-tight text-white sm:text-[1.9rem] sm:leading-tight">
-              {project.contractName ?? 'Untitled contract'}
+              {project.contractName ?? t('card.untitled')}
             </h1>
           </div>
 
@@ -54,21 +57,21 @@ function ProjectDetailHeader({ project, projectCode }) {
               className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 px-3.5 py-2 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/10"
             >
               <LayoutList size={15} />
-              Manage BOQ
+              {t('header.manageBoq')}
             </Link>
             <Link
               href={`/projects/${encoded}/invoices/new`}
               className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-sm font-semibold text-[#17161c] transition-colors hover:bg-white/90"
             >
               <FileText size={15} />
-              New invoice
+              {t('header.newInvoice')}
             </Link>
             <Link
               href="/projects"
               className="inline-flex items-center gap-1 rounded-xl px-2.5 py-2 text-sm font-medium text-white/55 transition-colors hover:text-white"
             >
-              <ChevronLeft size={15} />
-              Back
+              <ChevronLeft size={15} className="rtl:-scale-x-100" />
+              {t('header.back')}
             </Link>
           </div>
         </div>

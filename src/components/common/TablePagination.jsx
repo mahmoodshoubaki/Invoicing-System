@@ -2,6 +2,7 @@
 
 import { memo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Button from './Button';
 import { PAGE_SIZE_OPTIONS } from '@/lib/pageInfo';
 import { formatNumber } from '@/utils/formatters';
@@ -10,15 +11,16 @@ import { formatNumber } from '@/utils/formatters';
  * @param {{ page: number, totalPages: number, total: number, from: number, to: number, onChange: (page: number) => void, pageSize?: number, onPageSizeChange?: ((size: number) => void)|null, busy?: boolean, }} props
  */
 function TablePagination({ page, totalPages, total, from, to, onChange, pageSize, onPageSizeChange = null, busy = false }) {
+  const t = useTranslations('table');
   return (
     <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
         <p className="text-xs text-gray-500">
-          Showing {formatNumber(from)}–{formatNumber(to)} of {formatNumber(total)} records
+          {t('showing', { from: formatNumber(from), to: formatNumber(to), total: formatNumber(total), count: total })}
         </p>
         {onPageSizeChange && (
           <label className="flex items-center gap-1.5 text-xs text-gray-500">
-            Rows per page
+            {t('rowsPerPage')}
             <select
               value={pageSize}
               onChange={(e) => onPageSizeChange(Number(e.target.value))}
@@ -38,9 +40,10 @@ function TablePagination({ page, totalPages, total, from, to, onChange, pageSize
             variant="outline"
             size="sm"
             icon={ChevronLeft}
+            iconClassName="rtl:-scale-x-100"
             disabled={page <= 1 || busy}
             onClick={() => onChange(page - 1)}
-            aria-label="Previous page"
+            aria-label={t('previousPage')}
           />
           {Array.from({ length: totalPages }, (_, i) => i + 1)
             .filter((p) => Math.abs(p - page) <= 2)
@@ -62,9 +65,10 @@ function TablePagination({ page, totalPages, total, from, to, onChange, pageSize
             variant="outline"
             size="sm"
             icon={ChevronRight}
+            iconClassName="rtl:-scale-x-100"
             disabled={page >= totalPages || busy}
             onClick={() => onChange(page + 1)}
-            aria-label="Next page"
+            aria-label={t('nextPage')}
           />
         </div>
       )}

@@ -7,6 +7,7 @@ import {
   User, Lock, Eye, EyeOff, AlertCircle, Loader2, ArrowRight,
   ShieldCheck, Layers, LineChart,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/hooks/useAuth';
 import logo from '@/theme/assets/devoteam-logo.png';
 import { COMPANY_NAME, COMPANY_SHORT_NAME, withBasePath } from '@/constants/appConfig';
@@ -21,9 +22,9 @@ function redirectTarget() {
 const EASE = [0.16, 1, 0.3, 1];
 
 const HIGHLIGHTS = [
-  { icon: Layers, title: 'Every project, one ledger', body: 'BOQs, invoicing plans and collections in a single tracked pipeline.' },
-  { icon: LineChart, title: 'Variance you can see', body: 'Know the moment a cycle slips — before it becomes a delayed invoice.' },
-  { icon: ShieldCheck, title: 'Governed by workflow', body: 'Role-based approvals with a complete, auditable revision history.' },
+  { icon: Layers, key: 'ledger' },
+  { icon: LineChart, key: 'variance' },
+  { icon: ShieldCheck, key: 'workflow' },
 ];
 
 function AuroraField() {
@@ -62,6 +63,7 @@ function AuroraField() {
 }
 
 export default function LoginPage() {
+  const t = useTranslations('login');
   const { login, isAuthenticated, isLoading, error } = useAuth();
   const [form, setForm] = useState({ username: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
@@ -81,8 +83,8 @@ export default function LoginPage() {
 
   const validate = () => {
     const errors = {};
-    if (!form.username) errors.username = 'Username is required';
-    if (!form.password) errors.password = 'Password is required';
+    if (!form.username) errors.username = t('usernameRequired');
+    if (!form.password) errors.password = t('passwordRequired');
     setFieldError(errors);
     return Object.keys(errors).length === 0;
   };
@@ -118,7 +120,7 @@ export default function LoginPage() {
             </span>
             <div className="leading-tight">
               <p className="text-sm font-semibold text-white">{COMPANY_NAME}</p>
-              <p className="text-xs text-white/45">Invoicing &amp; Revenue Tracking</p>
+              <p className="text-xs text-white/45">{t('tagline')}</p>
             </div>
           </motion.div>
 
@@ -130,15 +132,14 @@ export default function LoginPage() {
             transition={{ duration: 0.7, delay: 0.12, ease: EASE }}
           >
             <h1 className="text-4xl font-bold leading-[1.1] tracking-tight text-white sm:text-5xl">
-              Revenue,
+              {t('headline')}
               <br />
               <span className="bg-gradient-to-r from-[#fca2ae] via-[#fcc354] to-[#f8485e] bg-clip-text text-transparent">
-                under control.
+                {t('headlineAccent')}
               </span>
             </h1>
             <p className="mt-5 max-w-md text-[15px] leading-relaxed text-white/55">
-              From bill of quantities to collected cash — one system tracking every
-              cycle, variance and approval across the portfolio.
+              {t('intro')}
             </p>
 
             {/* Rotating highlight */}
@@ -156,9 +157,9 @@ export default function LoginPage() {
                     <Highlight size={18} className="text-[#fca2ae]" />
                   </span>
                   <div>
-                    <p className="text-sm font-semibold text-white">{HIGHLIGHTS[highlight].title}</p>
+                    <p className="text-sm font-semibold text-white">{t(`highlights.${HIGHLIGHTS[highlight].key}.title`)}</p>
                     <p className="mt-1 text-[13px] leading-relaxed text-white/50">
-                      {HIGHLIGHTS[highlight].body}
+                      {t(`highlights.${HIGHLIGHTS[highlight].key}.body`)}
                     </p>
                   </div>
                 </motion.div>
@@ -168,10 +169,10 @@ export default function LoginPage() {
               <div className="mt-4 flex gap-2">
                 {HIGHLIGHTS.map((h, i) => (
                   <button
-                    key={h.title}
+                    key={h.key}
                     type="button"
                     onClick={() => setHighlight(i)}
-                    aria-label={`Show highlight ${i + 1}: ${h.title}`}
+                    aria-label={t('showHighlight', { number: i + 1, title: t(`highlights.${h.key}.title`) })}
                     className="group py-2"
                   >
                     <span
@@ -191,7 +192,7 @@ export default function LoginPage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5, duration: 0.6 }}
           >
-            © {new Date().getFullYear()} {COMPANY_NAME} · All rights reserved
+            {t('rights', { year: new Date().getFullYear(), company: COMPANY_NAME })}
           </motion.p>
         </aside>
 
@@ -206,9 +207,9 @@ export default function LoginPage() {
             <motion.div
               variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } } }}
             >
-              <h2 className="text-2xl font-bold tracking-tight text-[#3c3c3a]">Sign in</h2>
+              <h2 className="text-2xl font-bold tracking-tight text-[#3c3c3a]">{t('title')}</h2>
               <p className="mt-1.5 text-sm text-[#6f6f6c]">
-                Use your {COMPANY_SHORT_NAME} directory account to continue.
+                {t('subtitle', { company: COMPANY_SHORT_NAME })}
               </p>
             </motion.div>
 
@@ -233,12 +234,12 @@ export default function LoginPage() {
                 variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } } }}
               >
                 <label htmlFor="username" className="mb-2 block text-[13px] font-semibold text-[#3c3c3a]">
-                  Username
+                  {t('username')}
                 </label>
                 <div className="group relative">
                   <User
                     size={16}
-                    className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a1a1a0] transition-colors group-focus-within:text-[#f8485e]"
+                    className="pointer-events-none absolute inset-s-3.5 top-1/2 -translate-y-1/2 text-[#a1a1a0] transition-colors group-focus-within:text-[#f8485e]"
                   />
                   <input
                     id="username"
@@ -252,7 +253,7 @@ export default function LoginPage() {
                     placeholder="your.name"
                     disabled={isLoading}
                     aria-invalid={Boolean(fieldError.username)}
-                    className={`w-full rounded-xl border bg-white py-3 pl-10 pr-4 text-sm transition-all
+                    className={`w-full rounded-xl border bg-white py-3 ps-10 pe-4 text-sm transition-all
                       ${fieldError.username
                         ? 'border-red-300 bg-red-50/40'
                         : 'border-[#e4e2e2] focus:border-[#f8485e]'}`}
@@ -267,12 +268,12 @@ export default function LoginPage() {
                 variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } } }}
               >
                 <label htmlFor="password" className="mb-2 block text-[13px] font-semibold text-[#3c3c3a]">
-                  Password
+                  {t('password')}
                 </label>
                 <div className="group relative">
                   <Lock
                     size={16}
-                    className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a1a1a0] transition-colors group-focus-within:text-[#f8485e]"
+                    className="pointer-events-none absolute inset-s-3.5 top-1/2 -translate-y-1/2 text-[#a1a1a0] transition-colors group-focus-within:text-[#f8485e]"
                   />
                   <input
                     id="password"
@@ -286,7 +287,7 @@ export default function LoginPage() {
                     placeholder="••••••••"
                     disabled={isLoading}
                     aria-invalid={Boolean(fieldError.password)}
-                    className={`w-full rounded-xl border bg-white py-3 pl-10 pr-11 text-sm transition-all
+                    className={`w-full rounded-xl border bg-white py-3 ps-10 pe-11 text-sm transition-all
                       ${fieldError.password
                         ? 'border-red-300 bg-red-50/40'
                         : 'border-[#e4e2e2] focus:border-[#f8485e]'}`}
@@ -294,8 +295,8 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-[#a1a1a0] hover:text-[#6f6f6c]"
+                    aria-label={showPassword ? t('hidePassword') : t('showPassword')}
+                    className="absolute inset-e-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-[#a1a1a0] hover:text-[#6f6f6c]"
                   >
                     {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                   </button>
@@ -319,12 +320,12 @@ export default function LoginPage() {
                   {isLoading ? (
                     <>
                       <Loader2 size={16} className="animate-spin" />
-                      Authenticating…
+                      {t('authenticating')}
                     </>
                   ) : (
                     <>
-                      Sign in
-                      <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+                      {t('submit')}
+                      <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
                     </>
                   )}
                 </motion.button>
@@ -337,7 +338,7 @@ export default function LoginPage() {
             >
               <p className="flex items-center justify-center gap-1.5 text-xs text-[#a1a1a0]">
                 <ShieldCheck size={13} />
-                Contact your administrator if you cannot access the system.
+                {t('help')}
               </p>
             </motion.div>
           </motion.div>

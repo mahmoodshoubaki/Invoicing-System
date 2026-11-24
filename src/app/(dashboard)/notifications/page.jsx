@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { BellOff, CheckCheck } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 
 import PageHeader from '@/components/common/PageHeader';
 import Card from '@/components/common/Card';
@@ -23,29 +24,31 @@ import { useLoadOnChange } from '@/hooks/useLoadOnChange';
 const PAGE_SIZE = 20;
 
 const PRIORITY_OPTIONS = [
-  { value: '', label: 'Any priority' },
-  { value: PRIORITY.CRITICAL, label: 'Critical' },
-  { value: PRIORITY.URGENT, label: 'Urgent' },
-  { value: PRIORITY.HIGH, label: 'High' },
-  { value: PRIORITY.NORMAL, label: 'Normal' },
-  { value: PRIORITY.LOW, label: 'Low' },
+  { value: '', labelKey: 'any' },
+  { value: PRIORITY.CRITICAL, labelKey: 'critical' },
+  { value: PRIORITY.URGENT, labelKey: 'urgent' },
+  { value: PRIORITY.HIGH, labelKey: 'high' },
+  { value: PRIORITY.NORMAL, labelKey: 'normal' },
+  { value: PRIORITY.LOW, labelKey: 'low' },
 ];
 
 const EMPTY = { items: [], total: 0, unreadCount: 0 };
 
-function dayLabel(value, now) {
+function dayLabel(value, now, t, locale) {
   const d = new Date(value);
   const today = new Date(now);
   const startOf = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
   const days = Math.round((startOf(today) - startOf(d)) / 86400000);
-  if (days === 0) return 'Today';
-  if (days === 1) return 'Yesterday';
-  return d.toLocaleDateString('en-GB', {
+  if (days === 0) return t('today');
+  if (days === 1) return t('yesterday');
+  return d.toLocaleDateString(locale, {
     weekday: 'long', day: 'numeric', month: 'long', ...(d.getFullYear() !== today.getFullYear() ? { year: 'numeric' } : {}),
   });
 }
 
 export default function NotificationsPage() {
+  const t = useTranslations('notifications.page');
+  const locale = useLocale();
   const dispatch = useDispatch();
   const language = useSelector((s) => s.ui.language);
   const openNotification = useOpenNotification();
@@ -121,17 +124,17 @@ export default function NotificationsPage() {
   const groups = useMemo(() => {
     const out = [];
     for (const n of data.items) {
-      const label = dayLabel(n.createdOn, now);
+      const label = dayLabel(n.createdOn, now, t, locale);
       const last = out[out.length - 1];
       if (last && last.label === label) last.items.push(n);
       else out.push({ label, items: [n] });
     }
     return out;
-  }, [data.items, now]);
+  }, [data.items, now, t, locale]);
 
   const actions = (
     <Button variant="outline" icon={CheckCheck} onClick={markAllRead} disabled={data.unreadCount === 0}>
-      Mark all as read
+      {t('markAllRead')}
     </Button>
   );
 
@@ -140,9 +143,9 @@ export default function NotificationsPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader
-        title="Notifications"
+        title={t('title')}
         subtitle={
-          !loaded ? 'Loading…' : data.unreadCount > 0 ? `${data.unreadCount} unread` : 'All read'
+          !loaded ? t('loading') : data.unreadCount > 0 ? t('unreadCount', { count: data.unreadCount }) : t('allRead')
         }
         actions={actions}
       />
@@ -151,8 +154,8 @@ export default function NotificationsPage() {
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#f1f0ee] px-4 py-3">
           <PillTabs
             tabs={[
-              { key: 'all', label: 'All' },
-              { key: 'unread', label: 'Unread', count: loaded ? data.unreadCount : null },
+              { key: 'all', label: t('all') },
+              { key: 'unread', label: t('unread'), count: loaded ? data.unreadCount : null },
             ]}
             value={filters.tab}
             onChange={(tab) => setFilter({ tab })}
@@ -161,26 +164,26 @@ export default function NotificationsPage() {
             <select
               value={filters.priorityKey}
               onChange={(e) => setFilter({ priorityKey: e.target.value })}
-              aria-label="Priority"
+              aria-label={t('priorityLabel')}
               className={controlClass}
             >
-              {PRIORITY_OPTIONS.map((o) => <option key={o.label} value={o.value}>{o.label}</option>)}
+              {PRIORITY_OPTIONS.map((o) => <option key={o.labelKey} value={o.value}>{t(`priority.${o.labelKey}`)}</option>)}
             </select>
             <input
               type="date"
               value={filters.fromDate}
               max={filters.toDate || undefined}
               onChange={(e) => setFilter({ fromDate: e.target.value })}
-              aria-label="From date"
+              aria-label={t('fromDate')}
               className={controlClass}
             />
-            <span className="text-[11px]" style={{ color: CHROME.textMuted }}>to</span>
+            <span className="text-[11px]" style={{ color: CHROME.textMuted }}>{t('to')}</span>
             <input
               type="date"
               value={filters.toDate}
               min={filters.fromDate || undefined}
               onChange={(e) => setFilter({ toDate: e.target.value })}
-              aria-label="To date"
+              aria-label={t('toDate')}
               className={controlClass}
             />
           </div>
@@ -195,10 +198,10 @@ export default function NotificationsPage() {
             <div className="flex flex-col items-center gap-2 px-6 py-16 text-center">
               <BellOff size={26} style={{ color: CHROME.textMuted }} aria-hidden="true" />
               <p className="text-sm font-medium" style={{ color: CHROME.textSecondary }}>
-                {filtered ? 'Nothing matches these filters.' : 'No notifications yet.'}
+                {filtered ? t('noMatch') : t('none')}
               </p>
               <p className="text-xs" style={{ color: CHROME.textMuted }}>
-                {filtered ? 'Try another tab or clear the dates.' : 'When something needs you, it shows up here and in the bell.'}
+                {filtered ? t('noMatchHint') : t('noneHint')}
               </p>
             </div>
           ) : (
@@ -227,7 +230,7 @@ export default function NotificationsPage() {
         <div className="border-t border-[#f1f0ee] px-4 pb-3">
           <Pager skip={skip} take={take} total={data.total} onChange={setSkip} onTakeChange={(next) => { setTake(next); setSkip(0); }} busy={loading} />
           <p className="pt-2 text-[11px]" style={{ color: CHROME.textMuted }}>
-            Only recent notifications are listed. Older ones are not lost — the administrators can still find them.
+            {t('olderNote')}
           </p>
         </div>
       </Card>

@@ -3,9 +3,11 @@
 import { memo } from 'react';
 import Link from 'next/link';
 import { ArrowUpRight, Building2, CreditCard, Receipt } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { StatusBadge } from '@/components/common/Badge';
 import { CHROME, STATUS } from '@/theme/vizPalette';
-import { formatDate } from '@/utils/formatters';
+import { useLocaleFormat } from '@/hooks/useLocaleFormat';
+import { useProjectStatusLabel } from '@/hooks/useProjectStatusLabel';
 
 function contractProgress(startDate, finishDate) {
   if (!startDate || !finishDate) return null;
@@ -17,12 +19,15 @@ function contractProgress(startDate, finishDate) {
 }
 
 function ProjectCard({ project }) {
+  const t = useTranslations('projects.card');
+  const format = useLocaleFormat();
+  const statusLabel = useProjectStatusLabel();
   const progress = contractProgress(project.contractStartDate, project.contractFinishDate);
   const overdue = progress === 100;
 
   const meta = [
     { icon: Building2, value: project.clientName },
-    { icon: CreditCard, value: project.poNumber && `PO ${project.poNumber}` },
+    { icon: CreditCard, value: project.poNumber && t('po', { number: project.poNumber }) },
     { icon: Receipt, value: project.invoicingPlatform },
   ].filter((m) => m.value);
 
@@ -39,22 +44,22 @@ function ProjectCard({ project }) {
         />
 
         <header className="flex items-start justify-between gap-3">
-          <span className="rounded-md bg-[#f4f3f1] px-2 py-1 font-mono text-[11px] font-semibold text-[#52514e]">
+          <span dir="ltr" className="rounded-md bg-[#f4f3f1] px-2 py-1 font-mono text-[11px] font-semibold text-[#52514e]">
             {project.projectCode}
           </span>
-          <StatusBadge status={project.status} size="sm" />
+          <StatusBadge status={project.status} label={statusLabel(project.status)} size="sm" />
         </header>
 
         <h3
           className="mt-3 line-clamp-2 text-[15px] font-semibold leading-snug"
           style={{ color: CHROME.textPrimary }}
         >
-          {project.contractName ?? project.projectName ?? 'Untitled contract'}
+          {project.contractName ?? project.projectName ?? t('untitled')}
         </h3>
 
         {project.contractNumber != null && (
           <p className="mt-1 font-mono text-xs" style={{ color: CHROME.textMuted }}>
-            Contract #{project.contractNumber}
+            {t('contractNumber', { number: project.contractNumber })}
           </p>
         )}
 
@@ -70,11 +75,11 @@ function ProjectCard({ project }) {
         {progress !== null && (
           <div className="mt-auto pt-4">
             <div className="mb-1.5 flex items-center justify-between text-[11px]" style={{ color: CHROME.textMuted }}>
-              <span>{formatDate(project.contractStartDate)}</span>
+              <span>{format.date(project.contractStartDate)}</span>
               <span className={`font-semibold ${overdue ? 'text-[#c0392f]' : ''}`}>
-                {overdue ? 'Term ended' : `${progress}% elapsed`}
+                {overdue ? t('termEnded') : t('elapsed', { percent: progress })}
               </span>
-              <span>{formatDate(project.contractFinishDate)}</span>
+              <span>{format.date(project.contractFinishDate)}</span>
             </div>
             <div className="h-1.5 overflow-hidden rounded-full bg-[#f1f0ee]">
               <div
@@ -86,10 +91,10 @@ function ProjectCard({ project }) {
         )}
 
         <span
-          className="absolute bottom-4 right-4 text-[#a1a1a0] opacity-0 group-hover:opacity-100"
+          className="absolute bottom-4 inset-e-4 text-[#a1a1a0] opacity-0 group-hover:opacity-100"
           aria-hidden="true"
         >
-          <ArrowUpRight size={16} />
+          <ArrowUpRight size={16} className="rtl:-scale-x-100" />
         </span>
       </Link>
     </div>

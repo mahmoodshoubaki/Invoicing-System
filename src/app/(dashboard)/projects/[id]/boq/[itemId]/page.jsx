@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import { decodeRouteParam } from '@/lib/routeParam';
 import { useDispatch, useSelector } from 'react-redux';
 import Link from 'next/link';
 import { MotionConfig } from 'motion/react';
 import { CalendarRange, ChevronLeft, FileText, History, PencilLine } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import SubPageHeader from '@/components/common/SubPageHeader';
 import FormSection from '@/components/common/FormSection';
@@ -18,7 +20,9 @@ import InvoicingPlanTracker from '@/components/boq/InvoicingPlanTracker';
 import BOQItemHistoryModal from '@/components/boq/BOQItemHistoryModal';
 import BoqItemStepper from '@/components/boq/BoqItemStepper';
 import BoqItemTaskPanel from '@/components/boq/BoqItemTaskPanel';
-import { formatCurrency, formatDate } from '@/utils';
+import { formatCurrency } from '@/utils';
+import { useLocaleFormat } from '@/hooks/useLocaleFormat';
+import { useLookupLabel } from '@/hooks/useLookupLabel';
 import { usePermission } from '@/hooks/usePermission';
 import { useToast } from '@/hooks/useToast';
 import { ROUTES } from '@/constants/routes';
@@ -41,8 +45,14 @@ import {
 } from '@/store/slices/projectsSlice';
 
 export default function ViewBOQItemPage() {
+  const t = useTranslations('boq');
+  const tn = useTranslations('nav');
+  const th = useTranslations('projects');
+  const tf = useTranslations('files');
+  const format = useLocaleFormat();
+  const frequencyLabel = useLookupLabel('billingFrequency');
   const { id: rawId, itemId } = useParams();
-  const projectCode = decodeURIComponent(rawId);
+  const projectCode = decodeRouteParam(rawId);
   const dispatch = useDispatch();
   const toast = useToast();
   const { can } = usePermission();
@@ -74,7 +84,7 @@ export default function ViewBOQItemPage() {
     let cancelled = false;
     dispatch(fetchTrackerCycles(itemId)).unwrap()
       .then((result) => { if (!cancelled) setCycles(result); })
-      .catch((err) => { if (!cancelled) toast.error('Failed to load the invoicing plan', err ?? 'Please try again.'); });
+      .catch((err) => { if (!cancelled) toast.error(t('toasts.loadPlanFailed'), err ?? tf('pleaseTryAgain')); });
     return () => {
       cancelled = true;
       dispatch(clearTrackerCycles());
@@ -91,7 +101,7 @@ export default function ViewBOQItemPage() {
     dispatch(fetchBOQByProjectCode(projectCode));
     dispatch(fetchTrackerCycles(itemId)).unwrap()
       .then(setCycles)
-      .catch((err) => toast.error('Failed to load the invoicing plan', err ?? 'Please try again.'));
+      .catch((err) => toast.error(t('toasts.loadPlanFailed'), err ?? tf('pleaseTryAgain')));
   };
 
   if (projectLoading || boqLoading) {
@@ -105,9 +115,9 @@ export default function ViewBOQItemPage() {
   if (!item) {
     return (
       <div className="text-center py-20">
-        <p className="text-gray-500">BOQ item not found.</p>
+        <p className="text-gray-500">{t('item.notFound')}</p>
         <Link href={boqHref}>
-          <Button variant="outline" className="mt-4">Back to BOQ</Button>
+          <Button variant="outline" className="mt-4">{t('item.backToBoq')}</Button>
         </Link>
       </div>
     );
@@ -117,28 +127,28 @@ export default function ViewBOQItemPage() {
     <MotionConfig reducedMotion="user">
     <div className="mx-auto max-w-4xl">
       <SubPageHeader
-        eyebrow="Bill of Quantities"
-        title="BOQ Item"
+        eyebrow={t('eyebrow')}
+        title={t('item.title')}
         subtitle={item.englishName ?? currentProject?.contractName ?? projectCode}
         icon={FileText}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Projects', href: '/projects' },
+          { label: th('home'), href: '/' },
+          { label: tn('projects'), href: '/projects' },
           { label: currentProject?.contractName, href: `/projects/${encodeURIComponent(projectCode)}` },
-          { label: 'BOQ', href: boqHref },
-          { label: 'Item' },
+          { label: t('breadcrumb'), href: boqHref },
+          { label: t('breadcrumbItem') },
         ]}
         actions={
           <>
             <Link href={boqHref}>
-              <Button variant="ghost" icon={ChevronLeft} size="sm">Back</Button>
+              <Button variant="ghost" icon={ChevronLeft} iconClassName="rtl:-scale-x-100" size="sm">{t('actions.back')}</Button>
             </Link>
             <Button variant="outline" size="sm" icon={History} onClick={() => setShowHistory(true)}>
-              History
+              {t('actions.history')}
             </Button>
             {can('System', 'Administrator') && (
               <Link href={ROUTES.PROJECT_BOQ_EDIT(encodeURIComponent(projectCode), item.id)}>
-                <Button size="sm" icon={PencilLine}>Edit</Button>
+                <Button size="sm" icon={PencilLine}>{t('actions.edit')}</Button>
               </Link>
             )}
           </>
@@ -148,11 +158,11 @@ export default function ViewBOQItemPage() {
       <BoqItemStepper item={item} />
 
       <Reveal className="flex flex-col gap-5">
-        <FormSection title="Item Details" icon={FileText}>
+        <FormSection title={t('item.details')} icon={FileText}>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <InfoRow label="English Description" value={item.englishName} />
-            <InfoRow label="Arabic Description" value={item.arabicName} />
-            <InfoRow label="Status" value={
+            <InfoRow label={t('item.englishDescription')} value={item.englishName} />
+            <InfoRow label={t('item.arabicDescription')} value={item.arabicName} />
+            <InfoRow label={t('item.status')} value={
               item.statusId != null
                 ? (
                   <StatusBadge
@@ -162,30 +172,30 @@ export default function ViewBOQItemPage() {
                 )
                 : null
             } />
-            <InfoRow label="Billing Frequency" value={billingFrequenciesMap[item.billingFrequencyId]} />
-            <InfoRow label="Submitted By" value={item.submittedByName} />
-            <InfoRow label="Quantity" value={item.quantity} />
-            <InfoRow label={`Unit Cost (${currency})`} value={formatCurrency(item.unitCost, currency)} />
-            <InfoRow label="Total Cost" value={formatCurrency(item.totalCost, currency)} />
-            <InfoRow label="Baseline Expected Invoicing Date" value={formatDate(item.baselineInvoicingDate)} />
-            <InfoRow label="Updated Expected Invoicing Date" value={formatDate(item.expectedInvoicingDate)} />
+            <InfoRow label={t('item.billingFrequency')} value={frequencyLabel(billingFrequenciesMap[item.billingFrequencyId])} />
+            <InfoRow label={t('item.submittedBy')} value={item.submittedByName} />
+            <InfoRow label={t('item.quantity')} value={item.quantity} />
+            <InfoRow label={t('item.unitCostIn', { currency })} value={formatCurrency(item.unitCost, currency)} />
+            <InfoRow label={t('item.totalCost')} value={formatCurrency(item.totalCost, currency)} />
+            <InfoRow label={t('item.baselineInvoicing')} value={format.date(item.baselineInvoicingDate)} />
+            <InfoRow label={t('item.updatedInvoicing')} value={format.date(item.expectedInvoicingDate)} />
             <InfoRow
-              label="Contract Start Date"
-              value={subProjectsLoading ? 'Loading…' : formatDate(contractStartDate)}
+              label={t('item.contractStart')}
+              value={subProjectsLoading ? t('item.loading') : format.date(contractStartDate)}
             />
             <InfoRow
-              label="Contract Finish Date"
-              value={subProjectsLoading ? 'Loading…' : formatDate(contractFinishDate)}
+              label={t('item.contractFinish')}
+              value={subProjectsLoading ? t('item.loading') : format.date(contractFinishDate)}
             />
             <div className="md:col-span-2">
-              <InfoRow label="Notes" value={item.notes} />
+              <InfoRow label={t('item.notes')} value={item.notes} />
             </div>
           </div>
         </FormSection>
 
         <FormSection
-          title="Invoicing Plan Tracker"
-          subtitle="The cycles this item is scheduled to be invoiced in"
+          title={t('item.planTitle')}
+          subtitle={t('item.planSubtitle')}
           icon={CalendarRange}
         >
           <InvoicingPlanTracker
@@ -196,7 +206,7 @@ export default function ViewBOQItemPage() {
             loading={trackerCyclesLoading}
             ready={cycles.length > 0}
             disabled
-            anchorDateLabel="Expected Invoicing Date"
+            anchorDateLabel={t('item.anchorExpected')}
           />
         </FormSection>
 

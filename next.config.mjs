@@ -1,7 +1,12 @@
+import createNextIntlPlugin from 'next-intl/plugin';
+
+const withNextIntl = createNextIntlPlugin();
+
 const REQUIRED_ENV = [
   'NEXT_PUBLIC_APP_NAME', 'NEXT_PUBLIC_APP_SHORT_NAME', 'NEXT_PUBLIC_APP_VERSION',
   'NEXT_PUBLIC_COMPANY_NAME', 'NEXT_PUBLIC_COMPANY_SHORT_NAME',
   'NEXT_PUBLIC_DEFAULT_LANGUAGE', 'NEXT_PUBLIC_DEFAULT_CURRENCY', 'NEXT_PUBLIC_DEFAULT_VAT_PERCENT',
+  'NEXT_PUBLIC_USD_TO_SAR_RATE',
 ];
 const missingEnv = REQUIRED_ENV.filter((name) => !process.env[name]);
 if (missingEnv.length) throw new Error(`Missing settings in .env: ${missingEnv.join(', ')}`);
@@ -62,4 +67,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

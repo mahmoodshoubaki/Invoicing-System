@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MotionConfig, motion } from 'motion/react';
 import { ChevronRight, FolderKanban } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import Table from '@/components/common/Table';
 import TablePagination from '@/components/common/TablePagination';
@@ -14,12 +15,17 @@ import AnimatedCounter from '@/components/motion/AnimatedCounter';
 import ProjectFilters from '@/components/projects/list/ProjectFilters';
 import NoProjectsMatch from '@/components/projects/list/NoProjectsMatch';
 import ViewToggle from '@/components/projects/list/ViewToggle';
-import { PROJECT_COLUMNS } from '@/components/projects/list/projectColumns';
+import { projectColumns } from '@/components/projects/list/projectColumns';
+import { useProjectStatusLabel } from '@/hooks/useProjectStatusLabel';
 import { useProjectsList } from '@/components/projects/list/useProjectsList';
 import { pageInfo } from '@/lib/pageInfo';
 import { CHROME } from '@/theme/vizPalette';
 
 export default function ProjectsPage() {
+  const t = useTranslations('projects');
+  const tn = useTranslations('nav');
+  const statusLabel = useProjectStatusLabel();
+  const columns = useMemo(() => projectColumns(t, statusLabel), [t, statusLabel]);
   const router = useRouter();
   const [view, setView] = useState('grid');
   const list = useProjectsList();
@@ -55,7 +61,7 @@ export default function ProjectsPage() {
   } else {
     results = (
       <Table
-        columns={PROJECT_COLUMNS}
+        columns={columns}
         data={list.rows}
         isLoading={list.loading}
         rowKey="projectCode"
@@ -77,21 +83,20 @@ export default function ProjectsPage() {
         >
           <div>
             <nav className="mb-1.5 flex items-center gap-1 text-xs" style={{ color: CHROME.textMuted }}>
-              <span>Home</span>
-              <ChevronRight size={12} />
-              <span className="font-medium" style={{ color: CHROME.textSecondary }}>Projects</span>
+              <span>{t('home')}</span>
+              <ChevronRight size={12} className="rtl:-scale-x-100" />
+              <span className="font-medium" style={{ color: CHROME.textSecondary }}>{tn('projects')}</span>
             </nav>
             <h1 className="flex items-center gap-2.5 text-2xl font-bold tracking-tight" style={{ color: CHROME.textPrimary }}>
               <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#f8485e]/10 text-[#f8485e]">
                 <FolderKanban size={18} />
               </span>
-              Projects
+              {tn('projects')}
             </h1>
             <p className="mt-1.5 text-sm" style={{ color: CHROME.textSecondary }}>
-              <AnimatedCounter value={list.total} className="font-semibold" />
               {list.filtered && list.allTotal != null
-                ? ` of ${list.allTotal} ${list.allTotal === 1 ? 'project' : 'projects'} match`
-                : ` ${list.total === 1 ? 'project' : 'projects'}`}
+                ? t.rich('list.countFiltered', { all: list.allTotal, n: () => <AnimatedCounter value={list.total} className="font-semibold" /> })
+                : t.rich('list.countAll', { count: list.total, n: () => <AnimatedCounter value={list.total} className="font-semibold" /> })}
             </p>
           </div>
           <ViewToggle view={view} onChange={setView} />

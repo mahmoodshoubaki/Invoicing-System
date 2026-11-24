@@ -1,4 +1,5 @@
 import { ListChecks } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import FormSection from '@/components/common/FormSection';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
@@ -9,12 +10,13 @@ import BoqItemRow from './BoqItemRow';
  * @param {{ boqItems: Array, loading: boolean, currency: string, invoice: ReturnType<import('./useNewInvoiceForm').useNewInvoiceForm>, }} props
  */
 export default function BoqItemPicker({ boqItems, loading, currency, invoice }) {
+  const t = useTranslations('invoices.picker');
   const { form, errors, selectedIds, grandTotal } = invoice;
 
   return (
     <FormSection
-      title="BOQ Items"
-      subtitle="Select items, then enter the quantity to invoice for each"
+      title={t('title')}
+      subtitle={t('subtitle')}
       icon={ListChecks}
     >
       {loading ? (
@@ -24,10 +26,10 @@ export default function BoqItemPicker({ boqItems, loading, currency, invoice }) 
       ) : boqItems.length === 0 ? (
         <div className="py-6 text-center">
           <p className="text-sm text-gray-500">
-            No invoiceable BOQ items found for this project — an invoice request can&apos;t be created.
+            {t('none')}
           </p>
           <p className="text-xs text-gray-400 mt-1">
-            Taking you back automatically in a few seconds...
+            {t('goingBack')}
           </p>
         </div>
       ) : (
@@ -53,10 +55,10 @@ export default function BoqItemPicker({ boqItems, loading, currency, invoice }) 
           {selectedIds.length > 0 && (
             <div className="mt-3 flex items-center justify-between rounded-xl border border-[#f8485e]/20 bg-[#f8485e]/6 px-3.5 py-2.5">
               <span className="text-xs font-medium text-[#d9304a]">
-                {selectedIds.length} item{selectedIds.length !== 1 ? 's' : ''} selected
+                {t('selected', { count: selectedIds.length })}
               </span>
               <span className="text-sm font-bold tabular-nums text-[#d9304a]">
-                Grand total: {formatCurrency(grandTotal, currency)}
+                {t.rich('grandTotal', { value: formatCurrency(grandTotal, currency), amount: (chunks) => <span dir="ltr">{chunks}</span> })}
               </span>
             </div>
           )}

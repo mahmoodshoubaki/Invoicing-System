@@ -2,40 +2,43 @@
 
 import { useSelector } from 'react-redux';
 import { Building2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useLocaleFormat } from '@/hooks/useLocaleFormat';
 
 import FormSection from '@/components/common/FormSection';
 import { DatePicker, Input } from '@/components/forms/FormField';
 import { CHROME } from '@/theme/vizPalette';
-import { formatCurrency, formatDate } from '@/utils';
+import { formatCurrency } from '@/utils';
 import { mainProjectOf, projectValueTotal } from '@/lib/changeRequest/projectDraft';
 
-const NOT_IN_EPM = 'Not set in EPM — required';
 const blank = (value) => String(value ?? '').trim() === '';
 
 function SubProjectsTable({ subProjects, currency }) {
+  const t = useTranslations('changeRequests.contract');
+  const format = useLocaleFormat();
   return (
     <div className="mt-4 overflow-x-auto rounded-xl border border-gray-100">
       <table className="w-full border-collapse text-xs">
         <thead>
-          <tr className="border-b border-gray-100 bg-gray-50 text-left font-semibold uppercase tracking-wide text-gray-500">
-            <th className="px-3 py-2">Sub-project</th>
-            <th className="px-3 py-2 text-right">Value</th>
-            <th className="px-3 py-2">Start</th>
-            <th className="px-3 py-2">End</th>
-            <th className="px-3 py-2 text-right">Months</th>
+          <tr className="border-b border-gray-100 bg-gray-50 text-start font-semibold uppercase tracking-wide text-gray-500">
+            <th className="px-3 py-2">{t('subProject')}</th>
+            <th className="px-3 py-2 text-end">{t('value')}</th>
+            <th className="px-3 py-2">{t('start')}</th>
+            <th className="px-3 py-2">{t('end')}</th>
+            <th className="px-3 py-2 text-end">{t('months')}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-50 bg-white">
           {subProjects.map((p) => (
             <tr key={p.uid}>
               <td className="px-3 py-2" style={{ color: CHROME.textPrimary }}>
-                <span className="font-mono">{p.code}</span>
-                {p.isMain && <span className="ml-1.5 rounded-full bg-[#f1f0ee] px-1.5 py-px text-[10px] font-semibold text-gray-600">Main</span>}
+                <span dir="ltr" className="font-mono">{p.code}</span>
+                {p.isMain && <span className="ms-1.5 rounded-full bg-[#f1f0ee] px-1.5 py-px text-[10px] font-semibold text-gray-600">{t('main')}</span>}
               </td>
-              <td className="px-3 py-2 text-right tabular-nums">{blank(p.values.projectValue) ? '—' : formatCurrency(Number(p.values.projectValue), currency)}</td>
-              <td className="px-3 py-2">{formatDate(p.values.contractStartDate) || '—'}</td>
-              <td className="px-3 py-2">{formatDate(p.contractFinishDate) || '—'}</td>
-              <td className="px-3 py-2 text-right tabular-nums">{p.values.contractDuration || '—'}</td>
+              <td className="px-3 py-2 text-end tabular-nums">{blank(p.values.projectValue) ? '—' : formatCurrency(Number(p.values.projectValue), currency)}</td>
+              <td className="px-3 py-2">{format.date(p.values.contractStartDate) || '—'}</td>
+              <td className="px-3 py-2">{format.date(p.contractFinishDate) || '—'}</td>
+              <td className="px-3 py-2 text-end tabular-nums">{p.values.contractDuration || '—'}</td>
             </tr>
           ))}
         </tbody>
@@ -48,15 +51,17 @@ function SubProjectsTable({ subProjects, currency }) {
  * @param {{ form: ReturnType<import('./useChangeRequestForm').useChangeRequestForm>, subProjects: Array }} props
  */
 export default function ProjectChangesSection({ form, subProjects }) {
+  const t = useTranslations('changeRequests.contract');
+  const format = useLocaleFormat();
   const currency = useSelector((s) => s.ui.currency);
   const locked = !form.asks.fieldChanges;
   const main = mainProjectOf(subProjects);
 
   if (!main) {
     return (
-      <FormSection title="Contract dates" icon={Building2}>
+      <FormSection title={t('title')} icon={Building2}>
         <p className="text-xs" style={{ color: CHROME.textMuted }}>
-          EPM has no main project for this project (a code like 23/116), so the contract dates can&rsquo;t be changed.
+          {t('noMain')}
         </p>
       </FormSection>
     );
@@ -65,42 +70,42 @@ export default function ProjectChangesSection({ form, subProjects }) {
   const proposed = form.proposed.find((p) => p.uid === main.uid) ?? main;
   const edits = form.projectEdits[main.uid] ?? {};
   const problems = form.shownProblems.project[main.uid] ?? {};
-  const was = (key, text, missing = NOT_IN_EPM) => (key in edits ? `was ${text || '—'}` : blank(main.values[key]) ? missing : undefined);
+  const was = (key, text, missing = t('notInEpmRequired')) => (key in edits ? t('was', { value: text || '—' }) : blank(main.values[key]) ? missing : undefined);
   const set = (key) => (e) => form.setProjectField(main.uid, key, e.target.value);
   const start = proposed.values.contractStartDate;
   const end = proposed.contractFinishDate;
   const endHint = end !== main.contractFinishDate
-    ? `was ${formatDate(main.contractFinishDate) || '—'}`
-    : blank(main.contractFinishDate) ? NOT_IN_EPM : undefined;
+    ? t('was', { value: format.date(main.contractFinishDate) || '—' })
+    : blank(main.contractFinishDate) ? t('notInEpmRequired') : undefined;
 
   return (
     <FormSection
-      title="Contract dates"
-      subtitle={`Changed on the main project, ${main.code}. EPM is updated once the request is approved.`}
+      title={t('title')}
+      subtitle={t('subtitle', { code: main.code })}
       icon={Building2}
     >
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         <DatePicker
-          label="Updated Contract start date"
+          label={t('updatedStart')}
           value={start}
           onChange={set('contractStartDate')}
           disabled={locked}
-          hint={was('contractStartDate', formatDate(main.values.contractStartDate))}
+          hint={was('contractStartDate', format.date(main.values.contractStartDate))}
           error={problems.contractStartDate}
         />
         <Input
-          label="Updated Contract duration (months)"
+          label={t('updatedDuration')}
           type="number"
           min="1"
           step="1"
           value={proposed.values.contractDuration}
           onChange={set('contractDuration')}
           disabled={locked}
-          hint={was('contractDuration', main.values.contractDuration, 'Not set in EPM')}
+          hint={was('contractDuration', main.values.contractDuration, t('notInEpm'))}
           error={problems.contractDuration}
         />
         <DatePicker
-          label="Updated Contract end date"
+          label={t('updatedEnd')}
           value={end}
           onChange={set('contractFinishDate')}
           min={start || undefined}
@@ -109,10 +114,10 @@ export default function ProjectChangesSection({ form, subProjects }) {
           error={problems.contractFinishDate}
         />
         <Input
-          label="Project value"
+          label={t('projectValue')}
           readOnly
           value={formatCurrency(projectValueTotal(subProjects), currency)}
-          hint="Read-only"
+          hint={t('readOnly')}
           className="cursor-not-allowed bg-gray-50"
         />
       </div>

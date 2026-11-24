@@ -5,6 +5,7 @@ import {
   UploadCloud, X, FileText, FileSpreadsheet, Image as ImageIcon,
   File as FileIcon, CheckCircle2, Paperclip,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { formatFileSize } from '@/utils/formatters';
 
 export const MAX_ATTACHMENT_SIZE_MB = 15;
@@ -32,7 +33,7 @@ export const INVOICE_FILE_LIMITS = {
   maxCount: MAX_ATTACHMENTS_COUNT,
   accept: ACCEPT_ATTR,
   extensions: null,
-  label: 'PDF, Word, Excel, or images',
+  typesKey: 'general',
 };
 
 const extensionOf = (name) => String(name ?? '').split('.').pop().toLowerCase();
@@ -55,6 +56,8 @@ function genId() {
  * @param {{ count: number, size: number }} [props.existing]
  */
 export default function AttachmentUploader({ files, onChange, onRejected, disabled = false, limits = INVOICE_FILE_LIMITS, existing = NO_EXISTING }) {
+  const t = useTranslations('uploader');
+  const typesLabel = t(`types.${limits.typesKey}`);
   const perFile = limits.perFileMb * 1024 * 1024;
   const total = limits.totalMb * 1024 * 1024;
   const [dragActive, setDragActive] = useState(false);
@@ -98,15 +101,15 @@ export default function AttachmentUploader({ files, onChange, onRejected, disabl
         || accepted.some((f) => f.name === file.name && f.size === file.size);
 
       if (isDuplicate) {
-        rejected.push({ file, reason: 'This file was already added' });
+        rejected.push({ file, reason: t('reject.duplicate') });
       } else if (limits.extensions && !limits.extensions.includes(extensionOf(file.name))) {
-        rejected.push({ file, reason: `Only ${limits.label} files are allowed` });
+        rejected.push({ file, reason: t('reject.type', { types: typesLabel }) });
       } else if (runningCount >= limits.maxCount) {
-        rejected.push({ file, reason: `Maximum of ${limits.maxCount} attachments reached` });
+        rejected.push({ file, reason: t('reject.count', { max: limits.maxCount }) });
       } else if (file.size > perFile) {
-        rejected.push({ file, reason: `Exceeds the ${limits.perFileMb} MB per-file limit` });
+        rejected.push({ file, reason: t('reject.fileSize', { size: limits.perFileMb }) });
       } else if (runningTotal + file.size > total) {
-        rejected.push({ file, reason: `Would exceed the ${limits.totalMb} MB total limit` });
+        rejected.push({ file, reason: t('reject.totalSize', { size: limits.totalMb }) });
       } else {
         accepted.push(file);
         runningTotal += file.size;
@@ -131,7 +134,7 @@ export default function AttachmentUploader({ files, onChange, onRejected, disabl
     if (rejected.length > 0) {
       onRejected?.(rejected);
     }
-  }, [files, onChange, onRejected, animateProgress, existing, limits, perFile, total]);
+  }, [files, onChange, onRejected, animateProgress, existing, limits, perFile, total, t, typesLabel]);
 
   const removeFile = (id) => {
     stopProgress(id);
@@ -180,10 +183,10 @@ export default function AttachmentUploader({ files, onChange, onRejected, disabl
           <UploadCloud size={18} className={dragActive ? 'text-primary' : 'text-gray-400'} />
         </div>
         <p className="text-sm text-gray-700">
-          <span className="font-medium text-primary">Click to upload</span> or drag and drop
+          {t.rich('prompt', { b: (chunks) => <span className="font-medium text-primary">{chunks}</span> })}
         </p>
         <p className="text-xs text-gray-400">
-          {limits.label} · up to {limits.perFileMb} MB per file · {limits.maxCount} files max
+          {t('limits', { types: typesLabel, size: limits.perFileMb, max: limits.maxCount })}
         </p>
       </div>
 
@@ -192,9 +195,9 @@ export default function AttachmentUploader({ files, onChange, onRejected, disabl
           <div className="flex items-center justify-between text-xs text-gray-400 px-0.5">
             <span className="flex items-center gap-1">
               <Paperclip size={12} />
-              {files.length} file{files.length !== 1 ? 's' : ''} · {formatFileSize(totalSize)} of {limits.totalMb} MB
+              {t('summary', { count: files.length, used: formatFileSize(totalSize), total: limits.totalMb })}
             </span>
-            {anyUploading && <span className="text-primary">Uploading…</span>}
+            {anyUploading && <span className="text-primary">{t('uploading')}</span>}
           </div>
 
           {files.map((f) => {
@@ -212,7 +215,7 @@ export default function AttachmentUploader({ files, onChange, onRejected, disabl
                   </div>
                   {isDone ? (
                     <p className="flex items-center gap-1 text-xs text-green-600 mt-1">
-                      <CheckCircle2 size={12} /> Uploaded
+                      <CheckCircle2 size={12} /> {t('uploaded')}
                     </p>
                   ) : (
                     <div className="h-1.5 w-full bg-gray-200 rounded-full mt-1.5 overflow-hidden">
@@ -227,7 +230,7 @@ export default function AttachmentUploader({ files, onChange, onRejected, disabl
                   type="button"
                   onClick={() => removeFile(f.id)}
                   className="shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                  title="Remove"
+                  title={t('remove')}
                 >
                   <X size={14} />
                 </button>

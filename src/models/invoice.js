@@ -2,7 +2,24 @@ import { createWaitingTask } from '@/models/waitingTask';
 import { INVOICE_STATUS_ID } from '@/constants/statuses';
 
 /**
- * @param {Array<{statusId: number|null, totalAmount: number}>} invoices
+ * @param {{statusId: number|null, collectedAmount?: number|null}} invoice
+ * @returns {boolean}
+ */
+export function hasCollection(invoice) {
+  return invoice?.collectedAmount != null || invoice?.statusId === INVOICE_STATUS_ID.COLLECTED;
+}
+
+/**
+ * @param {{statusId: number|null, totalAmount: number, collectedAmount?: number|null}} invoice
+ * @returns {number}
+ */
+export function collectedSoFar(invoice) {
+  if (invoice?.collectedAmount != null) return invoice.collectedAmount;
+  return invoice?.statusId === INVOICE_STATUS_ID.COLLECTED ? (invoice.totalAmount ?? 0) : 0;
+}
+
+/**
+ * @param {Array<{statusId: number|null, totalAmount: number, collectedAmount?: number|null}>} invoices
  * @returns {{totalInvoicesValue: number, collectedValue: number, nonCollectedValue: number}}
  */
 export function summariseProjectInvoices(invoices = []) {
@@ -11,12 +28,12 @@ export function summariseProjectInvoices(invoices = []) {
     if (status === INVOICE_STATUS_ID.REJECTED || status === INVOICE_STATUS_ID.CANCELLED) return totals;
 
     const amount = invoice?.totalAmount ?? 0;
-    const collected = status === INVOICE_STATUS_ID.COLLECTED;
+    const collected = collectedSoFar(invoice);
 
     return {
       totalInvoicesValue: totals.totalInvoicesValue + amount,
-      collectedValue: totals.collectedValue + (collected ? amount : 0),
-      nonCollectedValue: totals.nonCollectedValue + (collected ? 0 : amount),
+      collectedValue: totals.collectedValue + collected,
+      nonCollectedValue: totals.nonCollectedValue + (amount - collected),
     };
   }, { totalInvoicesValue: 0, collectedValue: 0, nonCollectedValue: 0 });
 }
@@ -74,13 +91,12 @@ export function createInvoiceFormData(data) {
  * @returns {FormData}
  */
 export function createUpdateInvoiceFormData(data) {
-  const request = {
-    InvoiceId:              data.invoiceId,
-    ReasonsForUpdate:       data.reasonsForUpdate,
-    ExpectedCollectionDate:  data.expectedCollectionDate,
-    FinancialClaimReference: data.financialClaimReference ?? null,
-    AttachmentIdsToDelete:  data.attachmentIdsToDelete ?? [],
-  };
+  // A key left out keeps its saved value on the server.
+  const request = { InvoiceId: data.invoiceId };
+  if (data.reasonsForUpdate != null) request.ReasonsForUpdate = data.reasonsForUpdate;
+  if (data.expectedCollectionDate != null) request.ExpectedCollectionDate = data.expectedCollectionDate;
+  if (data.financialClaimReference != null) request.FinancialClaimReference = data.financialClaimReference;
+  if (data.attachmentIdsToDelete?.length) request.AttachmentIdsToDelete = data.attachmentIdsToDelete;
 
   const formData = new FormData();
   formData.append('Request', JSON.stringify(request));
@@ -122,6 +138,19 @@ export function createInvoiceAttachment(raw) {
 
 /**
  * @param {Object} raw
+ * @returns {{ id: number, amount: number, collectedDate: string|null, createdOn: string|null }}
+ */
+export function createInvoicePayment(raw) {
+  return {
+    id:            raw.id,
+    amount:        raw.amount ?? 0,
+    collectedDate: raw.collectedDate ?? null,
+    createdOn:     raw.createdOn ?? null,
+  };
+}
+
+/**
+ * @param {Object} raw
  * @returns {Object}
  */
 export function createInvoice(raw) {
@@ -146,6 +175,9 @@ export function createInvoice(raw) {
     workflowInstanceId:      raw.workflowInstanceId ?? null,
     waitingOn:               (raw.waitingOn ?? []).map(createWaitingTask),
     totalAmount:             raw.totalAmount ?? 0,
+    collectedAmount:         raw.collectedAmount ?? null,
+    collectedDate:           raw.collectedDate ?? null,
+    payments:                (raw.payments ?? []).map(createInvoicePayment),
     lines:                   (raw.lines ?? []).map(createInvoiceLine),
     attachments:             (raw.attachments ?? []).map(createInvoiceAttachment),
   };

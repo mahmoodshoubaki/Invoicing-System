@@ -2,9 +2,11 @@
 
 import { useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { decodeRouteParam } from '@/lib/routeParam';
 import Link from 'next/link';
 import { MotionConfig } from 'motion/react';
 import { ChevronLeft, FileDiff, Lock } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import SubPageHeader from '@/components/common/SubPageHeader';
 import Button from '@/components/common/Button';
@@ -27,7 +29,8 @@ import { CHROME } from '@/theme/vizPalette';
 
 export default function NewChangeRequestPage() {
   const { id: rawId } = useParams();
-  const projectCode = decodeURIComponent(rawId);
+  const t = useTranslations('changeRequests.page');
+  const projectCode = decodeRouteParam(rawId);
   const router = useRouter();
   const toast = useToast();
   const { can } = usePermission();
@@ -40,9 +43,9 @@ export default function NewChangeRequestPage() {
 
   const submit = useCallback(async (body, files) => {
     const created = await changeRequestRepository.createChangeRequest({ boqId: data.boq?.id, ...body }, files.added);
-    toast.success(`${created.number || 'Change request'} submitted`, 'It now waits on the approver. Its items are locked until it is decided.');
+    toast.success(t('submitted', { name: created.number || t('eyebrow') }), t('submittedBody'));
     router.push(ROUTES.PROJECT_CHANGE_REQUEST(encoded, created.changeRequestId));
-  }, [data.boq?.id, encoded, router, toast]);
+  }, [data.boq?.id, encoded, router, toast, t]);
 
   let body;
   if (data.loading || !existing.ready || readiness.checking) {
@@ -54,8 +57,7 @@ export default function NewChangeRequestPage() {
       <p className="flex items-start gap-2 rounded-xl border border-gray-100 bg-white px-4 py-4 text-sm" style={{ color: CHROME.textSecondary }}>
         <Lock size={15} className="mt-0.5 shrink-0" style={{ color: CHROME.textMuted }} aria-hidden="true" />
         <span>
-          EPM has no main project for {projectCode} (a code like 23/116), so no change request can be raised. The
-          contract dates belong to the main project.
+          {t('noMainProject', { code: projectCode })}
         </span>
       </p>
     );
@@ -67,8 +69,7 @@ export default function NewChangeRequestPage() {
           <Link href={ROUTES.PROJECT_CHANGE_REQUEST(encoded, existing.open.id)} className="font-semibold underline-offset-2 hover:underline">
             {existing.open.number}
           </Link>{' '}
-          is still open on this BOQ, and only one change request can be open at a time. It has to be approved,
-          rejected or cancelled before another is raised.
+          {t('alreadyOpen')}
         </span>
       </p>
     );
@@ -81,7 +82,7 @@ export default function NewChangeRequestPage() {
         reasons={data.reasons}
         onSubmit={submit}
         cancelHref={tabHref}
-        submitLabel="Submit for approval"
+        submitLabel={t('submitForApproval')}
       />
     );
   }
@@ -90,23 +91,23 @@ export default function NewChangeRequestPage() {
     <MotionConfig reducedMotion="user">
       <div className="mx-auto max-w-7xl">
         <SubPageHeader
-          eyebrow="Change request"
-          title="New change request"
+          eyebrow={t('eyebrow')}
+          title={t('newTitle')}
           icon={FileDiff}
           breadcrumbs={[
-            { label: "Home", href: "/" },
-            { label: "Projects", href: "/projects" },
+            { label: t('home'), href: "/" },
+            { label: t('projects'), href: "/projects" },
             {
               label: readiness.header?.contractName ?? projectCode,
               href: ROUTES.PROJECT_DETAIL(encoded),
             },
-            { label: "Change requests", href: tabHref },
-            { label: "New" },
+            { label: t('changeRequests'), href: tabHref },
+            { label: t('newCrumb') },
           ]}
           actions={
             <Link href={tabHref}>
-              <Button variant="ghost" icon={ChevronLeft} size="sm">
-                Back
+              <Button variant="ghost" icon={ChevronLeft} iconClassName="rtl:-scale-x-100" size="sm">
+                {t('back')}
               </Button>
             </Link>
           }

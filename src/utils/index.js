@@ -2,6 +2,8 @@ export { cn } from './cn';
 
 export {
   formatCurrency,
+  formatCurrencyAs,
+  convertFromBase,
   formatDate,
   formatDateTime,
   formatPercentage,

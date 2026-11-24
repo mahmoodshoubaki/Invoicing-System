@@ -1,12 +1,15 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
 import Modal from '@/components/common/Modal';
 import Table from '@/components/common/Table';
 import { StatusBadge } from '@/components/common/Badge';
-import { formatCurrency, formatDate, formatDateTime } from '@/utils/formatters';
+import { useLocaleFormat } from '@/hooks/useLocaleFormat';
+import { useLookupLabel } from '@/hooks/useLookupLabel';
+import { formatCurrency } from '@/utils/formatters';
 import {
   selectBillingFrequenciesMap,
   selectBoqItemStatusesMap,
@@ -20,6 +23,9 @@ import {
 } from '@/store/slices/boqSlice';
 
 export default function BOQItemHistoryModal({ open, onClose, boqItemId }) {
+  const t = useTranslations('boq');
+  const format = useLocaleFormat();
+  const frequencyLabel = useLookupLabel('billingFrequency');
   const dispatch = useDispatch();
   const currency = useSelector((s) => s.ui.currency);
   const billingFrequenciesMap = useSelector(selectBillingFrequenciesMap);
@@ -39,7 +45,7 @@ export default function BOQItemHistoryModal({ open, onClose, boqItemId }) {
   const columns = [
     {
       key: 'englishName',
-      label: 'Item',
+      label: t('columns.item'),
       render: (val, row) => (
         <>
         <div className={row.isDeleted ? 'opacity-50 line-through' : ''}>
@@ -52,55 +58,55 @@ export default function BOQItemHistoryModal({ open, onClose, boqItemId }) {
         </>
       ),
     },
-    { key: 'quantity', label: 'Qty', align: 'right' },
+    { key: 'quantity', label: t('columns.qty'), align: 'right' },
     {
       key: 'unitCost',
-      label: 'Unit Cost',
+      label: t('columns.unitCost'),
       align: 'right',
       render: (val) => formatCurrency(val, currency),
     },
     {
       key: 'totalCost',
-      label: 'Total Cost',
+      label: t('columns.totalCost'),
       align: 'right',
       render: (val) => formatCurrency(val, currency),
     },
     {
       key: 'statusId',
-      label: 'Status',
+      label: t('columns.status'),
       sortable: false,
       render: (val) => <StatusBadge status={boqStatusesMap[val] ?? String(val)} colors={boqStatusColorsMap[val]} />,
     },
     {
       key: 'baselineInvoicingDate',
-      label: 'Baseline Date',
-      render: (val) => formatDate(val),
+      label: t('columns.baselineDate'),
+      render: (val) => format.date(val),
     },
     {
       key: 'billingFrequencyId',
-      label: 'Billing Frequency',
-      render: (val) => billingFrequenciesMap[val] ?? '—',
+      label: t('columns.billingFrequency'),
+      render: (val) => frequencyLabel(billingFrequenciesMap[val]) ?? '—',
     },
     {
       key: 'submittedByName',
-      label: 'Submitted By',
+      label: t('columns.submittedBy'),
       render: (val) => val || '—',
     },
     {
       key: 'updatedOn',
-      label: 'Updated On',
-      render: (val) => formatDateTime(val) ?? '—',
+      label: t('columns.updatedOn'),
+      render: (val) => format.dateTime(val) || '—',
     },
   ];
 
   return (
-    <Modal open={open} onClose={onClose} title="BOQ Item History" size="full">
+    <Modal open={open} onClose={onClose} title={t('history.title')} size="full">
       <Table
         columns={columns}
         data={history}
         rowKey="id"
         isLoading={isLoading}
-        emptyMessage="No history recorded for this item yet."
+        emptyMessage={t('history.empty')}
         sortable={false}
       />
     </Modal>

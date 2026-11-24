@@ -1,11 +1,13 @@
 'use client';
 
 import { Boxes, User, Users } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 
 export default function AssigneeList({ users = [], roles = [], groups = [], emptyText = null, compact = false }) {
+  const t = useTranslations('tasks.assignees');
   if (users.length === 0 && roles.length === 0 && groups.length === 0) {
     return emptyText ? (
       <span className="text-[11px]" style={{ color: CHROME.textMuted }}>{emptyText}</span>
@@ -31,7 +33,7 @@ export default function AssigneeList({ users = [], roles = [], groups = [], empt
           key={`r-${role.id ?? role.name}`}
           className={`inline-flex items-center gap-1 rounded-full font-medium ${chip}`}
           style={{ backgroundColor: '#f1f0ee', color: CHROME.textSecondary }}
-          title="A role — anybody holding it can answer"
+          title={t('roleHint')}
         >
           <Users size={compact ? 9 : 10} aria-hidden="true" />
           {role.name}
@@ -42,7 +44,7 @@ export default function AssigneeList({ users = [], roles = [], groups = [], empt
           key={`g-${group.id ?? group.name}`}
           className={`inline-flex items-center gap-1 rounded-full font-medium ${chip}`}
           style={{ backgroundColor: withAlpha(STATUS.good, 0.12), color: STATUS.good }}
-          title="A group — any member can answer"
+          title={t('groupHint')}
         >
           <Boxes size={compact ? 9 : 10} aria-hidden="true" />
           {group.name}

@@ -2,35 +2,35 @@
 
 import Link from 'next/link';
 import { CalendarX } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import { ROUTES } from '@/constants/routes';
 import { CHROME } from '@/theme/vizPalette';
-import { formatDate } from '@/utils/formatters';
+import { useLocaleFormat } from '@/hooks/useLocaleFormat';
 import DashboardListCard from './DashboardListCard';
 import LateBadge from './LateBadge';
-import { plural, sourceNote } from './sourceNote';
+import { sourceNote } from './sourceNote';
 
 /**
  * @param {{ source: { status: string, data: Object|null, error: Error|null, reload: () => void }, href: string }} props
  */
 export default function DelayedCyclesCard({ source, href }) {
+  const t = useTranslations('dashboard');
+  const format = useLocaleFormat();
   const data = source.data;
   const cycles = data?.cycles ?? [];
-  const subtitle = sourceNote(
-    source,
-    `${plural(data?.total ?? 0, 'cycle')} late across ${plural(data?.boqCount ?? 0, 'BOQ')}`
-  );
+  const subtitle = sourceNote(t, source, t('delayed.subtitle', { cycles: data?.total ?? 0, boqs: data?.boqCount ?? 0 }));
 
   return (
     <DashboardListCard
-      title="Delayed BOQ cycles"
+      title={t('delayed.cardTitle')}
       icon={CalendarX}
       subtitle={subtitle}
       source={source}
       isEmpty={cycles.length === 0}
-      forbiddenText="You don't have access to BOQs."
-      emptyTitle="Nothing late"
-      emptyText="Every cycle due so far has an invoice."
+      forbiddenText={t('delayed.forbidden')}
+      emptyTitle={t('delayed.emptyTitle')}
+      emptyText={t('delayed.emptyText')}
       href={href}
     >
       {cycles.map((c) => (
@@ -42,11 +42,11 @@ export default function DelayedCyclesCard({ source, href }) {
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold" style={{ color: CHROME.textPrimary }}>{c.itemName}</p>
               <p className="mt-0.5 truncate text-xs" style={{ color: CHROME.textMuted }}>
-                <span className="font-mono">{c.projectCode}</span>
+                <span dir="ltr" className="font-mono">{c.projectCode}</span>
                 {c.projectName && ` · ${c.projectName}`}
               </p>
               <p className="mt-1 text-xs" style={{ color: CHROME.textSecondary }}>
-                Cycle {c.cycleNumber} of {c.totalCycles} · planned {formatDate(c.plannedDate)}
+                {t('delayed.cycleOf', { number: c.cycleNumber, total: c.totalCycles, date: format.date(c.plannedDate) })}
               </p>
             </div>
             <LateBadge days={c.daysLate} />

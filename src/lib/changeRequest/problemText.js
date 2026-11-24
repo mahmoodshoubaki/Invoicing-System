@@ -5,28 +5,23 @@ const LATE_CYCLE = /^plan cycle (\d+) on (\d{4}-\d{2}-\d{2}) would be after the 
 const NO_CYCLE = /^would have no invoicing plan cycle left\.?$/i;
 const ISO_DAY = /\b(\d{4}-\d{2}-\d{2})(?:T[\d:.]+)?\b/g;
 
-const withDates = (text) => text.replace(ISO_DAY, (_, day) => formatDate(day) || day);
-
-function listOf(numbers) {
-  if (numbers.length <= 1) return numbers.join('');
-  return `${numbers.slice(0, -1).join(', ')} and ${numbers.at(-1)}`;
-}
-
-function lateLine(cycles, finish) {
+function lateLine(cycles, finish, t, locale) {
+  const day = (value) => formatDate(value, locale);
   const days = cycles.map((c) => c.date).sort();
-  const when = days.length === 1
-    ? `on ${formatDate(days[0])}`
-    : `(${formatDate(days[0])} to ${formatDate(days.at(-1))})`;
-  const which = cycles.length === 1 ? `Cycle ${cycles[0].number}` : `Cycles ${listOf(cycles.map((c) => c.number))}`;
-  return `${which} ${when} would fall after the new contract end date, ${formatDate(finish)}.`;
+  const end = day(finish);
+  if (cycles.length === 1) return t('lateOne', { number: cycles[0].number, date: day(days[0]), finish: end });
+  const numbers = new Intl.ListFormat(locale, { type: 'conjunction' }).format(cycles.map((c) => String(c.number)));
+  if (days[0] === days.at(-1)) return t('lateManySameDay', { numbers, date: day(days[0]), finish: end });
+  return t('lateMany', { numbers, from: day(days[0]), to: day(days.at(-1)), finish: end });
 }
 
 /**
  * @param {string[]} messages
- * @param {{ inRequest?: string[] }} [options]
+ * @param {{ inRequest?: string[], t: (key: string, values?: Object) => string, locale: string }} options t is the `changeRequests.problems` translator
  * @returns {{ general: string[], items: Array<{ name: string, inRequest: boolean, lines: string[], hint: string|null }>, count: number }}
  */
-export function groupProblems(messages, { inRequest = [] } = {}) {
+export function groupProblems(messages, { inRequest = [], t, locale }) {
+  const withDates = (text) => text.replace(ISO_DAY, (_, day) => formatDate(day, locale) || day);
   const names = new Set(inRequest);
   const general = [];
   const byItem = new Map();
@@ -60,12 +55,10 @@ export function groupProblems(messages, { inRequest = [] } = {}) {
     const isIn = names.has(name);
     const lines = [...found.lines];
     let hint = null;
-    if (found.noCycle) lines.unshift('No invoicing plan cycle would be left — keep at least one.');
+    if (found.noCycle) lines.unshift(t('noCycleLeft'));
     if (found.late.length) {
-      lines.push(lateLine(found.late.sort((a, b) => a.number - b.number), found.finish));
-      hint = isIn
-        ? 'Move or remove those cycles in its invoicing plan, or keep a later contract end date.'
-        : 'It is not in this request: add it, then move or remove those cycles — or keep a later contract end date.';
+      lines.push(lateLine(found.late.sort((a, b) => a.number - b.number), found.finish, t, locale));
+      hint = isIn ? t('lateHintIn') : t('lateHintOut');
     }
     return { name, inRequest: isIn, lines, hint };
   });

@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { Menu } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useDispatch } from 'react-redux';
 import { toggleSidebar } from '@/store/slices/uiSlice';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,6 +16,7 @@ import { APP_SHORT_NAME, COMPANY_SHORT_NAME, withBasePath } from '@/constants/ap
 import { ROUTES } from '@/constants/routes';
 
 export default function Header() {
+  const t = useTranslations();
   const dispatch = useDispatch();
   const { user, logout } = useAuth();
 
@@ -31,13 +33,14 @@ export default function Header() {
       <button
         onClick={() => dispatch(toggleSidebar())}
         className="lg:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-500"
+        aria-label={t('nav.toggleSidebar')}
       >
         <Menu size={20} />
       </button>
 
-      <div className="flex items-center gap-2 min-w-0">
+      <div className="flex items-center gap-2 min-w-0 cursor-pointer" onClick={() => window.location.href = withBasePath(ROUTES.DASHBOARD)}>
         <div className="w-8 h-8 flex items-center justify-center shrink-0">
-          <Image src={logo} alt={`${COMPANY_SHORT_NAME} logo`} width={32} height={32} className="rounded-full" />
+          <Image src={logo} alt={t('header.logoAlt', { company: COMPANY_SHORT_NAME })} width={32} height={32} className="rounded-full" />
         </div>
         <div className="min-w-0 hidden sm:block">
           <p className="text-xs font-bold text-dark leading-tight truncate">{COMPANY_SHORT_NAME}</p>

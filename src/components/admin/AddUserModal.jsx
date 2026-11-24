@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/forms/FormField';
 import ADUserSearchInput from './ADUserSearchInput';
 
 const EMPTY_FORM = {
-  displayName: '',
+  username: '',
   roleIds: [],
   notifyUser: true,
 };
@@ -36,12 +36,12 @@ function AddUserModal({ open, onClose, onCreated }) {
 
   function selectCandidate(candidate) {
     setSelectedCandidate(candidate);
-    setFormData((prev) => ({ ...prev, displayName: candidate.username }));
+    setFormData((prev) => ({ ...prev, username: candidate.username }));
   }
 
   function clearCandidate() {
     setSelectedCandidate(null);
-    setFormData((prev) => ({ ...prev, displayName: '' }));
+    setFormData((prev) => ({ ...prev, username: '' }));
   }
 
   function toggleRole(roleId) {
@@ -54,7 +54,7 @@ function AddUserModal({ open, onClose, onCreated }) {
   }
 
   async function handleSave() {
-    if (!selectedCandidate || !formData.roleIds.length) {
+    if (!selectedCandidate || !formData.username || !formData.roleIds.length) {
       dispatch(addToast({ type: 'error', title: 'Validation', message: 'Select a user from the list and at least one role.' }));
       return;
     }

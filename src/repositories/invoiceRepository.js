@@ -1,6 +1,11 @@
 import { createApiClient } from '@/lib/apiClient';
 import { fetchAllPages } from '@/lib/fetchAllPages';
+import { markCollectedBody } from '@/lib/markCollectedForm';
 import { createInvoiceableBOQItem } from '@/models/boq';
+import {
+  createClaimActionBody, createClaimLog, createClaimStage, createFinancialClaimHistory, createInvoiceFinancialClaim,
+  createProjectFinancialClaims,
+} from '@/models/financialClaim';
 import {
   createAddAttachmentsFormData, createInvoice as mapInvoice, createInvoiceFormData, createUpdateInvoiceFormData,
 } from '@/models/invoice';
@@ -111,6 +116,86 @@ export const invoiceRepository = {
       return { rows: page?.history ?? [], total: page?.total ?? 0 };
     });
     return data.map(mapInvoice);
+  },
+
+  /**
+   * @param {string} projectCode
+   * @returns {Promise<{ contractNumber: number|null, claims: object[] }>}
+   */
+  async getProjectFinancialClaims(projectCode) {
+    const raw = await api.get('/GetProjectFinancialClaims', { projectCode });
+    return createProjectFinancialClaims(raw);
+  },
+
+  /**
+   * @param {string} invoiceId
+   * @returns {Promise<{ financialClaimReference: number|null, claim: object|null }>}
+   */
+  async getInvoiceFinancialClaim(invoiceId) {
+    const raw = await api.get('/GetInvoiceFinancialClaim', { invoiceId });
+    return createInvoiceFinancialClaim(raw);
+  },
+
+  /**
+   * @param {number} financialClaimReference
+   * @returns {Promise<object[]>}
+   */
+  async getFinancialClaimHistory(financialClaimReference) {
+    const raw = await api.get('/GetFinancialClaimHistory', { financialClaimReference });
+    return createFinancialClaimHistory(raw);
+  },
+
+  /**
+   * @returns {Promise<Array<{ key: number, nameEn: string|null, nameAr: string|null }>>}
+   */
+  async getNonEtimadClaimStages() {
+    const raw = await api.get('/GetNonEtimadFinancialClaimStages');
+    return (raw ?? []).map(createClaimStage);
+  },
+
+  /**
+   * @param {string} invoiceId
+   * @returns {Promise<object[]>}
+   */
+  async getNonEtimadClaimActions(invoiceId) {
+    const raw = await api.get('/GetNonEtimadFinancialClaimActions', { invoiceId });
+    return createClaimLog(raw);
+  },
+
+  /**
+   * @param {string} invoiceId
+   * @param {{ stageKey: string, actionDate: string, notes: string }} values
+   * @returns {Promise<number|null>}
+   */
+  async addNonEtimadClaimAction(invoiceId, values) {
+    const data = await api.post('/AddNonEtimadFinancialClaimAction', { invoiceId, ...createClaimActionBody(values) });
+    return data?.claimActionId ?? null;
+  },
+
+  /**
+   * @param {number} claimActionId
+   * @param {{ stageKey: string, actionDate: string, notes: string }} values
+   * @returns {Promise<void>}
+   */
+  async editNonEtimadClaimAction(claimActionId, values) {
+    await api.post('/EditNonEtimadFinancialClaimAction', { claimActionId, ...createClaimActionBody(values) });
+  },
+
+  /**
+   * @param {number} claimActionId
+   * @returns {Promise<void>}
+   */
+  async deleteNonEtimadClaimAction(claimActionId) {
+    await api.post('/DeleteNonEtimadFinancialClaimAction', { claimActionId });
+  },
+
+  /**
+   * @param {string} invoiceId
+   * @param {{ collectedAmount: string, collectedDate: string }} values
+   * @returns {Promise<void>}
+   */
+  async markCollected(invoiceId, values) {
+    await api.post('/MarkCollected', markCollectedBody(invoiceId, values));
   },
 
   /**

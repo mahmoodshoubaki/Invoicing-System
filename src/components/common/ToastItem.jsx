@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useDispatch } from 'react-redux';
 import { removeToast } from '@/store/slices/uiSlice';
 
@@ -34,6 +35,7 @@ const BAR_STYLES = {
 };
 
 export default function ToastItem({ toast }) {
+  const t = useTranslations('common');
   const dispatch = useDispatch();
   const Icon = ICONS[toast.type] || Info;
   const duration = toast.duration || 4000;
@@ -63,12 +65,13 @@ export default function ToastItem({ toast }) {
       </div>
       <button
         onClick={() => dispatch(removeToast(toast.id))}
+        aria-label={t('close')}
         className="shrink-0 opacity-60 hover:opacity-100 transition-opacity"
       >
         <X size={14} />
       </button>
       <div
-        className={`absolute bottom-0 left-0 h-1 opacity-60 ${BAR_STYLES[toast.type] || BAR_STYLES.info}`}
+        className={`absolute bottom-0 inset-s-0 h-1 opacity-60 ${BAR_STYLES[toast.type] || BAR_STYLES.info}`}
         style={{
           width: shrink ? '0%' : '100%',
           transitionProperty: 'width',

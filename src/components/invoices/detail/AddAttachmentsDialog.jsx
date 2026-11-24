@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import Modal from '@/components/common/Modal';
 import Button from '@/components/common/Button';
@@ -13,6 +14,7 @@ import { CHROME, STATUS } from '@/theme/vizPalette';
  * @param {{ invoiceId: string, onClose: () => void, onAdded: () => void }} props
  */
 export default function AddAttachmentsDialog({ invoiceId, onClose, onAdded }) {
+  const t = useTranslations('invoices.attachments');
   const toast = useToast();
   const [files, setFiles] = useState([]);
   const [rejected, setRejected] = useState([]);
@@ -27,11 +29,11 @@ export default function AddAttachmentsDialog({ invoiceId, onClose, onAdded }) {
     setError(null);
     try {
       const ids = await invoiceRepository.addInvoiceAttachments(invoiceId, files);
-      toast.success(`${ids.length || ready.length} file${(ids.length || ready.length) === 1 ? '' : 's'} added`);
+      toast.success(t('added', { count: ids.length || ready.length }));
       onAdded?.();
       onClose();
     } catch (err) {
-      setError(err?.message ?? 'Could not add the files.');
+      setError(err?.message ?? t('addFailed'));
     } finally {
       setBusy(false);
     }
@@ -41,13 +43,13 @@ export default function AddAttachmentsDialog({ invoiceId, onClose, onAdded }) {
     <Modal
       open
       onClose={busy ? () => {} : onClose}
-      title="Add attachments"
+      title={t('title')}
       size="md"
       footer={
         <>
-          <Button variant="outline" onClick={onClose} disabled={busy}>Cancel</Button>
+          <Button variant="outline" onClick={onClose} disabled={busy}>{t('cancel')}</Button>
           <Button onClick={save} loading={busy} disabled={ready.length === 0 || stillReading}>
-            Add {ready.length > 0 ? ready.length : ''} file{ready.length === 1 ? '' : 's'}
+            {t('addFiles', { count: ready.length })}
           </Button>
         </>
       }
@@ -57,14 +59,14 @@ export default function AddAttachmentsDialog({ invoiceId, onClose, onAdded }) {
         <ul className="mt-2 flex flex-col gap-0.5">
           {rejected.map(({ file, reason }) => (
             <li key={`${file.name}-${reason}`} className="text-[11px]" style={{ color: STATUS.critical }}>
-              {file.name}: {reason}
+              <bdi>{file.name}</bdi>: {reason}
             </li>
           ))}
         </ul>
       )}
       {error && <p className="mt-2 text-xs" style={{ color: STATUS.critical }}>{error}</p>}
       <p className="mt-3 text-[11px]" style={{ color: CHROME.textMuted }}>
-        The files are added to the invoice as they are. Nothing else about it changes.
+        {t('note')}
       </p>
     </Modal>
   );

@@ -11,7 +11,7 @@ function PageHeader({ title, subtitle, breadcrumbs, actions, children }) {
         <nav className="flex  justify-start gap-1 text-xs text-gray-400 mb-2">
           {breadcrumbs.map((crumb, idx) => (
             <span key={idx} className="flex items-center gap-1">
-              {idx > 0 && <ChevronRight size={12} className="shrink-0" />}
+              {idx > 0 && <ChevronRight size={12} className="shrink-0 rtl:-scale-x-100" />}
               {crumb.href ? (
                 <Link href={crumb.href} className="hover:text-primary transition-colors">
                   {crumb.label}

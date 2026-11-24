@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk, createSelector } from '@reduxjs/toolkit';
 import { lookupsRepository } from '@/repositories/lookupsRepository';
 import { changeRequestRepository } from '@/repositories/changeRequestRepository';
+import { invoiceRepository } from '@/repositories/invoiceRepository';
+import { localName } from '@/utils/localName';
 
 export const fetchBillingFrequencies = createAsyncThunk(
   'lookups/fetchBillingFrequencies',
@@ -90,7 +92,23 @@ export const fetchChangeRequestStatuses = createAsyncThunk(
   }
 );
 
+export const fetchClaimStages = createAsyncThunk(
+  'lookups/fetchClaimStages',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await invoiceRepository.getNonEtimadClaimStages();
+    } catch (err) {
+      return rejectWithValue(err.message || 'Failed to fetch financial claim stages.');
+    }
+  },
+  {
+    condition: (_, { getState }) => ['idle', 'failed'].includes(getState().lookups.claimStagesStatus),
+  }
+);
+
 const initialState = {
+  claimStages: [],
+  claimStagesStatus: 'idle',
   billingFrequencies: [],
   boqItemStatuses: [],
   invoiceStatuses: [],
@@ -182,19 +200,42 @@ const lookupsSlice = createSlice({
       .addCase(fetchChangeRequestStatuses.fulfilled, (state, action) => {
         state.changeRequestStatuses = action.payload;
       })
+      .addCase(fetchClaimStages.pending, (state) => {
+        state.claimStagesStatus = 'loading';
+      })
+      .addCase(fetchClaimStages.fulfilled, (state, action) => {
+        state.claimStages = action.payload;
+        state.claimStagesStatus = 'ready';
+      })
+      .addCase(fetchClaimStages.rejected, (state) => {
+        state.claimStagesStatus = 'failed';
+      })
       ;
   },
 
 });
 
+export const selectClaimStages = (state) => state.lookups.claimStages;
+export const selectClaimStagesStatus = (state) => state.lookups.claimStagesStatus;
 export const selectBillingFrequencies = (state) => state.lookups.billingFrequencies;
-export const selectBoqItemStatuses = (state) => state.lookups.boqItemStatuses;
-export const selectInvoiceStatuses = (state) => state.lookups.invoiceStatuses;
-export const selectTrackerCycleStatuses = (state) => state.lookups.trackerCycleStatuses;
-export const selectChangeRequestReasons = (state) => state.lookups.changeRequestReasons;
+const selectLanguage = (state) => state.ui.language;
+const withLabels = (rows, language) => rows.map((row) => ({ ...row, label: localName(row.labelEn, row.labelAr, language) }));
+
+export const selectBoqItemStatuses = createSelector([(state) => state.lookups.boqItemStatuses, selectLanguage], withLabels);
+export const selectBoqItemStatusesEnglish = createSelector([(state) => state.lookups.boqItemStatuses], (rows) => withLabels(rows, 'en'));
+export const selectInvoiceStatuses = createSelector([(state) => state.lookups.invoiceStatuses, selectLanguage], withLabels);
+export const selectTrackerCycleStatuses = createSelector([(state) => state.lookups.trackerCycleStatuses, selectLanguage], withLabels);
+const withChangeRequestLabels = (rows, language) => rows.map((row) => ({
+  ...row,
+  label: localName(row.label, row.labelAr, language),
+  justification: language === 'ar' ? (row.justificationAr || row.justification) : row.justification,
+}));
+
+export const selectChangeRequestReasons = createSelector([(state) => state.lookups.changeRequestReasons, selectLanguage], withChangeRequestLabels);
 export const selectChangeRequestStatuses = (state) => state.lookups.changeRequestStatuses;
-export const selectChangeRequestTypes = (state) => state.lookups.changeRequestTypes;
-export const selectChangeRequestProjectEffects = (state) => state.lookups.changeRequestProjectEffects;
+export const selectChangeRequestTypes = createSelector([(state) => state.lookups.changeRequestTypes, selectLanguage], withChangeRequestLabels);
+export const selectChangeRequestProjectEffects = createSelector([(state) => state.lookups.changeRequestProjectEffects, selectLanguage], withChangeRequestLabels);
+export const selectChangeRequestProjectEffectsEnglish = (state) => state.lookups.changeRequestProjectEffects;
 export const selectChangeRequestTypesFailed = (state) => state.lookups.changeRequestTypesFailed;
 
 export const selectChangeRequestTypesMap = createSelector(

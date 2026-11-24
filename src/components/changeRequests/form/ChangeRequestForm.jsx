@@ -2,9 +2,10 @@
 
 import { useRef } from 'react';
 import { Info } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import Reveal from '@/components/motion/Reveal';
-import { CR_RULES } from '@/constants/changeRequests';
+import { CR_RULE_KEYS } from '@/constants/changeRequests';
 import { CHROME } from '@/theme/vizPalette';
 import ReasonsSection from './ReasonsSection';
 import TypeAndEffectSection from './TypeAndEffectSection';
@@ -25,6 +26,8 @@ export default function ChangeRequestForm({
   changeRequestId = null,
 }) {
   const form = useChangeRequestForm({ boqItems, statusNameOf, subProjects, initial, onSubmit });
+  const t = useTranslations('changeRequests.form');
+  const tr = useTranslations('changeRequests.rules');
   const rootRef = useRef(null);
   useScrollToProblem(rootRef, form.refusedCount);
 
@@ -33,9 +36,9 @@ export default function ChangeRequestForm({
       <div className="mb-5 flex items-start gap-1.5 rounded-xl bg-[#f6f5f3] px-4 py-3 text-xs leading-relaxed" style={{ color: CHROME.textSecondary }}>
         <Info size={13} className="mt-0.5 shrink-0" style={{ color: CHROME.textMuted }} aria-hidden="true" />
         <div>
-          <p>A formal request to change the approved BOQ. Nothing changes until an approver accepts it.</p>
-          <ul className="mt-1 list-disc pl-4" style={{ color: CHROME.textMuted }}>
-            {CR_RULES.map((rule) => <li key={rule}>{rule}</li>)}
+          <p>{t('intro')}</p>
+          <ul className="mt-1 list-disc ps-4" style={{ color: CHROME.textMuted }}>
+            {CR_RULE_KEYS.map((rule) => <li key={rule}>{tr(rule)}</li>)}
           </ul>
         </div>
       </div>

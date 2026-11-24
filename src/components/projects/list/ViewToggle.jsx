@@ -2,13 +2,15 @@
 
 import { motion } from 'motion/react';
 import { LayoutGrid, Rows3 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 const OPTIONS = [
-  { id: 'grid', label: 'Cards', icon: LayoutGrid },
-  { id: 'table', label: 'Table', icon: Rows3 },
+  { id: 'grid', labelKey: 'cards', icon: LayoutGrid },
+  { id: 'table', labelKey: 'table', icon: Rows3 },
 ];
 
 export default function ViewToggle({ view, onChange }) {
+  const t = useTranslations('projects.list');
   return (
     <div className="flex items-center gap-0.5 rounded-xl bg-[#f4f3f1] p-1">
       {OPTIONS.map((opt) => (
@@ -29,7 +31,7 @@ export default function ViewToggle({ view, onChange }) {
             />
           )}
           <opt.icon size={13} className="relative z-10" />
-          <span className="relative z-10">{opt.label}</span>
+          <span className="relative z-10">{t(opt.labelKey)}</span>
         </button>
       ))}
     </div>

@@ -3,11 +3,15 @@
 import { memo } from 'react';
 import { motion } from 'motion/react';
 import { CalendarClock, FileSignature, Layers, Wallet } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import MetricBars from '@/components/charts/MetricBars';
 import Reveal, { revealItem } from '@/components/motion/Reveal';
 import InfoRow from './InfoRow';
 import { CHROME, SERIES, STATUS } from '@/theme/vizPalette';
-import { formatCurrency, formatDate } from '@/utils/formatters';
+import { useLocaleFormat } from '@/hooks/useLocaleFormat';
+import { formatCurrency } from '@/utils/formatters';
+
+const ltr = (chunks) => <span dir="ltr">{chunks}</span>;
 
 function Panel({ title, icon: Icon, subtitle, children, className = '' }) {
   return (
@@ -40,59 +44,63 @@ function contractProgress(startDate, finishDate) {
 }
 
 function OverviewTab({ project, projectCode, subProjects, totals, currency }) {
-  const contract = subProjects[0];
+  const t = useTranslations('projects');
+  const format = useLocaleFormat();
+  const contract = subProjects.find((p) => p.isMainProject) ?? subProjects[0];
   const money = (v) => formatCurrency(v, currency);
   const progress = contractProgress(contract?.contractStartDate, contract?.contractFinishDate);
 
   const revenueMix = [
-    { label: 'Professional Services', value: totals.revenuePS },
-    { label: 'SW Licenses', value: totals.revenueSWLicenses },
-    { label: 'Logistics', value: totals.revenueLogistics },
-    { label: 'Training', value: totals.revenueTraining },
-    { label: 'External Sub-Contractors', value: totals.revenueExternalSubs },
+    { label: t('overview.streams.ps'), value: totals.revenuePS },
+    { label: t('overview.streams.swLicenses'), value: totals.revenueSWLicenses },
+    { label: t('overview.streams.logistics'), value: totals.revenueLogistics },
+    { label: t('overview.streams.training'), value: totals.revenueTraining },
+    { label: t('overview.streams.externalSubs'), value: totals.revenueExternalSubs },
   ];
 
   const invoiced = totals.totalInvoicesValue || 0;
   const segments = [
-    { label: 'Collected', value: totals.collectedValue, color: SERIES[2] },
-    { label: 'Non-collected', value: totals.nonCollectedValue, color: STATUS.warning },
+    { key: 'collected', label: t('overview.collected'), value: totals.collectedValue, color: SERIES[2] },
+    { key: 'nonCollected', label: t('overview.nonCollected'), value: totals.nonCollectedValue, color: STATUS.warning },
   ].filter((s) => s.value > 0);
 
   return (
     <Reveal className="grid grid-cols-1 gap-5 lg:grid-cols-2">
       <div className="flex flex-col gap-5">
-        <Panel title="Contract Information" icon={FileSignature}>
+        <Panel title={t('overview.contractInfo')} icon={FileSignature}>
           <div className="grid grid-cols-2 gap-4">
-            <InfoRow label="Contract Name" value={project.contractName} />
-            <InfoRow label="Project Code" value={projectCode} />
-            <InfoRow label="Signature Date" value={formatDate(contract?.contractSignatureDate)} />
-            <InfoRow label="Site Receipt Date" value={formatDate(contract?.siteReceiptDate)} />
+            <InfoRow label={t('overview.contractName')} value={project.contractName} />
+            <InfoRow label={t('overview.projectCode')} value={<span dir="ltr">{projectCode}</span>} />
+            <InfoRow label={t('overview.bdm')} value={contract?.bdm} />
+            <InfoRow label={t('overview.businessUnit')} value={contract?.businessUnit} />
+            <InfoRow label={t('overview.signatureDate')} value={format.date(contract?.contractSignatureDate)} />
+            <InfoRow label={t('overview.siteReceiptDate')} value={format.date(contract?.siteReceiptDate)} />
           </div>
         </Panel>
 
         <Panel
-          title="Contract Timeline"
+          title={t('overview.timeline')}
           icon={CalendarClock}
-          subtitle={contract?.contractDuration ? `Duration: ${contract.contractDuration}` : undefined}
+          subtitle={contract?.contractDuration ? t('overview.duration', { value: contract.contractDuration }) : undefined}
         >
           {progress === null ? (
             <p className="py-4 text-sm" style={{ color: CHROME.textMuted }}>
-              Contract start and finish dates haven&apos;t been set for this project yet.
+              {t('overview.noDates')}
             </p>
           ) : (
             <>
               <div className="mb-2 flex items-baseline justify-between">
                 <span className="text-xs font-medium" style={{ color: CHROME.textSecondary }}>
-                  {formatDate(contract.contractStartDate)}
+                  {format.date(contract.contractStartDate)}
                 </span>
                 <span
                   className="text-xs font-bold"
                   style={{ color: progress === 100 ? STATUS.critical : CHROME.textPrimary }}
                 >
-                  {progress === 100 ? 'Term ended' : `${progress}% elapsed`}
+                  {progress === 100 ? t('card.termEnded') : t('card.elapsed', { percent: progress })}
                 </span>
                 <span className="text-xs font-medium" style={{ color: CHROME.textSecondary }}>
-                  {formatDate(contract.contractFinishDate)}
+                  {format.date(contract.contractFinishDate)}
                 </span>
               </div>
               <div className="relative h-2 overflow-hidden rounded-full bg-[#f1f0ee]">
@@ -111,29 +119,29 @@ function OverviewTab({ project, projectCode, subProjects, totals, currency }) {
       </div>
 
       <div className="flex flex-col gap-5">
-        <Panel title="Financial Summary" icon={Wallet} subtitle="Across this project and its sub-projects">
+        <Panel title={t('overview.financialSummary')} icon={Wallet} subtitle={t('overview.financialSummaryNote')}>
           <div className="grid grid-cols-2 gap-4">
-            <InfoRow label="Project Value" value={money(totals.projectValue)} />
-            <InfoRow label="VAT Value" value={money(totals.vatValue)} />
-            <InfoRow label="Total Revenue" value={money(totals.totalRevenue)} />
-            <InfoRow label="Work in Progress" value={money(totals.wip)} />
+            <InfoRow label={t('overview.projectValue')} value={money(totals.projectValue)} />
+            <InfoRow label={t('overview.vatValue')} value={money(totals.vatValue)} />
+            <InfoRow label={t('overview.totalRevenue')} value={money(totals.totalRevenue)} />
+            <InfoRow label={t('overview.wip')} value={money(totals.wip)} />
           </div>
 
           {invoiced > 0 && segments.length > 0 && (
             <div className="mt-5 border-t border-[#f1f0ee] pt-4">
               <div className="mb-2 flex items-baseline justify-between">
                 <span className="text-xs font-semibold" style={{ color: CHROME.textSecondary }}>
-                  Cash position
+                  {t('overview.cashPosition')}
                 </span>
                 <span className="text-xs tabular-nums" style={{ color: CHROME.textMuted }}>
-                  {money(invoiced)} invoiced
+                  {t.rich('overview.invoicedAmount', { value: money(invoiced), amount: ltr })}
                 </span>
               </div>
               <div className="flex h-2.5 gap-0.5 overflow-hidden rounded-full bg-[#f1f0ee]">
                 {segments.map((seg) => (
                   <motion.div
-                    key={seg.label}
-                    className="h-full first:rounded-l-full last:rounded-r-full"
+                    key={seg.key}
+                    className="h-full first:rounded-s-full last:rounded-e-full"
                     style={{ backgroundColor: seg.color }}
                     initial={{ width: 0 }}
                     whileInView={{ width: `${(seg.value / invoiced) * 100}%` }}
@@ -144,7 +152,7 @@ function OverviewTab({ project, projectCode, subProjects, totals, currency }) {
               </div>
               <ul className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1">
                 {segments.map((seg) => (
-                  <li key={seg.label} className="flex items-center gap-1.5 text-xs">
+                  <li key={seg.key} className="flex items-center gap-1.5 text-xs">
                     <span className="h-2 w-2 rounded-xs" style={{ backgroundColor: seg.color }} aria-hidden="true" />
                     <span style={{ color: CHROME.textSecondary }}>{seg.label}</span>
                     <span className="font-semibold tabular-nums" style={{ color: CHROME.textPrimary }}>
@@ -157,11 +165,11 @@ function OverviewTab({ project, projectCode, subProjects, totals, currency }) {
           )}
         </Panel>
 
-        <Panel title="Revenue Mix" icon={Layers} subtitle="By stream, ranked">
+        <Panel title={t('overview.revenueMix')} icon={Layers} subtitle={t('overview.revenueMixNote')}>
           <MetricBars
             items={revenueMix}
             format={money}
-            emptyMessage="No revenue has been broken down by stream yet."
+            emptyMessage={t('overview.noRevenue')}
           />
         </Panel>
       </div>

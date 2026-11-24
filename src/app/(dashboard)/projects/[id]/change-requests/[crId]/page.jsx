@@ -2,8 +2,10 @@
 
 import { useCallback, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { decodeRouteParam } from '@/lib/routeParam';
 import Link from 'next/link';
 import { ChevronLeft, FileDiff, History, PencilLine, Workflow } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import SubPageHeader from '@/components/common/SubPageHeader';
 import Button from '@/components/common/Button';
@@ -33,7 +35,8 @@ import { CHROME } from '@/theme/vizPalette';
 
 export default function ChangeRequestPage() {
   const { id: rawId, crId } = useParams();
-  const projectCode = decodeURIComponent(rawId);
+  const t = useTranslations('changeRequests.page');
+  const projectCode = decodeRouteParam(rawId);
   const encoded = encodeURIComponent(projectCode);
   const { can } = usePermission();
   const [cr, setCr] = useState(null);
@@ -76,34 +79,34 @@ export default function ChangeRequestPage() {
         />
       )}
       <SubPageHeader
-        eyebrow="Change request"
-        title={cr ? <span className="inline-flex flex-wrap items-center gap-2">{cr.number} <ChangeRequestStatusBadge statusId={cr.statusId} size="sm" /></span> : 'Change request'}
+        eyebrow={t('eyebrow')}
+        title={cr ? <span className="inline-flex flex-wrap items-center gap-2">{cr.number} <ChangeRequestStatusBadge statusId={cr.statusId} size="sm" /></span> : t('eyebrow')}
         icon={FileDiff}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Projects', href: '/projects' },
+          { label: t('home'), href: '/' },
+          { label: t('projects'), href: '/projects' },
           { label: projectCode, href: ROUTES.PROJECT_DETAIL(encoded) },
-          { label: 'Change requests', href: tabHref },
+          { label: t('changeRequests'), href: tabHref },
           { label: cr?.number ?? '…' },
         ]}
         actions={
           <>
             <Link href={tabHref}>
-              <Button variant="ghost" icon={ChevronLeft} size="sm">Back</Button>
+              <Button variant="ghost" icon={ChevronLeft} iconClassName="rtl:-scale-x-100" size="sm">{t('back')}</Button>
             </Link>
             {cr && (
               <Button variant="outline" icon={History} size="sm" onClick={() => setHistoryOpen(true)}>
-                History
+                {t('history')}
               </Button>
             )}
             {canViewRuns && cr && (
               <Button variant="outline" icon={Workflow} size="sm" onClick={() => setRunsOpen(true)}>
-                Workflow runs
+                {t('workflowRuns')}
               </Button>
             )}
             {canResubmit && (
               <Link href={ROUTES.PROJECT_CHANGE_REQUEST_EDIT(encoded, cr.id)}>
-                <Button icon={PencilLine} size="sm">Edit and resubmit</Button>
+                <Button icon={PencilLine} size="sm">{t('editResubmit')}</Button>
               </Link>
             )}
           </>
@@ -121,8 +124,7 @@ export default function ChangeRequestPage() {
         <div className="flex flex-col gap-5">
           {cr.statusId === CR_STATUS.RETURNED && (
             <p className="rounded-xl bg-[#f6f5f3] px-4 py-3 text-xs" style={{ color: CHROME.textSecondary }}>
-              Sent back to its requester. It stays open — its items stay locked — until it is changed and sent again,
-              or cancelled.
+              {t('returnedNote')}
             </p>
           )}
           
@@ -137,7 +139,7 @@ export default function ChangeRequestPage() {
           )}
           {cr.newItems.length > 0 && <NewItemsTable items={cr.newItems} projectCode={projectCode} />}
           <div className="flex flex-col gap-3 rounded-xl border border-gray-100 bg-white p-5">
-            <p className="text-sm font-semibold" style={{ color: CHROME.textPrimary }}>Files</p>
+            <p className="text-sm font-semibold" style={{ color: CHROME.textPrimary }}>{t('files')}</p>
             <AttachmentList
               files={cr.attachments}
               download={(file) => changeRequestRepository.downloadAttachment(cr.id, file.contentId, file.fileName)}

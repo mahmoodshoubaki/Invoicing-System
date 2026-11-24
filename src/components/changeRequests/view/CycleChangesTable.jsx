@@ -1,8 +1,9 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+import { useLocaleFormat } from '@/hooks/useLocaleFormat';
 import Table from '@/components/common/Table';
 import { CHROME, STATUS } from '@/theme/vizPalette';
-import { formatDate } from '@/utils';
 
 const KIND_COLORS = { Added: STATUS.good, Moved: STATUS.info, Removed: STATUS.critical };
 
@@ -10,22 +11,25 @@ const KIND_COLORS = { Added: STATUS.good, Moved: STATUS.info, Removed: STATUS.cr
  * @param {{ changes: Array }} props
  */
 export default function CycleChangesTable({ changes }) {
+  const t = useTranslations('changeRequests.cycles');
+  const tk = useTranslations('changeRequests.kinds');
+  const format = useLocaleFormat();
   const columns = [
-    { key: 'boqItemName', label: 'Item', render: (name, c) => <span className="text-xs" style={{ color: CHROME.textPrimary }}>{name || `Item ${c.boqItemId}`}</span> },
+    { key: 'boqItemName', label: t('item'), render: (name, c) => <span className="text-xs" style={{ color: CHROME.textPrimary }}>{name || t('itemFallback', { id: c.boqItemId })}</span> },
     {
       key: 'changeKind',
-      label: 'Change',
-      render: (kind) => <span className="text-xs font-semibold" style={{ color: KIND_COLORS[kind] ?? CHROME.textSecondary }}>{kind || '—'}</span>,
+      label: t('change'),
+      render: (kind) => <span className="text-xs font-semibold" style={{ color: KIND_COLORS[kind] ?? CHROME.textSecondary }}>{kind ? (tk.has(kind) ? tk(kind) : kind) : '—'}</span>,
     },
     {
       key: 'oldPlannedDate',
-      label: 'From',
-      render: (date) => <span className="text-xs line-through" style={{ color: CHROME.textMuted }}>{date ? formatDate(date) : '—'}</span>,
+      label: t('from'),
+      render: (date) => <span className="text-xs line-through" style={{ color: CHROME.textMuted }}>{date ? format.date(date) : '—'}</span>,
     },
     {
       key: 'newPlannedDate',
-      label: 'To',
-      render: (date) => <span className="text-xs font-medium" style={{ color: CHROME.textPrimary }}>{date ? formatDate(date) : '—'}</span>,
+      label: t('to'),
+      render: (date) => <span className="text-xs font-medium" style={{ color: CHROME.textPrimary }}>{date ? format.date(date) : '—'}</span>,
     },
   ];
 
@@ -35,7 +39,7 @@ export default function CycleChangesTable({ changes }) {
         className="mb-2 text-sm font-semibold"
         style={{ color: CHROME.textPrimary }}
       >
-        Invoicing plan changes
+        {t('title')}
       </p>
 
       <Table
@@ -48,7 +52,7 @@ export default function CycleChangesTable({ changes }) {
         sortable={false}
         resizable={false}
         compact
-        emptyMessage="No invoicing plan changes."
+        emptyMessage={t('empty')}
       />
     </div>
   );

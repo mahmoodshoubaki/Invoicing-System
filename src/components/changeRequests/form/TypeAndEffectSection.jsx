@@ -2,6 +2,7 @@
 
 import { useSelector } from 'react-redux';
 import { Tags } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import FormSection from '@/components/common/FormSection';
 import { CR_OTHER_TYPE_MAX } from '@/constants/changeRequests';
@@ -23,6 +24,7 @@ const choiceClass = (on) => `press-flat flex cursor-pointer items-center gap-2 r
  * @param {{ form: ReturnType<import('./useChangeRequestForm').useChangeRequestForm> }} props
  */
 export default function TypeAndEffectSection({ form }) {
+  const t = useTranslations('changeRequests.typeEffect');
   const types = useSelector(selectChangeRequestTypes);
   const effects = useSelector(selectChangeRequestProjectEffects);
   const failed = useSelector(selectChangeRequestTypesFailed);
@@ -33,16 +35,16 @@ export default function TypeAndEffectSection({ form }) {
   const showText = needsTypeText(form.typeKeys, types);
 
   return (
-    <FormSection title="Type and project effect" subtitle="What kind of change this is, and what it does to the contract value" icon={Tags}>
+    <FormSection title={t('title')} subtitle={t('subtitle')} icon={Tags}>
       {types.length === 0 || effects.length === 0 ? (
         <p className="text-xs" style={{ color: failed ? STATUS.critical : CHROME.textMuted }}>
-          {failed ? 'The types and project effects could not be loaded. Reload the page to try again.' : 'Loading the types…'}
+          {failed ? t('loadFailed') : t('loading')}
         </p>
       ) : (
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <div data-problem-scope>
             <fieldset disabled={lockTypes}>
-              <legend className="mb-2 text-xs font-semibold" style={{ color: CHROME.textPrimary }}>Type — pick one or more</legend>
+              <legend className="mb-2 text-xs font-semibold" style={{ color: CHROME.textPrimary }}>{t('typeLegend')}</legend>
               <div className="flex flex-col gap-1.5">
                 {types.map((type) => {
                   const on = form.typeKeys.includes(type.key);
@@ -59,7 +61,7 @@ export default function TypeAndEffectSection({ form }) {
             {showText && (
               <div className="mt-2">
                 <label htmlFor="cr-other-type" className="mb-1 block text-xs font-medium" style={{ color: CHROME.textSecondary }}>
-                  Describe the other type
+                  {t('describeOther')}
                 </label>
                 <textarea
                   id="cr-other-type"
@@ -68,11 +70,11 @@ export default function TypeAndEffectSection({ form }) {
                   value={form.otherTypeText}
                   disabled={lockText}
                   onChange={(e) => form.setOtherTypeText(e.target.value)}
-                  placeholder="Like: split milestone 2 into two payments"
+                  placeholder={t('otherPlaceholder')}
                   className="w-full resize-y rounded-lg border bg-white px-3 py-2 text-xs outline-none focus:border-primary"
                   style={{ borderColor: problems.otherTypeText ? STATUS.critical : '#e4e2e2' }}
                 />
-                <p className="text-right text-[10px] tabular-nums" style={{ color: CHROME.textMuted }}>
+                <p className="text-end text-[10px] tabular-nums" style={{ color: CHROME.textMuted }}>
                   {form.otherTypeText.length} / {CR_OTHER_TYPE_MAX}
                 </p>
                 <Problem text={problems.otherTypeText} />
@@ -81,7 +83,7 @@ export default function TypeAndEffectSection({ form }) {
           </div>
 
           <fieldset data-problem-scope disabled={lockEffect}>
-            <legend className="mb-2 text-xs font-semibold" style={{ color: CHROME.textPrimary }}>Project effect — pick one</legend>
+            <legend className="mb-2 text-xs font-semibold" style={{ color: CHROME.textPrimary }}>{t('effectLegend')}</legend>
             <div className="flex flex-col gap-1.5" role="radiogroup">
               {effects.map((effect) => {
                 const on = form.projectEffectKey === effect.key;

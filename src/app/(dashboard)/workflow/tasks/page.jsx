@@ -36,16 +36,18 @@ import {
   selectMyTasksLoaded,
 } from '@/store/slices/workflowTasksSlice';
 import { motion } from 'motion/react';
+import { useTranslations } from 'next-intl';
 
 const POLL_INTERVAL_MS = 45_000;
 
 const FILTER_TABS = [
-  { key: TASK_FILTERS.ALL, label: 'All' },
-  { key: TASK_FILTERS.PENDING, label: 'Pending' },
-  { key: TASK_FILTERS.COMPLETED, label: 'Completed' },
+  { key: TASK_FILTERS.ALL, labelKey: 'filters.all' },
+  { key: TASK_FILTERS.PENDING, labelKey: 'filters.pending' },
+  { key: TASK_FILTERS.COMPLETED, labelKey: 'filters.completed' },
 ];
 
 export default function MyTasksPage() {
+  const t = useTranslations('tasks.page');
   const dispatch = useDispatch();
   const toast = useToast();
   const { can } = usePermission();
@@ -102,16 +104,16 @@ export default function MyTasksPage() {
     }));
 
     if (reassignTask.rejected.match(result)) {
-      toast.error('Could not hand this task on', result.payload);
+      toast.error(t('handFailed'), result.payload);
       load();
       return;
     }
 
     setHandingOn(null);
-    toast.success('Task handed on', 'It has moved to their list, keeping its original due date.');
+    toast.success(t('handed'), t('handedBody'));
 
     load();
-  }, [dispatch, handingOn, load, toast]);
+  }, [dispatch, handingOn, load, toast, t]);
 
   const handleComplete = useCallback(
     async ({ task, outcomeKey, comment, reasonKey = null, otherReason = null }) => {
@@ -120,18 +122,18 @@ export default function MyTasksPage() {
       );
 
       if (completeTask.rejected.match(result)) {
-        toast.error('Could not complete this task', result.payload);
+        toast.error(t('completeFailed'), result.payload);
         load();
         return;
       }
 
       const fault = faultAfterCompleting(result.payload?.instance);
-      if (fault) toast.error('Your answer was saved, but the run stopped', fault.message);
-      else toast.success('Task completed', task.title ?? undefined);
+      if (fault) toast.error(t('savedButStopped'), fault.message);
+      else toast.success(t('completed'), task.title ?? undefined);
 
       load();
     },
-    [dispatch, load, toast]
+    [dispatch, load, toast, t]
   );
 
   const handleAsk = useCallback((task, outcome) => {
@@ -141,10 +143,10 @@ export default function MyTasksPage() {
   const handleFormCompleted = useCallback(({ task, instance }) => {
     setFormFor(null);
     const fault = faultAfterCompleting(instance);
-    if (fault) toast.error('Your answer was saved, but the run stopped', fault.message);
-    else toast.success('Task completed', task.title ?? undefined);
+    if (fault) toast.error(t('savedButStopped'), fault.message);
+    else toast.success(t('completed'), task.title ?? undefined);
     load();
-  }, [load, toast]);
+  }, [load, toast, t]);
 
   const handleAnswerConfirm = useCallback(async ({ comment, reasonKey, otherReason }) => {
     const { task, outcome } = askFor;
@@ -156,12 +158,12 @@ export default function MyTasksPage() {
   if (!canView) {
     return (
       <div>
-        <PageHeader title="My Tasks" breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'My Tasks' }]} />
+        <PageHeader title={t('title')} breadcrumbs={[{ label: t('home'), href: '/' }, { label: t('title') }]} />
         <Card>
           <EmptyState
             icon={Lock}
-            title="You do not have access to workflow tasks"
-            message="Ask an administrator to grant you the WorkflowTasks.View permission."
+            title={t('noAccess')}
+            message={t('noAccessBody')}
           />
         </Card>
       </div>
@@ -171,15 +173,15 @@ export default function MyTasksPage() {
   return (
     <div>
       <PageHeader
-        title="My Tasks"
-        subtitle="Workflow steps waiting on you"
+        title={t('title')}
+        subtitle={t('subtitle')}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'My Tasks' },
+          { label: t('home'), href: '/' },
+          { label: t('title') },
         ]}
         actions={
           <Button variant="outline" size="sm" icon={RefreshCw} onClick={load} loading={isLoading}>
-            Refresh
+            {t('refresh')}
           </Button>
         }
       />
@@ -198,16 +200,16 @@ export default function MyTasksPage() {
               {!loaded ? (
                 <div className="flex flex-col items-center justify-center gap-2 py-16">
                   <LoadingSpinner />
-                  <p className="text-[11px]" style={{ color: CHROME.textMuted }}>Loading your tasks…</p>
+                  <p className="text-[11px]" style={{ color: CHROME.textMuted }}>{t('loading')}</p>
                 </div>
               ) : error && tasks.length === 0 ? (
                 <EmptyState
                   icon={AlertTriangle}
-                  title="Could not load your tasks"
+                  title={t('loadFailed')}
                   message={typeof error === 'string' ? error : error?.message}
                   action={
                     <Button variant="outline" size="sm" onClick={load}>
-                      Try again
+                      {t('tryAgain')}
                     </Button>
                   }
                 />
@@ -272,6 +274,7 @@ export default function MyTasksPage() {
 }
 
 function TaskToolbar({ filter, onFilterChange, total, pendingCount }) {
+  const t = useTranslations('tasks.page');
   const counts = useMemo(
     () => ({
       [filter]: total,
@@ -282,7 +285,7 @@ function TaskToolbar({ filter, onFilterChange, total, pendingCount }) {
 
   return (
     <div className="flex items-center gap-1 border-b border-[#f1f0ee] px-4 py-2.5">
-      <ListChecks size={15} style={{ color: CHROME.textMuted }} aria-hidden="true" className="mr-1.5" />
+      <ListChecks size={15} style={{ color: CHROME.textMuted }} aria-hidden="true" className="me-1.5" />
       {FILTER_TABS.map((tab) => {
         const active = filter === tab.key;
         const count = counts[tab.key];
@@ -298,9 +301,9 @@ function TaskToolbar({ filter, onFilterChange, total, pendingCount }) {
               color: active ? CHROME.textPrimary : CHROME.textMuted,
             }}
           >
-            {tab.label}
+            {t(tab.labelKey)}
             {count !== undefined && count > 0 && (
-              <span className="ml-1.5 tabular-nums" style={{ color: CHROME.textMuted }}>
+              <span className="ms-1.5 tabular-nums" style={{ color: CHROME.textMuted }}>
                 {count}
               </span>
             )}

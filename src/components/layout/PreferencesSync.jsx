@@ -5,14 +5,15 @@ import { useDispatch } from 'react-redux';
 import { setLanguage, setCurrency, setCurrencySymbol } from '@/store/slices/uiSlice';
 import { getCookie } from '@/utils/cookies';
 import { Currencies } from '@/constants/currencies';
-import { DEFAULT_CURRENCY, DEFAULT_LANGUAGE } from '@/constants/appConfig';
+import { DEFAULT_CURRENCY } from '@/constants/appConfig';
+import { LANGUAGE_COOKIE, LANGUAGE_CURRENCY, resolveLanguage, textDirection } from '@/i18n/config';
 
 export default function PreferencesSync() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const lang = getCookie('language', DEFAULT_LANGUAGE);
-    const curr = getCookie('currency', DEFAULT_CURRENCY);
+    const lang = resolveLanguage(getCookie(LANGUAGE_COOKIE, ''));
+    const curr = getCookie('currency', '') || LANGUAGE_CURRENCY[lang] || DEFAULT_CURRENCY;
     const symbol = Currencies.find(c => c.Key === curr)?.symbol ?? '';
 
     dispatch(setLanguage(lang));
@@ -20,7 +21,7 @@ export default function PreferencesSync() {
     dispatch(setCurrencySymbol(symbol));
 
     document.documentElement.lang = lang;
-    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.dir = textDirection(lang);
   }, [dispatch]);
 
   return null;

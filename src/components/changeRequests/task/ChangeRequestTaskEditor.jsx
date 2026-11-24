@@ -2,6 +2,7 @@
 
 import { useImperativeHandle, useRef } from 'react';
 import { Info } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import Reveal from '@/components/motion/Reveal';
 import ReasonsSection from '@/components/changeRequests/form/ReasonsSection';
@@ -20,9 +21,9 @@ const anyBox = (p) => Boolean(
   || Object.keys(p.project).length || Object.keys(p.items).length
 );
 
-function lockedNote(asks) {
-  if (asks.fieldChanges && !asks.cycleChanges) return 'This task changes the item and project fields only — each item’s invoicing plan stays as the request has it.';
-  if (asks.cycleChanges && !asks.fieldChanges) return 'This task changes the invoicing plans only — the item and project fields stay as the request has them.';
+function lockedNote(asks, t) {
+  if (asks.fieldChanges && !asks.cycleChanges) return t('fieldsOnly');
+  if (asks.cycleChanges && !asks.fieldChanges) return t('plansOnly');
   return null;
 }
 
@@ -30,6 +31,7 @@ function lockedNote(asks) {
  * @param {{ parts: Object, asks: Object, reasons: Array, handleRef: { current: Object|null }, data: { boqItems: Array, subProjects: Array, initial: Object, kept: Object, statusNameOf: (statusId) => string|null }, }} props
  */
 export default function ChangeRequestTaskEditor({ parts, asks, reasons, data, handleRef }) {
+  const t = useTranslations('changeRequests.task');
   const form = useChangeRequestForm({
     boqItems: data.boqItems,
     statusNameOf: data.statusNameOf,
@@ -52,7 +54,7 @@ export default function ChangeRequestTaskEditor({ parts, asks, reasons, data, ha
   }), [form, parts, data.subProjects, data.kept]);
 
   const changes = asksForChanges(parts);
-  const note = lockedNote(asks);
+  const note = lockedNote(asks, t);
   const keptCount = data.kept.fieldChanges.length + data.kept.cycleChanges.length;
 
   return (
@@ -67,10 +69,7 @@ export default function ChangeRequestTaskEditor({ parts, asks, reasons, data, ha
             <div>
               {note && <p>{note}</p>}
               {keptCount > 0 && (
-                <p>
-                  {keptCount} change{keptCount === 1 ? '' : 's'} on an item or sub-project this form can&rsquo;t show
-                  {keptCount === 1 ? ' is' : ' are'} kept and sent back as {keptCount === 1 ? 'it is' : 'they are'}.
-                </p>
+                <p>{t('kept', { count: keptCount })}</p>
               )}
             </div>
           </div>

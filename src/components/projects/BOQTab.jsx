@@ -2,60 +2,53 @@
 
 import { memo, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Banknote, CheckCircle2, History, LayoutList, Plus, Settings2 } from 'lucide-react';
+import { Banknote, History, LayoutList, Plus, Settings2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Button from '@/components/common/Button';
 import Table from '@/components/common/Table';
 import { StatusBadge } from '@/components/common/Badge';
 import BOQItemHistoryModal from '@/components/boq/BOQItemHistoryModal';
 import TabToolbar from './TabToolbar';
-import { CHROME, SERIES_ROLE, STATUS } from '@/theme/vizPalette';
-import { formatCurrency, formatDate } from '@/utils/formatters';
+import { CHROME, SERIES_ROLE } from '@/theme/vizPalette';
+import { formatCurrency } from '@/utils/formatters';
+import { useLocaleFormat } from '@/hooks/useLocaleFormat';
+import { useLookupLabel } from '@/hooks/useLookupLabel';
 import { usePermission } from '@/hooks/usePermission';
-import { BOQ_STATUS } from '@/constants/statuses';
 import { ROUTES } from '@/constants/routes';
 
 function BOQTab({
   projectCode, boqItems, currentBOQ, billingFrequenciesMap, boqItemStatusesMap, boqItemStatusColorsMap, currency,
 }) {
+  const t = useTranslations('boq');
+  const format = useLocaleFormat();
+  const frequencyLabel = useLookupLabel('billingFrequency');
   const { can } = usePermission();
   const [historyItemId, setHistoryItemId] = useState(null);
   const money = (v) => formatCurrency(v, currency);
   const encoded = encodeURIComponent(projectCode);
 
-  const summary = useMemo(() => {
-    const totalCost = boqItems.reduce((sum, i) => sum + (i.totalCost || 0), 0);
-    const invoiced = boqItems.filter(
-      (i) => boqItemStatusesMap[i.statusId] === BOQ_STATUS.INVOICED
-    ).length;
-    return { totalCost, invoiced };
-  }, [boqItems, boqItemStatusesMap]);
+  const totalCost = useMemo(() => boqItems.reduce((sum, i) => sum + (i.totalCost || 0), 0), [boqItems]);
 
   const stats = useMemo(() => [
     {
-      label: 'BOQ items',
+      label: t('stats.items'),
       value: boqItems.length,
       icon: LayoutList,
       accent: SERIES_ROLE.wip,
     },
     {
-      label: 'Total value',
-      value: money(summary.totalCost),
+      label: t('stats.totalValue'),
+      value: money(totalCost),
       icon: Banknote,
       accent: SERIES_ROLE.revenue,
     },
-    {
-      label: 'Invoiced',
-      value: `${summary.invoiced} / ${boqItems.length}`,
-      icon: CheckCircle2,
-      accent: STATUS.good,
-    },
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [boqItems.length, summary, currency]);
+  ], [boqItems.length, totalCost, currency, t]);
 
   const columns = useMemo(() => [
     {
       key: 'englishName',
-      label: 'Item',
+      label: t('columns.item'),
       render: (val, row) => (
         <div>
           <Link
@@ -74,16 +67,16 @@ function BOQTab({
         </div>
       ),
     },
-    { key: 'quantity', label: 'Qty', align: 'center' },
+    { key: 'quantity', label: t('columns.qty'), align: 'center' },
     {
       key: 'unitCost',
-      label: 'Unit Cost',
+      label: t('columns.unitCost'),
       align: 'right',
       render: (val) => <span className="text-sm tabular-nums">{money(val)}</span>,
     },
     {
       key: 'totalCost',
-      label: 'Total Cost',
+      label: t('columns.totalCost'),
       align: 'right',
       render: (val) => (
         <span className="text-sm font-semibold tabular-nums" style={{ color: CHROME.textPrimary }}>
@@ -93,7 +86,7 @@ function BOQTab({
     },
     {
       key: 'statusId',
-      label: 'Status',
+      label: t('columns.status'),
       align: 'center',
       sortable: false,
       render: (val) => (
@@ -102,27 +95,27 @@ function BOQTab({
     },
     {
       key: 'baselineInvoicingDate',
-      label: 'Baseline Date',
+      label: t('columns.baselineDate'),
       align: 'center',
       render: (val) => (
-        <span className="text-sm" style={{ color: CHROME.textMuted }}>{formatDate(val) || '—'}</span>
+        <span className="text-sm" style={{ color: CHROME.textMuted }}>{format.date(val) || '—'}</span>
       ),
     },
     {
       key: 'expectedInvoicingDate',
-      label: 'Expected Date',
+      label: t('columns.expectedDate'),
       align: 'center',
       render: (val) => (
-        <span className="text-sm" style={{ color: CHROME.textSecondary }}>{formatDate(val) || '—'}</span>
+        <span className="text-sm" style={{ color: CHROME.textSecondary }}>{format.date(val) || '—'}</span>
       ),
     },
     {
       key: 'billingFrequencyId',
-      label: 'Billing',
+      label: t('columns.billing'),
       align: 'center',
       render: (val) => (
         <span className="text-sm" style={{ color: CHROME.textSecondary }}>
-          {billingFrequenciesMap[val] ?? '—'}
+          {frequencyLabel(billingFrequenciesMap[val]) ?? '—'}
         </span>
       ),
     },
@@ -139,21 +132,21 @@ function BOQTab({
             size="xs"
             icon={History}
             onClick={() => setHistoryItemId(row.id)}
-            title="Revision history"
+            title={t('actions.revisionHistory')}
           />
         </div>
       ),
     },
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [currency, boqItemStatusesMap, boqItemStatusColorsMap, billingFrequenciesMap, encoded]);
+  ], [currency, boqItemStatusesMap, boqItemStatusColorsMap, billingFrequenciesMap, encoded, t, format, frequencyLabel]);
 
   const actions = currentBOQ?.id ? (
     <Link href={`/projects/${encoded}/boq`}>
-      <Button variant="outline" size="sm" icon={Settings2}>Manage BOQ</Button>
+      <Button variant="outline" size="sm" icon={Settings2}>{t('actions.manage')}</Button>
     </Link>
   ) : can('Boqs', 'Create') ? (
     <Link href={`/projects/${encoded}/boq/new`}>
-      <Button size="sm" icon={Plus}>Add first item</Button>
+      <Button size="sm" icon={Plus}>{t('actions.addFirstItem')}</Button>
     </Link>
   ) : null;
 
@@ -171,7 +164,7 @@ function BOQTab({
         columns={columns}
         data={boqItems}
         rowKey="id"
-        emptyMessage="No BOQ items have been added to this project yet."
+        emptyMessage={t('tabEmpty')}
       />
     </div>
   );

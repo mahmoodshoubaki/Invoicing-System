@@ -6,14 +6,16 @@ import {
   Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
 import { Table2, AreaChart as AreaIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import ChartTooltip from './ChartTooltip';
 import { CHROME, SERIES_ROLE } from '@/theme/vizPalette';
-import { formatCurrency } from '@/utils/formatters';
+import { convertFromBase, formatCurrency } from '@/utils/formatters';
+import { useLocaleFormat } from '@/hooks/useLocaleFormat';
 
-const SERIES = [
-  { key: 'revenue', name: 'Revenue', color: SERIES_ROLE.revenue },
-  { key: 'invoiced', name: 'Invoiced', color: SERIES_ROLE.invoiced },
-  { key: 'collected', name: 'Collected', color: SERIES_ROLE.collected },
+const SERIES_KEYS = [
+  { key: 'revenue', color: SERIES_ROLE.revenue },
+  { key: 'invoiced', color: SERIES_ROLE.invoiced },
+  { key: 'collected', color: SERIES_ROLE.collected },
 ];
 
 const compact = (v) => {
@@ -23,6 +25,9 @@ const compact = (v) => {
 };
 
 export default function RevenueAreaChart({ data = [] }) {
+  const t = useTranslations('dashboard.trend');
+  const { rtl } = useLocaleFormat();
+  const SERIES = SERIES_KEYS.map((s) => ({ ...s, name: t(s.key) }));
   const currency = useSelector((s) => s.ui.currency);
   const [view, setView] = useState('chart');
   const money = (v) => formatCurrency(v, currency);
@@ -48,8 +53,8 @@ export default function RevenueAreaChart({ data = [] }) {
 
         <div className="flex items-center gap-0.5 rounded-lg bg-[#f4f3f1] p-0.5">
           {[
-            { id: 'chart', label: 'Chart', icon: AreaIcon },
-            { id: 'table', label: 'Table', icon: Table2 },
+            { id: 'chart', label: t('chart'), icon: AreaIcon },
+            { id: 'table', label: t('table'), icon: Table2 },
           ].map((opt) => (
             <button
               key={opt.id}
@@ -69,7 +74,7 @@ export default function RevenueAreaChart({ data = [] }) {
 
       {view === 'chart' ? (
         <ResponsiveContainer width="100%" height={300}>
-          <AreaChart data={data} margin={{ top: 6, right: 12, left: 4, bottom: 0 }}>
+          <AreaChart data={data} margin={{ top: 6, right: rtl ? 4 : 12, left: rtl ? 12 : 4, bottom: 0 }}>
             <defs>
               {SERIES.map((s) => (
                 <linearGradient key={s.key} id={`fill-${s.key}`} x1="0" y1="0" x2="0" y2="1">
@@ -82,13 +87,15 @@ export default function RevenueAreaChart({ data = [] }) {
             <CartesianGrid stroke={CHROME.grid} vertical={false} />
             <XAxis
               dataKey="month"
+              reversed={rtl}
               tick={{ fontSize: 11, fill: CHROME.textMuted }}
               axisLine={{ stroke: CHROME.axis }}
               tickLine={false}
               dy={8}
             />
             <YAxis
-              tickFormatter={compact}
+              tickFormatter={(v) => compact(convertFromBase(v, currency))}
+              orientation={rtl ? 'right' : 'left'}
               tick={{ fontSize: 11, fill: CHROME.textMuted }}
               axisLine={false}
               tickLine={false}
@@ -120,13 +127,13 @@ export default function RevenueAreaChart({ data = [] }) {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-[#faf9f8]">
-                <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide" style={{ color: CHROME.textMuted }}>
-                  Month
+                <th className="px-4 py-2.5 text-start text-xs font-semibold uppercase tracking-wide" style={{ color: CHROME.textMuted }}>
+                  {t('month')}
                 </th>
                 {SERIES.map((s) => (
                   <th
                     key={s.key}
-                    className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wide"
+                    className="px-4 py-2.5 text-end text-xs font-semibold uppercase tracking-wide"
                     style={{ color: CHROME.textMuted }}
                   >
                     {s.name}
@@ -143,7 +150,7 @@ export default function RevenueAreaChart({ data = [] }) {
                   {SERIES.map((s) => (
                     <td
                       key={s.key}
-                      className="px-4 py-2.5 text-right tabular-nums"
+                      className="px-4 py-2.5 text-end tabular-nums"
                       style={{ color: CHROME.textSecondary }}
                     >
                       {money(row[s.key])}

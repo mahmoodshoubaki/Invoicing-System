@@ -2,23 +2,35 @@
 
 import { memo } from 'react';
 import { motion } from 'motion/react';
-import { FileDiff, FileText, LayoutList, Network, PieChart } from 'lucide-react';
+import { FileDiff, FileText, Landmark, LayoutList, Network, PieChart } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
-export const PROJECT_TABS = ['Overview', 'EPM Sub-Projects', 'BOQ', 'Invoices', 'Change requests'];
+export const PROJECT_TABS = ['Overview', 'EPM Sub-Projects', 'BOQ', 'Invoices', 'Etimad Financial claims', 'Change requests'];
 
 export const tabSlug = (tab) => tab.toLowerCase().replace(/\s+/g, '-');
 
 const NO_TABS = [];
+
+const TAB_LABEL_KEYS = {
+  Overview: 'overview',
+  'EPM Sub-Projects': 'subProjects',
+  BOQ: 'boq',
+  Invoices: 'invoices',
+  'Etimad Financial claims': 'financialClaims',
+  'Change requests': 'changeRequests',
+};
 
 const TAB_ICONS = {
   Overview: PieChart,
   'EPM Sub-Projects': Network,
   BOQ: LayoutList,
   Invoices: FileText,
+  'Etimad Financial claims': Landmark,
   'Change requests': FileDiff,
 };
 
 function ProjectTabs({ activeTab, onChange, counts = {}, hidden = NO_TABS }) {
+  const t = useTranslations('projects.tabs');
   return (
     <div className="mb-5 flex w-fit max-w-full gap-1 overflow-x-auto rounded-2xl bg-[#f4f3f1] p-1.5">
       {PROJECT_TABS.filter((tab) => !hidden.includes(tab)).map((tab) => {
@@ -44,7 +56,7 @@ function ProjectTabs({ activeTab, onChange, counts = {}, hidden = NO_TABS }) {
               />
             )}
             <Icon size={14} className="relative z-10" />
-            <span className="relative z-10 whitespace-nowrap">{tab}</span>
+            <span className="relative z-10 whitespace-nowrap">{t(TAB_LABEL_KEYS[tab])}</span>
             {count != null && (
               <span
                 className={`relative z-10 rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums transition-colors ${

@@ -1,6 +1,9 @@
 'use client';
 
 import { useSelector } from 'react-redux';
+import { useTranslations } from 'next-intl';
+import { useLookupLabel } from '@/hooks/useLookupLabel';
+import { useLocaleFormat } from '@/hooks/useLocaleFormat';
 
 import Table from '@/components/common/Table';
 import { CR_TARGET } from '@/constants/changeRequests';
@@ -12,32 +15,38 @@ import { CHROME } from '@/theme/vizPalette';
  * @param {{ changes: Array }} props
  */
 export default function FieldChangesTable({ changes }) {
+  const t = useTranslations('changeRequests.fieldChanges');
+  const format = useLocaleFormat();
+  const areaLabel = useLookupLabel('changeRequests.areas');
+  const frequencyLabel = useLookupLabel('billingFrequency');
   const currency = useSelector((s) => s.ui.currency);
   const frequencies = useSelector(selectBillingFrequencies);
-  const show = (fieldName, value) => formatChangeValue(fieldName, value, { currency, frequencies });
+  const show = (fieldName, value) => formatChangeValue(fieldName, value, {
+    currency, frequencies, frequencyLabel, formatDay: format.date, monthsLabel: (count) => t('months', { count }),
+  });
 
   const columns = [
     {
       key: 'targetName',
-      label: 'Changes to',
+      label: t('changesTo'),
       render: (name, c) => (
         <span className="text-xs" style={{ color: CHROME.textPrimary }}>
           {name || c.targetId}
           <span className="block text-[11px]" style={{ color: CHROME.textMuted }}>
-            {c.targetTypeKey === CR_TARGET.PROJECT ? 'EPM project' : 'BOQ item'}
+            {c.targetTypeKey === CR_TARGET.PROJECT ? t('epmProject') : t('boqItem')}
           </span>
         </span>
       ),
     },
-    { key: 'fieldLabel', label: 'Field', render: (label) => <span className="text-xs">{label}</span> },
+    { key: 'fieldLabel', label: t('field'), render: (label) => <span className="text-xs">{areaLabel(label)}</span> },
     {
       key: 'oldValue',
-      label: 'From',
+      label: t('from'),
       render: (value, c) => <span className="text-xs line-through" style={{ color: CHROME.textMuted }}>{show(c.fieldName, value)}</span>,
     },
     {
       key: 'newValue',
-      label: 'To',
+      label: t('to'),
       render: (value, c) => <span className="text-xs font-medium" style={{ color: CHROME.textPrimary }}>{show(c.fieldName, value)}</span>,
     },
   ];
@@ -48,7 +57,7 @@ export default function FieldChangesTable({ changes }) {
         className="mb-2 text-sm font-semibold"
         style={{ color: CHROME.textPrimary }}
       >
-        Field changes
+        {t('title')}
       </p>
       <Table
         columns={columns}
@@ -60,7 +69,7 @@ export default function FieldChangesTable({ changes }) {
         sortable={false}
         resizable={false}
         compact
-        emptyMessage="No field changes."
+        emptyMessage={t('empty')}
       />
     </div>
   );

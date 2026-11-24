@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useSelector } from 'react-redux';
 
 import PageHeader from '@/components/common/PageHeader';
@@ -10,40 +11,41 @@ import ErrorNote from '@/components/ui/ErrorNote';
 import PillTabs from '@/components/ui/PillTabs';
 import ProjectStatusSelect from '@/components/dashboard/lists/ProjectStatusSelect';
 import { pendingApprovalColumns } from '@/components/dashboard/lists/pendingApprovalColumns';
-import { PENDING_TYPES, pendingHref } from '@/components/dashboard/lists/pendingTypes';
+import { PENDING_TYPES, pendingHref, pendingTypeName } from '@/components/dashboard/lists/pendingTypes';
 import { usePendingApprovalsPage } from '@/components/dashboard/lists/useDashboardLists';
-import { plural } from '@/components/dashboard/sourceNote';
 import { useProjectStatuses } from '@/components/dashboard/useProjectStatuses';
 import { ROUTES } from '@/constants/routes';
+import { useLocaleFormat } from '@/hooks/useLocaleFormat';
 import { useUrlParam } from '@/hooks/useUrlParam';
 import { pageInfo } from '@/lib/pageInfo';
 
-const BREADCRUMBS = [{ label: 'Dashboard', href: ROUTES.DASHBOARD }, { label: 'Pending approvals' }];
-
 export default function PendingApprovalsPage() {
+  const t = useTranslations('dashboard');
+  const tn = useTranslations('nav');
+  const format = useLocaleFormat();
   const router = useRouter();
   const currency = useSelector((s) => s.ui.currency);
   const [projectStatus, setProjectStatus] = useUrlParam('projectStatus');
   const [type, setType] = useUrlParam('type');
   const statuses = useProjectStatuses();
   const list = usePendingApprovalsPage(projectStatus, type);
-  const columns = useMemo(() => pendingApprovalColumns({ currency }), [currency]);
+  const columns = useMemo(() => pendingApprovalColumns({ currency, t, format }), [currency, t, format]);
 
   const byType = list.meta.byType ?? [];
-  const all = byType.reduce((sum, t) => sum + t.count, 0);
+  const all = byType.reduce((sum, entry) => sum + entry.count, 0);
   const tabs = [
-    { key: '', label: 'All', count: list.meta.byType ? all : null },
-    ...PENDING_TYPES.filter((k) => byType.some((t) => t.type === k.type))
-      .map((k) => ({ key: k.type, label: k.label, count: byType.find((t) => t.type === k.type).count })),
+    { key: '', label: t('pending.all'), count: list.meta.byType ? all : null },
+    ...PENDING_TYPES.filter((k) => byType.some((entry) => entry.type === k.type))
+      .map((k) => ({ key: k.type, label: pendingTypeName(t, k.type, 'label'), count: byType.find((entry) => entry.type === k.type).count })),
   ];
   const firstLoad = list.loading && !list.meta.byType;
 
   return (
     <div>
       <PageHeader
-        title="Pending approvals"
-        subtitle={firstLoad ? 'Loading…' : `${plural(all, 'request')} not finished yet`}
-        breadcrumbs={BREADCRUMBS}
+        title={t('pending.pageTitle')}
+        subtitle={firstLoad ? t('source.loading') : t('pending.subtitle', { count: all })}
+        breadcrumbs={[{ label: tn('dashboard'), href: ROUTES.DASHBOARD }, { label: t('pending.pageTitle') }]}
       />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <PillTabs tabs={tabs} value={type} onChange={setType} />
@@ -59,7 +61,7 @@ export default function PendingApprovalsPage() {
           isLoading={list.loading}
           onRowClick={(row) => router.push(pendingHref(row))}
           sortable={false}
-          emptyMessage="Nothing waiting for a decision."
+          emptyMessage={t('pending.pageEmpty')}
           pagination={pageInfo(list.page, list.pageSize, list.total, list.setPage, list.setPageSize)}
         />
       )}

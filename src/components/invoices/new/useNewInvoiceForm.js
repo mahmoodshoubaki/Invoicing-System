@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
+import { useTranslations } from 'next-intl';
 
 import { useToast } from '@/hooks/useToast';
 import { createInvoice } from '@/store/slices/invoicesSlice';
@@ -18,6 +19,7 @@ const INITIAL_FORM = {
  */
 export function useNewInvoiceForm({ projectCode, boqItems, projectFinancials }) {
   const router = useRouter();
+  const t = useTranslations('invoices.form');
   const dispatch = useDispatch();
   const toast = useToast();
 
@@ -64,7 +66,7 @@ export function useNewInvoiceForm({ projectCode, boqItems, projectFinancials }) 
 
     const lineEntries = Object.entries(form.boqLineItems);
     if (lineEntries.length === 0) {
-      e.boqLineItems = 'Select at least one BOQ item';
+      e.boqLineItems = t('errors.selectItem');
     } else {
       lineEntries.forEach(([itemId, { quantity }]) => {
         const boq = boqItems.find((b) => String(b.id) === itemId);
@@ -73,9 +75,9 @@ export function useNewInvoiceForm({ projectCode, boqItems, projectFinancials }) 
         const available = boq.availableQuantity;
 
         if (!quantity || isNaN(qty) || qty <= 0) {
-          e[`qty_${itemId}`] = 'Enter a quantity greater than 0';
+          e[`qty_${itemId}`] = t('errors.quantity');
         } else if (qty > available) {
-          e[`qty_${itemId}`] = `Only ${available} unit${available !== 1 ? 's' : ''} available (${boq.committedQuantity} already committed)`;
+          e[`qty_${itemId}`] = t('errors.onlyAvailable', { available, committed: boq.committedQuantity });
         }
       });
     }
@@ -120,10 +122,10 @@ export function useNewInvoiceForm({ projectCode, boqItems, projectFinancials }) 
       })).unwrap();
 
       setConfirmOpen(false);
-      toast.success('Invoice request submitted', 'The invoice request was created successfully.');
+      toast.success(t('submitted'), t('submittedBody'));
       router.push(`/projects/${encodeURIComponent(projectCode)}`);
     } catch (err) {
-      toast.error('Failed to submit invoice request', err ?? 'Please try again.');
+      toast.error(t('submitFailed'), err ?? t('tryAgain'));
     } finally {
       setSaving(false);
     }

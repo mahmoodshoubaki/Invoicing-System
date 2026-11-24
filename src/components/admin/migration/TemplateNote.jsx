@@ -8,7 +8,8 @@ export default function TemplateNote() {
       <Info size={14} className="mt-0.5 shrink-0" style={{ color: CHROME.textMuted }} aria-hidden="true" />
       <ul className="list-disc pl-4">
         <li>Each sheet: row 1 headers, row 2 help, row 3 an example. Data starts on row 4; rows 2 and 3 are never read.</li>
-        <li>Invoices: an Invoiced Date is needed for Invoiced and Collected invoices, and a Collected Date for Collected ones.</li>
+        <li>Invoices: an Invoiced Date is needed for Invoiced, Partially Collected and Collected invoices, and a Collected Date for Partially Collected and Collected ones.</li>
+        <li>Partially Collected invoices also need a Collected Amount: the total received so far, no more than the invoice amount.</li>
         <li>Invoice Lines have no Billed Unit Price — each line is billed at its item&rsquo;s Unit Cost.</li>
       </ul>
     </div>

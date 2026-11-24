@@ -1,46 +1,45 @@
 import { CHROME } from '@/theme/vizPalette';
-import { formatCurrency, formatDateTime } from '@/utils/formatters';
+import { formatCurrency } from '@/utils/formatters';
 import PendingStatusBadge from './PendingStatusBadge';
 import ProjectCell from './ProjectCell';
 import ViewLink from './ViewLink';
-import { pendingHref, pendingTitle, pendingType } from './pendingTypes';
+import { pendingHref, pendingTitle, pendingType, pendingTypeName } from './pendingTypes';
 
 /**
- * @param {{ currency: string }} options
+ * @param {{ currency: string, t: (key: string, values?: Object) => string, format: ReturnType<import('@/hooks/useLocaleFormat').useLocaleFormat> }} options
  */
-export function pendingApprovalColumns({ currency }) {
+export function pendingApprovalColumns({ currency, t, format }) {
   return [
     {
       key: 'type',
-      label: 'Kind',
+      label: t('pending.columns.kind'),
       render: (val) => {
-        const kind = pendingType(val);
-        const Icon = kind?.icon;
+        const Icon = pendingType(val)?.icon;
         return (
           <span className="flex items-center gap-1.5 text-sm" style={{ color: CHROME.textSecondary }}>
             {Icon && <Icon size={13} aria-hidden="true" />}
-            {kind?.single ?? val}
+            {pendingTypeName(t, val, 'single')}
           </span>
         );
       },
     },
     {
       key: 'title',
-      label: 'Reference',
-      render: (_, row) => <span className="font-mono text-xs font-semibold" style={{ color: CHROME.textPrimary }}>{pendingTitle(row)}</span>,
+      label: t('pending.columns.reference'),
+      render: (_, row) => <span dir="ltr" className="font-mono text-xs font-semibold" style={{ color: CHROME.textPrimary }}>{pendingTitle(t, row)}</span>,
     },
-    { key: 'projectCode', label: 'Project', render: (code, row) => <ProjectCell code={code} name={row.projectName} /> },
-    { key: 'statusId', label: 'Status', render: (val, row) => <PendingStatusBadge type={row.type} statusId={val} /> },
+    { key: 'projectCode', label: t('pending.columns.project'), render: (code, row) => <ProjectCell code={code} name={row.projectName} /> },
+    { key: 'statusId', label: t('pending.columns.status'), render: (val, row) => <PendingStatusBadge type={row.type} statusId={val} /> },
     {
       key: 'stageTitle',
-      label: 'Stage',
+      label: t('pending.columns.stage'),
       render: (val) => (val
         ? <span className="text-sm" style={{ color: CHROME.textSecondary }}>{val}</span>
-        : <span className="text-xs italic" style={{ color: CHROME.textMuted }}>No live run</span>),
+        : <span className="text-xs italic" style={{ color: CHROME.textMuted }}>{t('pending.noLiveRun')}</span>),
     },
     {
       key: 'amount',
-      label: 'Amount',
+      label: t('pending.columns.amount'),
       align: 'right',
       render: (val) => (
         <span className="text-sm font-semibold tabular-nums" style={{ color: CHROME.textPrimary }}>
@@ -50,8 +49,8 @@ export function pendingApprovalColumns({ currency }) {
     },
     {
       key: 'submittedOn',
-      label: 'Submitted',
-      render: (val) => <span className="text-sm" style={{ color: CHROME.textMuted }}>{formatDateTime(val) || '—'}</span>,
+      label: t('pending.columns.submitted'),
+      render: (val) => <span className="text-sm" style={{ color: CHROME.textMuted }}>{format.dateTime(val) || '—'}</span>,
     },
     { key: 'actions', label: '', resizable: false, render: (_, row) => <ViewLink href={pendingHref(row)} /> },
   ];

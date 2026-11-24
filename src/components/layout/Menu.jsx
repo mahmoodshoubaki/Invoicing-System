@@ -23,7 +23,7 @@ export default function Menu({children, menuButtonElement}) {
           {menuButtonElement}
         </button>
         {open && (
-          <div className="absolute right-0 top-full mt-2 w-25 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+          <div className="absolute inset-e-0 top-full mt-2 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
             {children}
           </div>
         )}

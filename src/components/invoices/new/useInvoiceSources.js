@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslations } from 'next-intl';
 
 import { useToast } from '@/hooks/useToast';
 import { aggregateSubProjectFinancials } from '@/models/project';
@@ -19,6 +20,7 @@ import {
  */
 export function useInvoiceSources(projectCode) {
   const router = useRouter();
+  const t = useTranslations('invoices.form');
   const dispatch = useDispatch();
   const toast = useToast();
 
@@ -43,8 +45,8 @@ export function useInvoiceSources(projectCode) {
       .then((items) => {
         if (items.length === 0) {
           toast.warning(
-            'No invoiceable BOQ items',
-            "This project has no invoiceable BOQ items, so an invoice request can't be created. Taking you back in a few seconds."
+            t('noBoqTitle'),
+            t('noBoqBody')
           );
           setRedirecting(true);
         }

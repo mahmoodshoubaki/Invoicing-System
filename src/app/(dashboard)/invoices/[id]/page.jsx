@@ -7,6 +7,8 @@ import Link from 'next/link';
 import {
   ChevronLeft, FileText, User, Calendar, DollarSign, Percent, Download, Edit2, History, Paperclip, Trash2, Workflow,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useLocaleFormat } from '@/hooks/useLocaleFormat';
 
 import PageHeader from '@/components/common/PageHeader';
 import Button from '@/components/common/Button';
@@ -19,11 +21,15 @@ import DeleteInvoicesDialog from '@/components/invoices/DeleteInvoicesDialog';
 import InvoiceTaskPanel from '@/components/invoices/detail/InvoiceTaskPanel';
 import InvoiceStepper from '@/components/invoices/detail/InvoiceStepper';
 import AddAttachmentsDialog from '@/components/invoices/detail/AddAttachmentsDialog';
+import FinancialClaimCard from '@/components/invoices/detail/FinancialClaimCard';
+import InfoItem from '@/components/invoices/detail/InfoItem';
+import CollectedInfoItems from '@/components/invoices/detail/CollectedInfoItems';
+import InvoicePaymentsCard from '@/components/invoices/detail/InvoicePaymentsCard';
 import { DELETABLE_INVOICE_STATUS_IDS, INVOICE_STATUS_ID } from '@/constants/statuses';
 import { baselineDateOrPending, invoiceNumberOrPending } from '@/utils/invoiceDisplay';
 import TargetRunsModal from '@/components/workflow/runs/TargetRunsModal';
 import { TARGET_TYPE } from '@/constants/workflow';
-import { formatCurrency, formatDate, formatDateTime, formatPercentage, formatFileSize } from '@/utils/formatters';
+import { formatCurrency, formatPercentage, formatFileSize } from '@/utils/formatters';
 import { iconForFileName } from '@/utils/attachmentIcon';
 import { saveBlob } from '@/utils/saveBlob';
 import { fetchInvoiceById, selectSelectedInvoice, selectInvoicesLoading } from '@/store/slices/invoicesSlice';
@@ -33,20 +39,10 @@ import { useToast } from '@/hooks/useToast';
 import { usePermission } from '@/hooks/usePermission';
 import { allow, WORKFLOW_INSTANCE_PERMISSIONS } from '@/constants/workflowPermissions';
 
-const InfoItem = ({ icon: Icon, label, value, valueClass = '' }) => (
-  <div className="flex items-start gap-3">
-    <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center shrink-0 mt-0.5">
-      <Icon size={15} className="text-gray-500" />
-    </div>
-    <div>
-      <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">{label}</p>
-      <p className={`text-sm text-gray-800 mt-0.5 ${valueClass}`}>{value || '—'}</p>
-    </div>
-  </div>
-);
-
 function InvoiceDetailContent() {
   const { id } = useParams();
+  const t = useTranslations('invoices.detail');
+  const format = useLocaleFormat();
   const searchParams = useSearchParams();
   const queryProjectCode = searchParams.get('projectCode');
   const dispatch = useDispatch();
@@ -80,7 +76,7 @@ function InvoiceDetailContent() {
       );
       saveBlob(blob, fileName);
     } catch (err) {
-      toast.error('Download failed', err?.message ?? 'Please try again.');
+      toast.error(t('downloadFailed'), err?.message ?? t('tryAgain'));
     } finally {
       setDownloadingIds((prev) => {
         const next = new Set(prev);
@@ -91,7 +87,7 @@ function InvoiceDetailContent() {
   };
 
   const backHref = projectCode ? `/projects/${encodeURIComponent(projectCode)}` : '/invoices';
-  const backLabel = projectCode ? 'Back to Project' : 'Back to Invoices';
+  const backLabel = projectCode ? t('backToProject') : t('backToInvoices');
 
   if (isLoading && !invoice) {
     return (
@@ -104,7 +100,7 @@ function InvoiceDetailContent() {
   if (!invoice) {
     return (
       <div className="text-center py-20">
-        <p className="text-gray-500">Invoice not found.</p>
+        <p className="text-gray-500">{t('notFound')}</p>
         <Link href={backHref}>
           <Button variant="outline" className="mt-4">{backLabel}</Button>
         </Link>
@@ -127,7 +123,7 @@ function InvoiceDetailContent() {
           invoices={[invoice]}
           onClose={() => setDeleteOpen(false)}
           onDeleted={() => {
-            toast.success('Invoice deleted', 'Any workflow running on it was cancelled.');
+            toast.success(t('deleted'), t('deletedBody'));
             router.replace(backHref);
           }}
         />
@@ -152,37 +148,37 @@ function InvoiceDetailContent() {
       )}
 
       <PageHeader
-        title={invoiceNumberOrPending(invoice)}
+        title={invoiceNumberOrPending(invoice, t('pendingNumber'))}
         subtitle={projectCode}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
+          { label: t('home'), href: '/' },
           ...(projectCode
-            ? [{ label: 'Projects', href: '/projects' }, { label: projectCode, href: `/projects/${encodeURIComponent(projectCode)}` }]
-            : [{ label: 'Invoice Requests', href: '/invoices' }]),
-          { label: invoiceNumberOrPending(invoice) },
+            ? [{ label: t('projects'), href: '/projects' }, { label: projectCode, href: `/projects/${encodeURIComponent(projectCode)}` }]
+            : [{ label: t('invoiceRequests'), href: '/invoices' }]),
+          { label: invoiceNumberOrPending(invoice, t('pendingNumber')) },
         ]}
         actions={
           <>
             <Button variant="ghost" icon={History} size="sm" onClick={() => setHistoryOpen(true)}>
-              History
+              {t('history')}
             </Button>
             {canViewRuns && (
               <Button variant="outline" icon={Workflow} size="sm" onClick={() => setRunsOpen(true)}>
-                Workflow runs
+                {t('workflowRuns')}
               </Button>
             )}
             {can('System', 'Administrator') && projectCode && (
               <Link href={`/projects/${encodeURIComponent(projectCode)}/invoices/${id}/edit`}>
-                <Button variant="outline" icon={Edit2} size="sm">Edit</Button>
+                <Button variant="outline" icon={Edit2} size="sm">{t('edit')}</Button>
               </Link>
             )}
             {can('Invoices', 'Delete') && DELETABLE_INVOICE_STATUS_IDS.includes(invoice.statusId) && (
               <Button variant="outline" icon={Trash2} size="sm" onClick={() => setDeleteOpen(true)}>
-                Delete
+                {t('delete')}
               </Button>
             )}
             <Link href={backHref}>
-              <Button variant="ghost" icon={ChevronLeft} size="sm">{backLabel}</Button>
+              <Button variant="ghost" icon={ChevronLeft} iconClassName="rtl:-scale-x-100" size="sm">{backLabel}</Button>
             </Link>
           </>
         }
@@ -197,34 +193,39 @@ function InvoiceDetailContent() {
 
           <Card>
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
-              <h3 className="text-sm font-semibold text-gray-700">Invoice Information</h3>
+              <h3 className="text-sm font-semibold text-gray-700">{t('invoiceInfo')}</h3>
               <StatusBadge
                 status={invoiceStatusesMap[invoice.statusId] ?? '—'}
                 colors={invoiceStatusColorsMap[invoice.statusId]}
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <InfoItem icon={FileText} label="Invoice Number" value={invoiceNumberOrPending(invoice)} valueClass="font-mono font-semibold" />
-              <InfoItem icon={DollarSign} label="Total Amount" value={formatCurrency(invoice.totalAmount, currency)} valueClass="font-semibold text-primary" />
-              <InfoItem icon={DollarSign} label="Revenue" value={formatCurrency(invoice.revenue, currency)} />
-              <InfoItem icon={DollarSign} label="WIP" value={formatCurrency(invoice.wip, currency)} />
-              <InfoItem icon={Percent} label="VAT Rate" value={formatPercentage(invoice.vat)} />
-              <InfoItem icon={User} label="Submitted By" value={invoice.submittedByName} />
-              <InfoItem icon={Calendar} label="Submission Date" value={formatDateTime(invoice.submissionDate)} />
-              <InfoItem icon={Calendar} label="Baseline Expected Collection Date" value={baselineDateOrPending(invoice)} />
-              <InfoItem icon={Calendar} label="Updated Expected Collection Date" value={formatDate(invoice.expectedCollectionDate)} />
-              <InfoItem icon={Calendar} label="Reasons For Update" value={invoice.reasonsForUpdate} />
-              <InfoItem icon={FileText} label="Financial Claim Reference" value={invoice.financialClaimReference} valueClass="font-mono" />
-              <InfoItem icon={Calendar} label="Receipt Issue Date" value={formatDate(invoice.receiptIssueDate)} />
+              <InfoItem icon={FileText} label={t('invoiceNumber')} value={invoiceNumberOrPending(invoice, t('pendingNumber'))} valueClass="font-mono font-semibold" />
+              <InfoItem icon={DollarSign} label={t('totalAmount')} value={formatCurrency(invoice.totalAmount, currency)} valueClass="font-semibold text-primary" />
+              <CollectedInfoItems invoice={invoice} currency={currency} />
+              <InfoItem icon={DollarSign} label={t('revenue')} value={formatCurrency(invoice.revenue, currency)} />
+              <InfoItem icon={DollarSign} label={t('wip')} value={formatCurrency(invoice.wip, currency)} />
+              <InfoItem icon={Percent} label={t('vatRate')} value={formatPercentage(invoice.vat)} />
+              <InfoItem icon={User} label={t('submittedBy')} value={invoice.submittedByName} />
+              <InfoItem icon={Calendar} label={t('submissionDate')} value={format.date(invoice.submissionDate)} />
+              <InfoItem icon={Calendar} label={t('baselineCollection')} value={baselineDateOrPending(invoice, t('pendingDate'), format.date)} />
+              <InfoItem icon={Calendar} label={t('updatedCollection')} value={format.date(invoice.expectedCollectionDate)} />
+              <InfoItem icon={Calendar} label={t('reasons')} value={invoice.reasonsForUpdate} />
+              <InfoItem icon={FileText} label={t('claimReference')} value={invoice.financialClaimReference} valueClass="font-mono" />
+              <InfoItem icon={Calendar} label={t('receiptDate')} value={format.date(invoice.receiptIssueDate)} />
             </div>
           </Card>
 
+          <InvoicePaymentsCard payments={invoice.payments} currency={currency} />
+
+          <FinancialClaimCard key={`${invoice.id}:${invoice.financialClaimReference ?? ''}`} invoiceId={invoice.id} />
+
           <Card>
             <h3 className="text-sm font-semibold text-gray-700 mb-4 pb-3 border-b border-gray-100">
-              BOQ Line Items ({invoice.lines.length})
+              {t('lineItems', { count: invoice.lines.length })}
             </h3>
             {invoice.lines.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-6">No line items on this invoice.</p>
+              <p className="text-sm text-gray-400 text-center py-6">{t('noLines')}</p>
             ) : (
               <div className="flex flex-col gap-3">
                 {invoice.lines.map((line) => (
@@ -240,19 +241,19 @@ function InvoiceDetailContent() {
                     </div>
                     <div className="mt-2 pt-2 border-t border-gray-200 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                       <div>
-                        <p className="text-gray-400">Quantity</p>
+                        <p className="text-gray-400">{t('quantity')}</p>
                         <p className="font-semibold text-gray-700">{line.quantity}</p>
                       </div>
                       <div>
-                        <p className="text-gray-400">Billed Unit Price</p>
+                        <p className="text-gray-400">{t('billedUnitPrice')}</p>
                         <p className="font-semibold text-gray-700">{formatCurrency(line.billedUnitPrice, currency)}</p>
                       </div>
                       <div>
-                        <p className="text-gray-400">Line Total</p>
+                        <p className="text-gray-400">{t('lineTotal')}</p>
                         <p className="font-semibold text-primary">{formatCurrency(line.billedUnitPrice * line.quantity, currency)}</p>
                       </div>
                       <div>
-                        <p className="text-gray-400">Submission Variance</p>
+                        <p className="text-gray-400">{t('submissionVariance')}</p>
                         <div className="mt-0.5"><VarianceBadge days={line.varianceDays} size="sm" /></div>
                       </div>
                     </div>
@@ -266,17 +267,17 @@ function InvoiceDetailContent() {
           <Card>
             <div className="mb-4 flex items-center justify-between gap-3 border-b border-gray-100 pb-3">
               <h3 className="text-sm font-semibold text-gray-700">
-                Attachments ({invoice.attachments.length})
+                {t('attachments', { count: invoice.attachments.length })}
               </h3>
               {can('Invoices', 'Add Attachments')
                 && ![INVOICE_STATUS_ID.COLLECTED, INVOICE_STATUS_ID.CANCELLED].includes(invoice.statusId) && (
                 <Button variant="outline" size="xs" icon={Paperclip} onClick={() => setAddingFiles(true)}>
-                  Add files
+                  {t('addFiles')}
                 </Button>
               )}
             </div>
             {invoice.attachments.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-6">No attachments on this invoice.</p>
+              <p className="text-sm text-gray-400 text-center py-6">{t('noAttachments')}</p>
             ) : (
               <div className="flex flex-col gap-2">
                 {invoice.attachments.map((attachment) => {
@@ -287,10 +288,10 @@ function InvoiceDetailContent() {
                         <Icon size={15} className="text-gray-500" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm text-gray-800 truncate">{attachment.fileName}</p>
+                        <p className="text-sm text-gray-800 truncate"><bdi>{attachment.fileName}</bdi></p>
                         <p className="text-xs text-gray-400 mt-0.5">
                           {formatFileSize(attachment.fileSize)}
-                          {attachment.uploadedBy && ` · Uploaded by ${attachment.uploadedBy}`}
+                          {attachment.uploadedBy && ` · ${t('uploadedBy', { name: attachment.uploadedBy })}`}
                         </p>
                       </div>
                       <Button
@@ -299,7 +300,7 @@ function InvoiceDetailContent() {
                         icon={Download}
                         loading={downloadingIds.has(attachment.id)}
                         onClick={() => handleDownload(attachment)}
-                        title="Download"
+                        title={t('download')}
                       />
                     </div>
                   );
@@ -312,13 +313,13 @@ function InvoiceDetailContent() {
         <div>
           <Card>
             <h3 className="text-sm font-semibold text-gray-700 mb-4 pb-3 border-b border-gray-100">
-              Project
+              {t('project')}
             </h3>
             <div className="flex flex-col gap-3">
-              <InfoItem icon={FileText} label="Project Code" value={projectCode} />
+              <InfoItem icon={FileText} label={t('projectCode')} value={projectCode} />
               {projectCode && (
                 <Link href={`/projects/${encodeURIComponent(projectCode)}`}>
-                  <Button variant="outline" size="sm" className="w-full">View Project</Button>
+                  <Button variant="outline" size="sm" className="w-full">{t('viewProject')}</Button>
                 </Link>
               )}
             </div>

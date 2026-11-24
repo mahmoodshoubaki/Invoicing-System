@@ -3,15 +3,23 @@ import { FilePen, FileText, ListChecks } from 'lucide-react';
 import { invoiceHref } from '@/components/invoices/list/invoiceListColumns';
 import { ROUTES } from '@/constants/routes';
 import { invoiceNumberOrPending } from '@/utils/invoiceDisplay';
-import { plural } from '../sourceNote';
 
 export const PENDING_TYPES = [
-  { type: 'invoice', label: 'Invoices', single: 'Invoice', short: 'invoice', icon: FileText },
-  { type: 'changeRequest', label: 'Change requests', single: 'Change request', short: 'CR', icon: FilePen },
-  { type: 'boqItem', label: 'BOQ items', single: 'BOQ item', short: 'BOQ item', icon: ListChecks },
+  { type: 'invoice', icon: FileText },
+  { type: 'changeRequest', icon: FilePen },
+  { type: 'boqItem', icon: ListChecks },
 ];
 
 export const pendingType = (type) => PENDING_TYPES.find((t) => t.type === type) ?? null;
+
+/**
+ * @param {(key: string, values?: Object) => string} t translator for the `dashboard` namespace
+ * @param {string} type
+ * @param {'label'|'single'} form
+ */
+export function pendingTypeName(t, type, form) {
+  return pendingType(type) ? t(`pendingTypes.${type}.${form}`) : type;
+}
 
 export function pendingHref(item) {
   const code = encodeURIComponent(item.projectCode ?? '');
@@ -21,14 +29,14 @@ export function pendingHref(item) {
   return ROUTES.DASHBOARD_PENDING_APPROVALS;
 }
 
-export function pendingTitle(item) {
-  if (item.type === 'invoice') return invoiceNumberOrPending({ invoiceNumber: item.title });
-  return item.title || pendingType(item.type)?.single || '—';
+export function pendingTitle(t, item) {
+  if (item.type === 'invoice') return invoiceNumberOrPending({ invoiceNumber: item.title }, t('lists.invoiceNumberPending'));
+  return item.title || pendingTypeName(t, item.type, 'single') || '—';
 }
 
-export function pendingBreakdown(byType) {
+export function pendingBreakdown(t, byType) {
   return byType
-    .filter((t) => t.count > 0)
-    .map((t) => plural(t.count, pendingType(t.type)?.short ?? t.type))
+    .filter((entry) => entry.count > 0)
+    .map((entry) => (pendingType(entry.type) ? t(`pendingTypes.${entry.type}.count`, { count: entry.count }) : `${entry.count} ${entry.type}`))
     .join(' · ');
 }

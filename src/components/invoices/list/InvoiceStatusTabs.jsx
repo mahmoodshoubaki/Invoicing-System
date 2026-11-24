@@ -1,12 +1,15 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 /**
  * @param {{ statuses: Array<{ id: number, label: string }>, value: number|null, onChange: (id: number|null) => void }} props
  */
 export default function InvoiceStatusTabs({ statuses, value, onChange }) {
-  const tabs = [{ id: null, label: 'All' }, ...statuses];
+  const t = useTranslations('invoices.list');
+  const tabs = [{ id: null, label: t('all') }, ...statuses];
   return (
-    <div role="tablist" aria-label="Invoice status" className="mb-5 flex w-fit flex-wrap gap-1 rounded-xl bg-gray-100 p-1">
+    <div role="tablist" aria-label={t('statusTabs')} className="mb-5 flex w-fit flex-wrap gap-1 rounded-xl bg-gray-100 p-1">
       {tabs.map((tab) => {
         const active = tab.id === value;
         return (

@@ -2,12 +2,14 @@
 
 import { motion } from 'motion/react';
 import { SearchX, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import Button from '@/components/common/Button';
 import { CHROME } from '@/theme/vizPalette';
 
 /** @param {{ filtered: boolean, onClear: () => void }} props */
 export default function NoProjectsMatch({ filtered, onClear }) {
+  const t = useTranslations('projects.list');
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }}
@@ -19,17 +21,17 @@ export default function NoProjectsMatch({ filtered, onClear }) {
       </span>
       <div>
         <p className="text-sm font-semibold" style={{ color: CHROME.textPrimary }}>
-          {filtered ? 'No projects match your filters' : 'No projects yet'}
+          {filtered ? t('noMatch') : t('noProjects')}
         </p>
         {filtered && (
           <p className="mt-1 text-xs" style={{ color: CHROME.textMuted }}>
-            Try a different search term or clear the status filter.
+            {t('noMatchHint')}
           </p>
         )}
       </div>
       {filtered && (
         <Button variant="outline" size="sm" icon={X} onClick={onClear}>
-          Clear filters
+          {t('clearFilters')}
         </Button>
       )}
     </motion.div>

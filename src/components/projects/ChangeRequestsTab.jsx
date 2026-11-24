@@ -5,24 +5,30 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { FileDiff, Plus } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useLookupLabel } from '@/hooks/useLookupLabel';
+import { useLocaleFormat } from '@/hooks/useLocaleFormat';
 
 import Button from '@/components/common/Button';
 import Table from '@/components/common/Table';
 import ErrorNote from '@/components/ui/ErrorNote';
 import ChangeRequestStatusBadge from '@/components/changeRequests/view/ChangeRequestStatusBadge';
 import { useBoqChangeRequests } from '@/components/changeRequests/useBoqChangeRequests';
-import { CR_RULES } from '@/constants/changeRequests';
+import { CR_RULE_KEYS } from '@/constants/changeRequests';
 import { ROUTES } from '@/constants/routes';
 import {
   selectChangeRequestProjectEffectsMap, selectChangeRequestReasonsMap, selectChangeRequestTypesMap,
 } from '@/store/slices/lookupsSlice';
 import { CHROME } from '@/theme/vizPalette';
-import { formatDateTime } from '@/utils/formatters';
 
 /**
  * @param {{ projectCode: string, boqId: string|null, canCreate: boolean }} props
  */
 function ChangeRequestsTab({ projectCode, boqId, canCreate }) {
+  const t = useTranslations('changeRequests.tab');
+  const tr = useTranslations('changeRequests.rules');
+  const format = useLocaleFormat();
+  const areaLabel = useLookupLabel('changeRequests.areas');
   const router = useRouter();
   const reasonsMap = useSelector(selectChangeRequestReasonsMap);
   const typesMap = useSelector(selectChangeRequestTypesMap);
@@ -31,45 +37,45 @@ function ChangeRequestsTab({ projectCode, boqId, canCreate }) {
   const encoded = encodeURIComponent(projectCode);
 
   const columns = [
-    { key: 'number', label: 'Request', render: (number) => <span className="text-xs font-semibold" style={{ color: CHROME.textPrimary }}>{number}</span> },
-    { key: 'statusId', label: 'Status', render: (statusId) => <ChangeRequestStatusBadge statusId={statusId} /> },
+    { key: 'number', label: t('columns.request'), render: (number) => <span className="text-xs font-semibold" style={{ color: CHROME.textPrimary }}>{number}</span> },
+    { key: 'statusId', label: t('columns.status'), render: (statusId) => <ChangeRequestStatusBadge statusId={statusId} /> },
     {
       key: 'reasonKeys',
-      label: 'Reasons',
+      label: t('columns.reasons'),
       render: (keys) => <span className="text-xs">{keys.map((k) => reasonsMap[k]?.label ?? k).join(', ') || '—'}</span>,
     },
     {
       key: 'typeKeys',
-      label: 'Type',
+      label: t('columns.type'),
       render: (keys) => <span className="text-xs">{keys.map((k) => typesMap[k]?.label ?? k).join(', ') || '—'}</span>,
     },
     {
       key: 'projectEffectKey',
-      label: 'Project effect',
+      label: t('columns.effect'),
       render: (key) => <span className="text-xs">{key != null ? effectsMap[key]?.label ?? key : '—'}</span>,
     },
-    { key: 'affectedAreas', label: 'Changes', render: (areas) => <span className="text-xs" style={{ color: CHROME.textMuted }}>{areas.join(', ') || '—'}</span> },
-    { key: 'requestedByName', label: 'Raised by', render: (name) => <span className="text-xs">{name ?? '—'}</span> },
-    { key: 'createdOn', label: 'Raised on', render: (on) => <span className="text-xs">{on ? formatDateTime(on) : '—'}</span> },
+    { key: 'affectedAreas', label: t('columns.changes'), render: (areas) => <span className="text-xs" style={{ color: CHROME.textMuted }}>{areas.map(areaLabel).join(', ') || '—'}</span> },
+    { key: 'requestedByName', label: t('columns.raisedBy'), render: (name) => <span className="text-xs">{name ?? '—'}</span> },
+    { key: 'createdOn', label: t('columns.raisedOn'), render: (on) => <span className="text-xs">{on ? format.dateTime(on) : '—'}</span> },
   ];
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-gray-100 bg-white px-5 py-4">
         <div className="min-w-0">
-          <h3 className="text-base font-semibold" style={{ color: CHROME.textPrimary }}>Change requests</h3>
-          <ul className="mt-1 list-disc pl-4 text-xs" style={{ color: CHROME.textMuted }}>
-            {CR_RULES.map((rule) => <li key={rule}>{rule}</li>)}
+          <h3 className="text-base font-semibold" style={{ color: CHROME.textPrimary }}>{t('title')}</h3>
+          <ul className="mt-1 list-disc ps-4 text-xs" style={{ color: CHROME.textMuted }}>
+            {CR_RULE_KEYS.map((rule) => <li key={rule}>{tr(rule)}</li>)}
           </ul>
         </div>
         {canCreate && (
           list.open ? (
-            <p className="max-w-xs text-right text-xs" style={{ color: CHROME.textMuted }}>
-              {list.open.number} is still open — a new request can be raised once it is Completed.
+            <p className="max-w-xs text-end text-xs" style={{ color: CHROME.textMuted }}>
+              {t('openNote', { number: list.open.number })}
             </p>
           ) : (
             <Link href={ROUTES.PROJECT_CHANGE_REQUEST_NEW(encoded)}>
-              <Button size="sm" icon={Plus} disabled={!boqId || !list.ready}>New change request</Button>
+              <Button size="sm" icon={Plus} disabled={!boqId || !list.ready}>{t('new')}</Button>
             </Link>
           )
         )}
@@ -89,7 +95,7 @@ function ChangeRequestsTab({ projectCode, boqId, canCreate }) {
           emptyMessage={
             <span className="inline-flex flex-col items-center gap-2">
               <FileDiff size={22} className="text-gray-300" aria-hidden="true" />
-              No change requests on this BOQ yet.
+              {t('empty')}
             </span>
           }
         />

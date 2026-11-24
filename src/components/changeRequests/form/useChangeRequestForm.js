@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useLocale, useTranslations } from 'next-intl';
 
 import { boqRepository } from '@/repositories/boqRepository';
 import { itemBlocker } from '@/lib/changeRequest/eligibility';
@@ -29,6 +30,10 @@ const NO_FILES = { existing: [], deleteIds: [], added: [] };
  */
 export function useChangeRequestForm({ boqItems, statusNameOf, subProjects, initial = null, onSubmit, asks = ALL_PARTS }) {
   const start = initial ?? EMPTY;
+  const t = useTranslations('changeRequests.form');
+  const tp = useTranslations('changeRequests.problems');
+  const tb = useTranslations('changeRequests.blocker');
+  const locale = useLocale();
   const types = useSelector(selectChangeRequestTypes);
   const [reasons, setReasons] = useState(start.reasons);
   const [typeKeys, setTypeKeys] = useState(start.typeKeys ?? []);
@@ -57,9 +62,9 @@ export function useChangeRequestForm({ boqItems, statusNameOf, subProjects, init
     [reasons, typeKeys, otherTypeText, projectEffectKey, details, projectEdits, items, newItems, files]
   );
   const problems = useMemo(() => {
-    const all = changeRequestProblems(draft, { subProjects, allItems: boqItems, types });
-    return asks === ALL_PARTS ? all : problemsAskedFor(all, asks, draft);
-  }, [draft, subProjects, boqItems, types, asks]);
+    const all = changeRequestProblems(draft, { subProjects, allItems: boqItems, types, t: tp });
+    return asks === ALL_PARTS ? all : problemsAskedFor(all, asks, draft, tp);
+  }, [draft, subProjects, boqItems, types, asks, tp]);
 
   const toggleReason = (key) => {
     setReasons((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
@@ -113,15 +118,15 @@ export function useChangeRequestForm({ boqItems, statusNameOf, subProjects, init
       setPlans((prev) => ({ ...prev, [itemId]: { busy: false, error: null } }));
     } catch (err) {
       if (rebuildSeq.current[itemId] !== mine) return;
-      setPlans((prev) => ({ ...prev, [itemId]: { busy: false, error: err?.message || 'Failed to generate the invoicing plan.' } }));
+      setPlans((prev) => ({ ...prev, [itemId]: { busy: false, error: err?.message || t('planFailed') } }));
     }
-  }, [window.start, window.end]);
+  }, [window.start, window.end, t]);
 
   const addItem = async (itemId) => {
     const item = boqItems.find((i) => String(i.id) === String(itemId));
     if (!item || items.some((d) => String(d.itemId) === String(itemId))) return;
-    const name = item.englishName ?? `Item ${item.id}`;
-    const blocked = itemBlocker(item, statusNameOf(item.statusId));
+    const name = item.englishName ?? t('itemFallback', { id: item.id });
+    const blocked = itemBlocker(item, statusNameOf(item.statusId), tb);
     if (blocked) {
       setAdding({ itemId: null, error: `${name}: ${blocked.reason}` });
       return;
@@ -133,7 +138,7 @@ export function useChangeRequestForm({ boqItems, statusNameOf, subProjects, init
       setAdding({ itemId: null, error: null });
       edited();
     } catch (err) {
-      setAdding({ itemId: null, error: `${name}: ${err?.message || 'its invoicing plan could not be loaded.'}` });
+      setAdding({ itemId: null, error: `${name}: ${err?.message || t('planLoadFailed')}` });
     }
   };
 
@@ -181,7 +186,7 @@ export function useChangeRequestForm({ boqItems, statusNameOf, subProjects, init
       const anyPlaced = placed.reasons || placed.typeKeys || placed.otherTypeText || placed.projectEffectKey
         || placed.details || placed.files || placed.general.length
         || Object.keys(placed.project).length || Object.keys(placed.items).length || Object.keys(placed.newItems).length;
-      if (!anyPlaced) placed.general.push(err?.message || 'The change request could not be sent.');
+      if (!anyPlaced) placed.general.push(err?.message || t('sendFailed'));
       showServerErrors(placed);
     } finally {
       setSubmitting(false);
@@ -206,7 +211,7 @@ export function useChangeRequestForm({ boqItems, statusNameOf, subProjects, init
     + Object.values(shownProblems.project).reduce((n, p) => n + Object.keys(p).length, 0)
     + Object.values(shownProblems.items).reduce((n, p) => n + Object.keys(p).length, 0)
     + Object.values(shownProblems.newItems).reduce((n, p) => n + Object.keys(p).length, 0)
-    + groupProblems(shownProblems.general).count;
+    + groupProblems(shownProblems.general, { t: tp, locale }).count;
 
   return {
     reasons,

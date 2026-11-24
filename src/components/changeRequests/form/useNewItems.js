@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { boqRepository } from '@/repositories/boqRepository';
 import { toPlanCycles } from '@/lib/changeRequest/itemDraft';
@@ -12,6 +13,7 @@ const NONE = [];
  * @param {{ initial?: Array, window: { start: string, end: string }, canEdit: boolean, onEdit: () => void }} options
  */
 export function useNewItems({ initial = NONE, window, canEdit, onEdit }) {
+  const t = useTranslations('changeRequests.form');
   const [newItems, setNewItems] = useState(initial);
   const [plans, setPlans] = useState({});
   const lastKey = useRef(initial.length);
@@ -34,9 +36,9 @@ export function useNewItems({ initial = NONE, window, canEdit, onEdit }) {
       setPlans((prev) => ({ ...prev, [key]: { busy: false, error: null } }));
     } catch (err) {
       if (rebuildSeq.current[key] !== mine) return;
-      setPlans((prev) => ({ ...prev, [key]: { busy: false, error: err?.message || 'Failed to generate the invoicing plan.' } }));
+      setPlans((prev) => ({ ...prev, [key]: { busy: false, error: err?.message || t('planFailed') } }));
     }
-  }, [window.start, window.end]);
+  }, [window.start, window.end, t]);
 
   const addNewItem = () => {
     if (!canEdit) return;

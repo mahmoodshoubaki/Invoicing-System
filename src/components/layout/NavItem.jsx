@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useSelector } from 'react-redux';
 import { usePermission } from '@/hooks/usePermission';
 import { selectMyTaskCount } from '@/store/slices/workflowTasksSlice';
@@ -29,8 +30,8 @@ export default function NavItem({ item, depth = 0, collapsed }) {
   const isActive = childActive || (item.exact ? pathname === item.href : matches(item.href));
   const { icon: Icon } = item;
 
-  const language = useSelector((s) => s.ui.language);
-  const label = language === 'ar' && item.labelAr ? item.labelAr : item.label;
+  const t = useTranslations('nav');
+  const label = t(item.labelKey);
 
   const badgeCount = useSelector((s) => {
     if (item.badge === 'unseen') return selectUnseenCount(s);
@@ -56,13 +57,13 @@ export default function NavItem({ item, depth = 0, collapsed }) {
           <Icon size={18} className="shrink-0" />
           {!collapsed && (
             <>
-              <span className="flex-1 text-left">{label}</span>
-              {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              <span className="flex-1 text-start">{label}</span>
+              {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} className="rtl:-scale-x-100" />}
             </>
           )}
         </button>
         {expanded && !collapsed && (
-          <ul className="mt-1 ml-4 space-y-0.5 border-l-2 border-gray-100 pl-3">
+          <ul className="mt-1 ms-4 space-y-0.5 border-s-2 border-gray-100 ps-3">
             {item.children.map((child) => (
               <NavItem key={child.href} item={child} depth={depth + 1} collapsed={collapsed} />
             ))}
@@ -92,7 +93,7 @@ export default function NavItem({ item, depth = 0, collapsed }) {
           </span>
         )}
         {collapsed && badgeCount > 0 && (
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+          <span className="absolute top-1 inset-e-1 w-2 h-2 bg-red-500 rounded-full" />
         )}
       </Link>
     </li>

@@ -5,6 +5,7 @@ import {
   GitBranch, Bell, Users, Shield, ListChecks, Boxes,
   Activity, X, Menu, BellRing, Timer, HardDriveUpload,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleSidebar } from '@/store/slices/uiSlice';
 import NavItem from './NavItem';
@@ -12,45 +13,39 @@ import { APP_SHORT_NAME, APP_VERSION } from '@/constants/appConfig';
 
 const NAV_ITEMS = [
   {
-    label: 'Dashboard',
-    labelAr: 'لوحة التحكم',
+    labelKey: 'dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
     permission: null,
   },
   {
-    label: 'Projects',
-    labelAr: 'المشاريع',
+    labelKey: 'projects',
     href: '/projects',
     icon: FolderKanban,
     permission: { module: 'Projects', action: 'View' },
   },
   {
-    label: 'Invoice Requests',
-    labelAr: 'طلبات الفاتورة',
+    labelKey: 'invoiceRequests',
     href: '/invoices',
     icon: Receipt,
     permission: { module: 'Invoices', action: 'View' },
   },
   {
-    label: 'My Tasks',
-    labelAr: 'مهامي',
+    labelKey: 'myTasks',
     href: '/workflow/tasks',
     icon: ListChecks,
     permission: { module: 'WorkflowTasks', action: 'View' },
     badge: 'workflowTasks',
   },
   {
-    label: 'Notifications',
-    labelAr: 'الإشعارات',
+    labelKey: 'notifications',
     href: '/notifications',
     icon: Bell,
     permission: null,
     badge: 'unseen',
   },
   {
-    label: 'Admin',
-    labelAr: 'الإدارة',
+    labelKey: 'admin',
     href: '/admin',
     icon: Shield,
     permission: [
@@ -67,11 +62,10 @@ const NAV_ITEMS = [
       { module: 'WorkflowInstances', action: 'View' },
     ],
     children: [
-      { label: 'Users', labelAr: 'المستخدمون', href: '/admin/users', icon: Users, permission: { module: 'System', action: 'Administrator' } },
-      { label: 'Roles & Permissions', labelAr: 'الأدوار والصلاحيات', href: '/admin/roles', icon: Shield, permission: { module: 'Role', action: 'View' } },
+      { labelKey: 'users', href: '/admin/users', icon: Users, permission: { module: 'System', action: 'Administrator' } },
+      { labelKey: 'rolesAndPermissions', href: '/admin/roles', icon: Shield, permission: { module: 'Role', action: 'View' } },
       {
-        label: 'Groups',
-        labelAr: 'المجموعات',
+        labelKey: 'groups',
         href: '/admin/groups',
         icon: Boxes,
         permission: [
@@ -80,8 +74,7 @@ const NAV_ITEMS = [
         ],
       },
       {
-        label: 'Workflow',
-        labelAr: 'سير العمل',
+        labelKey: 'workflow',
         href: '/admin/workflow',
         icon: GitBranch,
         permission: [
@@ -90,8 +83,7 @@ const NAV_ITEMS = [
         ],
       },
       {
-        label: 'Notifications',
-        labelAr: 'إدارة الإشعارات',
+        labelKey: 'notificationSettings',
         href: '/admin/notifications',
         icon: BellRing,
         permission: [
@@ -100,8 +92,7 @@ const NAV_ITEMS = [
         ],
       },
       {
-        label: 'Monitoring',
-        labelAr: 'المراقبة',
+        labelKey: 'monitoring',
         href: '/admin/monitoring',
         icon: Activity,
         permission: [
@@ -110,13 +101,14 @@ const NAV_ITEMS = [
           { module: 'Workflow', action: 'Manage' },
         ],
       },
-      { label: 'Background Jobs', labelAr: 'المهام الخلفية', href: '/admin/jobs', icon: Timer, permission: { module: 'System', action: 'Manage Jobs' } },
-      { label: 'Data Migration', labelAr: 'ترحيل البيانات', href: '/admin/migration', icon: HardDriveUpload, permission: { module: 'System', action: 'Administrator' } },
+      { labelKey: 'backgroundJobs', href: '/admin/jobs', icon: Timer, permission: { module: 'System', action: 'Manage Jobs' } },
+      { labelKey: 'dataMigration', href: '/admin/migration', icon: HardDriveUpload, permission: { module: 'System', action: 'Administrator' } },
     ],
   },
 ];
 
 export default function Sidebar() {
+  const t = useTranslations('nav');
   const dispatch = useDispatch();
   const sidebarOpen = useSelector((s) => s.ui.sidebarOpen);
 
@@ -131,16 +123,16 @@ export default function Sidebar() {
 
       <aside
         className={`sticky top-16 max-h-[calc(100vh-4rem)] shrink-0 bg-white z-30 flex flex-col
-          transition-all duration-300 ease-in-out border-r border-gray-100
+          transition-all duration-300 ease-in-out border-e border-gray-100
+          shadow-[2px_0_8px_rgba(0,0,0,0.06)] rtl:shadow-[-2px_0_8px_rgba(0,0,0,0.06)]
           ${sidebarOpen ? 'w-64' : 'w-16'}
         `}
-        style={{ boxShadow: '2px 0 8px rgba(0,0,0,0.06)' }}
       >
         <div className={`flex items-center h-12 px-4 border-b border-gray-100 shrink-0 ${sidebarOpen ? 'justify-end' : 'justify-center'}`}>
           <button
             onClick={() => dispatch(toggleSidebar())}
             className="p-1 rounded-md hover:bg-gray-100 text-gray-500 shrink-0"
-            aria-label="Toggle sidebar"
+            aria-label={t('toggleSidebar')}
           >
             {sidebarOpen ? <X size={16} /> : <Menu size={16} />}
           </button>

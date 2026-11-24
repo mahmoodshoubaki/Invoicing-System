@@ -2,9 +2,11 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { decodeRouteParam } from '@/lib/routeParam';
 import { useSelector } from 'react-redux';
 import { MotionConfig } from 'motion/react';
 import { ChevronLeft, FileText, Paperclip, Send } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import SubPageHeader from '@/components/common/SubPageHeader';
 import FormSection from '@/components/common/FormSection';
@@ -25,8 +27,9 @@ import { useToast } from '@/hooks/useToast';
 
 export default function NewInvoicePage() {
   const { id: rawId } = useParams();
-  const projectCode = decodeURIComponent(rawId);
+  const projectCode = decodeRouteParam(rawId);
   const toast = useToast();
+  const t = useTranslations('invoices.form');
   const currency = useSelector((s) => s.ui.currency);
 
   const sources = useInvoiceSources(projectCode);
@@ -50,27 +53,27 @@ export default function NewInvoicePage() {
           open={invoice.confirmOpen}
           onClose={invoice.closeConfirm}
           onConfirm={invoice.handleConfirmSubmit}
-          title="Submit Invoice Request"
-          message={`Submit invoice request for ${formatCurrency(invoice.grandTotal, currency)}? This will be sent for review.`}
-          confirmLabel="Submit Request"
+          title={t('submitTitle')}
+          message={t.rich('submitMessage', { value: formatCurrency(invoice.grandTotal, currency), amount: (chunks) => <span dir="ltr">{chunks}</span> })}
+          confirmLabel={t('submitRequestConfirm')}
           confirmVariant="primary"
           loading={invoice.saving}
         />
 
         <SubPageHeader
-          eyebrow="Invoicing"
-          title="New Invoice Request"
+          eyebrow={t('eyebrow')}
+          title={t('newTitle')}
           subtitle={project.contractName ?? projectCode}
           icon={FileText}
           breadcrumbs={[
-            { label: 'Home', href: '/' },
-            { label: 'Projects', href: '/projects' },
+            { label: t('home'), href: '/' },
+            { label: t('projects'), href: '/projects' },
             { label: project.contractName, href: projectHref },
-            { label: 'New Request' },
+            { label: t('newRequest') },
           ]}
           actions={
             <Link href={projectHref}>
-              <Button variant="ghost" icon={ChevronLeft} size="sm">Back</Button>
+              <Button variant="ghost" icon={ChevronLeft} iconClassName="rtl:-scale-x-100" size="sm">{t('back')}</Button>
             </Link>
           }
         />
@@ -95,14 +98,14 @@ export default function NewInvoicePage() {
             <>
               <InvoiceDetailsSection form={invoice.form} errors={invoice.errors} set={invoice.set} />
 
-              <FormSection title="Attachments" subtitle="Supporting documents for this request" icon={Paperclip}>
+              <FormSection title={t('attachments')} subtitle={t('attachmentsHint')} icon={Paperclip}>
                 <AttachmentUploader
                   files={invoice.attachments}
                   onChange={invoice.setAttachments}
                   disabled={invoice.saving}
                   onRejected={(rejected) => {
                     rejected.forEach(({ file, reason }) => {
-                      toast.error('Attachment not added', `${file.name}: ${reason}`);
+                      toast.error(t('attachmentNotAdded'), `${file.name}: ${reason}`);
                     });
                   }}
                 />
@@ -110,7 +113,7 @@ export default function NewInvoicePage() {
 
               <div className="sticky bottom-0 z-10 flex items-center justify-end gap-3 rounded-2xl border border-[#e9e7e5] bg-white/95 px-4 py-3 shadow-[0_-4px_16px_-8px_rgb(60_60_58/0.18)]">
                 <Link href={projectHref}>
-                  <Button variant="ghost">Cancel</Button>
+                  <Button variant="ghost">{t('cancel')}</Button>
                 </Link>
                 <Button
                   icon={Send}
@@ -118,7 +121,7 @@ export default function NewInvoicePage() {
                   loading={invoice.saving}
                   disabled={invoice.attachmentsUploading}
                 >
-                  {invoice.attachmentsUploading ? 'Uploading attachments…' : 'Submit request'}
+                  {invoice.attachmentsUploading ? t('uploadingAttachments') : t('submitRequest')}
                 </Button>
               </div>
             </>

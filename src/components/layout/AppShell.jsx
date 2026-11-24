@@ -9,7 +9,7 @@ export default function AppShell({ children }) {
     <div className="min-h-screen bg-app flex flex-col">
       <Header />
 
-      <div className="flex flex-1 pt-16 rtl:flex-row-reverse">
+      <div className="flex flex-1 pt-16">
         <Sidebar />
 
         <main className="flex-1 min-w-0 overflow-auto">

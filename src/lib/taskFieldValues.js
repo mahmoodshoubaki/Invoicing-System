@@ -22,18 +22,18 @@ export function initialValues(fields) {
 
 const isEmpty = (value) => value == null || String(value).trim() === '';
 
-function fieldProblem(field, value) {
+function fieldProblem(field, value, t) {
   if (field.typeKey === LIST_TYPE) return null;
   if (field.typeKey === INVOICING_PLAN_TYPE) {
-    return field.required && parsePlanValue(value).length === 0 ? 'At least one cycle is needed.' : null;
+    return field.required && parsePlanValue(value).length === 0 ? t('oneCycle') : null;
   }
   if (field.typeKey === FILES_TYPE) {
-    if (isStillAdding(value)) return 'A file is still being added — a moment.';
-    return field.required && filesAfterSave(value) === 0 ? 'At least one file is needed.' : null;
+    if (isStillAdding(value)) return t('fileAdding');
+    return field.required && filesAfterSave(value) === 0 ? t('oneFile') : null;
   }
-  if (field.required && isEmpty(value)) return `${field.label || field.name} is required.`;
+  if (field.required && isEmpty(value)) return t('required', { label: field.label || field.name });
   if (field.typeKey === 'number' && !isEmpty(value) && !NUMBER.test(String(value).trim())) {
-    return 'Use digits, with a dot for decimals — like 1234.50.';
+    return t('digits');
   }
   return null;
 }
@@ -41,15 +41,15 @@ function fieldProblem(field, value) {
 /**
  * @returns {{ fieldErrors: Object<string, string>, commentError: string|null }}
  */
-export function checkBeforeSubmit(fields, values, button, comment) {
+export function checkBeforeSubmit(fields, values, button, comment, t) {
   const fieldErrors = {};
   if (button?.requiresFields) {
     for (const field of fields ?? []) {
-      const problem = fieldProblem(field, values?.[field.name]);
+      const problem = fieldProblem(field, values?.[field.name], t);
       if (problem) fieldErrors[field.name] = problem;
     }
   }
-  const commentError = button?.requiresComment && isEmpty(comment) ? `"${button.label}" needs a comment.` : null;
+  const commentError = button?.requiresComment && isEmpty(comment) ? t('needsComment', { label: button.label }) : null;
   return { fieldErrors, commentError };
 }
 

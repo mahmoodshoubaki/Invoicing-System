@@ -16,7 +16,7 @@ function SubPageHeader({ title, subtitle, icon: Icon, breadcrumbs = [], actions,
     >
       {/* Soft brand wash in the corner — enough to tie back to the hero pages */}
       <div
-        className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-[#f8485e] opacity-[0.07] blur-3xl"
+        className="pointer-events-none absolute -inset-e-12 -top-16 h-40 w-40 rounded-full bg-[#f8485e] opacity-[0.07] blur-3xl"
         aria-hidden="true"
       />
 
@@ -24,7 +24,7 @@ function SubPageHeader({ title, subtitle, icon: Icon, breadcrumbs = [], actions,
         <nav className="relative mb-2.5 flex flex-wrap items-center gap-1 text-xs" style={{ color: CHROME.textMuted }}>
           {breadcrumbs.map((crumb, i) => (
             <span key={`${crumb.label}-${i}`} className="flex items-center gap-1">
-              {i > 0 && <ChevronRight size={11} className="shrink-0" />}
+              {i > 0 && <ChevronRight size={11} className="shrink-0 rtl:-scale-x-100" />}
               {crumb.href ? (
                 <Link href={crumb.href} className="transition-colors hover:text-[#f8485e]">
                   {crumb.label}

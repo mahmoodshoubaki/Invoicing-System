@@ -23,8 +23,4 @@ export const CR_PERMISSIONS = {
   UPDATE: { module: 'ChangeRequests', action: 'Update', code: 'ChangeRequests.Update' },
 };
 
-export const CR_RULES = [
-  'A change request can only change approved items that have no invoices.',
-  'Only one change request can be open on a BOQ at a time.',
-  'While it is open, its items can’t be invoiced, edited, deleted or changed by a workflow task.',
-];
+export const CR_RULE_KEYS = ['approvedOnly', 'oneOpen', 'whileOpen'];

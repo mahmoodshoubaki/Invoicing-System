@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useLocale, useTranslations } from 'next-intl';
 
 import { boqRepository } from '@/repositories/boqRepository';
 import { changeRequestRepository } from '@/repositories/changeRequestRepository';
@@ -19,6 +20,8 @@ const NOTHING_KEPT = { fieldChanges: [], cycleChanges: [] };
  * @param {ReturnType<import('@/lib/changeRequest/taskFields').changeRequestTaskParts>} parts
  */
 export function useChangeRequestTaskData(task, parts) {
+  const t = useTranslations('changeRequests.task');
+  const locale = useLocale();
   const statusesMap = useSelector(selectBoqItemStatusesMap);
   const changeRequestId = task.targetIds?.length === 1 ? task.targetIds[0] : null;
   const changes = asksForChanges(parts);
@@ -39,12 +42,12 @@ export function useChangeRequestTaskData(task, parts) {
           }
         }
         if (!loaded && changes && Boolean(parts.fieldChanges) !== Boolean(parts.cycleChanges)) {
-          throw loadError ?? new Error('This task is not about one change request, so its changes can’t be shown.');
+          throw loadError ?? new Error(t('notOneRequest'));
         }
 
         const { changeRequest, unreadable } = changeRequestFromTask(parts, loaded);
         if (unreadable.length) {
-          throw new Error(`${unreadable.join(' and ')} could not be read from this task. Open the change request instead.`);
+          throw new Error(t('unreadable', { names: new Intl.ListFormat(locale, { type: 'conjunction' }).format(unreadable) }));
         }
 
         let boqItems = NONE;
@@ -52,7 +55,7 @@ export function useChangeRequestTaskData(task, parts) {
         let cyclesByItem = {};
         if (changes) {
           const projectCode = loaded?.projectCode ?? task.projectCode;
-          if (!projectCode) throw new Error('This task does not say which project the change request is on.');
+          if (!projectCode) throw new Error(t('noProject'));
           const [boq, rawSubProjects] = await Promise.all([
             boqRepository.getBOQByProjectCode(projectCode),
             projectRepository.getSubProjectsSummary(projectCode),

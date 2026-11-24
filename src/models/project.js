@@ -25,9 +25,6 @@
  * @property {number} revenueTraining
  * @property {number} revenueSWLicenses
  * @property {number} wip
- * @property {number} collectedValue
- * @property {number} nonCollectedValue
- * @property {number} totalInvoicesValue
  * @property {string|null} startDate
  * @property {string|null} endDate
  * @property {number} duration
@@ -46,6 +43,8 @@
  * @property {string|null} projectCode
  * @property {string|null} poNumber
  * @property {string|null} invoicingPlatform
+ * @property {string|null} bdm
+ * @property {string|null} businessUnit
  * @property {string|null} status
  * @property {string|null} contractStartDate
  * @property {string|null} contractFinishDate
@@ -70,6 +69,8 @@ export function mapProjectListItem(raw) {
     projectCode:           info.projectCode       ?? null,
     poNumber:              info.poNumber != null ? String(info.poNumber) : null,
     invoicingPlatform:     info.invoicingPlatform ?? null,
+    bdm:                   info.bdm               ?? null,
+    businessUnit:          info.businessUnit      ?? null,
     status:                info.projectStatus     ?? null,
     contractStartDate:     info.contractStartDate     ?? null,
     contractFinishDate:    info.contractFinishDate    ?? null,
@@ -117,9 +118,6 @@ export function createProject(raw) {
     revenueTraining:       raw.projectRevenue_Training               ?? 0,
     revenueSWLicenses:     raw.projectRevenue_SWLicenses             ?? 0,
     wip:                   raw.projectWIP                            ?? 0,
-    collectedValue:        raw.invoicesCollectedValue                ?? 0,
-    nonCollectedValue:     raw.invoicesNonCollectedValue             ?? 0,
-    totalInvoicesValue:    raw.totalInvoicesValue                    ?? 0,
 
     // Timeline
     startDate:             raw.actualStartDate       ?? null,
@@ -167,9 +165,6 @@ export function mapMainProjectDetails(raw) {
  * @property {number} wip
  * @property {number} vatPercentage
  * @property {number} vatValue
- * @property {number} collectedValue
- * @property {number} nonCollectedValue
- * @property {number} totalInvoicesValue
  */
 
 /**
@@ -190,9 +185,6 @@ export function mapSubProjectSummary(raw) {
     wip:                   fin.projectWIP                             ?? 0,
     vatPercentage:         fin.projectVATPercentage                   ?? 0,
     vatValue:              fin.projectVATValue                        ?? 0,
-    collectedValue:        fin.invoicesCollectedValue                 ?? 0,
-    nonCollectedValue:     fin.invoicesNonCollectedValue               ?? 0,
-    totalInvoicesValue:    fin.totalInvoicesValue                     ?? 0,
   };
 }
 
@@ -206,9 +198,6 @@ const ZERO_SUB_PROJECT_TOTALS = {
   revenueSWLicenses: 0,
   wip: 0,
   vatValue: 0,
-  collectedValue: 0,
-  nonCollectedValue: 0,
-  totalInvoicesValue: 0,
 };
 
 /**
@@ -225,9 +214,6 @@ export function aggregateSubProjectFinancials(subProjects) {
     revenueSWLicenses:     totals.revenueSWLicenses     + sp.revenueSWLicenses,
     wip:                   totals.wip                   + sp.wip,
     vatValue:              totals.vatValue              + sp.vatValue,
-    collectedValue:        totals.collectedValue        + sp.collectedValue,
-    nonCollectedValue:     totals.nonCollectedValue     + sp.nonCollectedValue,
-    totalInvoicesValue:    totals.totalInvoicesValue    + sp.totalInvoicesValue,
   }), { ...ZERO_SUB_PROJECT_TOTALS });
 }
 

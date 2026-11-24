@@ -7,17 +7,18 @@ const blank = (value) => String(value ?? '').trim() === '';
 /**
  * @param {Object} button
  * @param {{ reasonKey?: string, otherReason?: string }} [picked]
+ * @param {(key: string, values?: Object) => string} t the `tasks.errors` translator
  */
-export function reasonProblem(button, { reasonKey = '', otherReason = '' } = {}) {
+export function reasonProblem(button, { reasonKey = '', otherReason = '' } = {}, t) {
   const reasons = button?.reasons;
   if (!reasons) return null;
-  if (!reasonKey) return reasons.required ? `"${button.label}" needs a reason.` : null;
+  if (!reasonKey) return reasons.required ? t('needsReason', { label: button.label }) : null;
   if (reasonKey === OTHER_REASON_KEY) {
     const text = otherReason.trim();
-    if (!text) return 'Type the reason, or pick one from the list.';
-    return text.length > REASON_TEXT_MAX ? `The reason can be at most ${REASON_TEXT_MAX} characters.` : null;
+    if (!text) return t('typeReason');
+    return text.length > REASON_TEXT_MAX ? t('reasonTooLong', { max: REASON_TEXT_MAX }) : null;
   }
-  return reasons.options.some((o) => o.key === reasonKey) ? null : 'Pick a reason from the list.';
+  return reasons.options.some((o) => o.key === reasonKey) ? null : t('pickReason');
 }
 
 export function reasonToSend(button, { reasonKey = '', otherReason = '' } = {}) {

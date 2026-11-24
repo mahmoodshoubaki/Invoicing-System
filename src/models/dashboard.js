@@ -18,6 +18,8 @@ export function mapInvoiceSummary(raw) {
   return {
     total: num(raw?.total) ?? 0,
     byStatus: (raw?.byStatus ?? []).map((s) => ({ statusId: s.statusId, count: num(s.count) ?? 0, amount: num(s.amount) ?? 0 })),
+    collectedAmount: num(raw?.collectedAmount) ?? 0,
+    collectedThisYear: num(raw?.collectedThisYear) ?? 0,
     inProgress: {
       count: num(inProgress.count) ?? 0,
       latest: (inProgress.latest ?? []).map((inv) => ({
@@ -33,10 +35,10 @@ export function mapInvoiceSummary(raw) {
   };
 }
 
-export function monthLabel(key) {
+export function monthLabel(key, locale = 'en-GB') {
   const [year, month] = String(key ?? '').split('-').map(Number);
   if (!year || !month) return String(key ?? '');
-  return new Date(year, month - 1, 1).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+  return new Date(year, month - 1, 1).toLocaleDateString(locale, { month: 'short', year: 'numeric' });
 }
 
 export function mapMonthlyTrend(raw) {
@@ -57,6 +59,8 @@ export function mapDelayedCycles(raw) {
       boqItemId: c.boqItemId,
       projectCode: c.projectCode ?? null,
       projectName: c.projectName ?? null,
+      bdm: c.bdm ?? null,
+      businessUnit: c.businessUnit ?? null,
       itemName: c.itemNameEn || c.itemNameAr || '',
       cycleNumber: num(c.cycleNumber),
       totalCycles: num(c.totalCycles),

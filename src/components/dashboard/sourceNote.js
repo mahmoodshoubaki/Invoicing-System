@@ -1,8 +1,12 @@
-export function sourceNote(source, readyNote, forbiddenNote = 'No access') {
-  if (source.status === 'loading') return 'Loading…';
-  if (source.status === 'forbidden') return forbiddenNote;
-  if (source.status === 'error') return 'Could not be loaded';
+/**
+ * @param {(key: string) => string} t translator for the `dashboard` namespace
+ * @param {{ status: string }} source
+ * @param {string} readyNote
+ * @param {string} [forbiddenNote]
+ */
+export function sourceNote(t, source, readyNote, forbiddenNote) {
+  if (source.status === 'loading') return t('source.loading');
+  if (source.status === 'forbidden') return forbiddenNote ?? t('source.forbidden');
+  if (source.status === 'error') return t('source.error');
   return readyNote;
 }
-
-export const plural = (count, word) => `${count} ${word}${count === 1 ? '' : 's'}`;

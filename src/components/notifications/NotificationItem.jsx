@@ -2,6 +2,7 @@
 
 import { memo } from 'react';
 import { ArrowUpRight } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 
 import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
@@ -16,16 +17,19 @@ const PRIORITY_TONE = {
   [PRIORITY.CRITICAL]: STATUS.critical,
 };
 
-const PRIORITY_LABEL = {
-  [PRIORITY.HIGH]: 'High priority',
-  [PRIORITY.URGENT]: 'Urgent',
-  [PRIORITY.CRITICAL]: 'Critical',
+const PRIORITY_LABEL_KEY = {
+  [PRIORITY.HIGH]: 'high',
+  [PRIORITY.URGENT]: 'urgent',
+  [PRIORITY.CRITICAL]: 'critical',
 };
 
 /**
  * @param {{ notification: Object, language: 'en'|'ar', now: number, onOpen: (n: Object) => void, full?: boolean, }} props
  */
 function NotificationItem({ notification, language, now, onOpen, full = false }) {
+  const t = useTranslations('notifications');
+  const tc = useTranslations('common');
+  const locale = useLocale();
   const { subject, body, dir } = notificationText(notification, language);
   const unread = !notification.isRead;
   const tone = PRIORITY_TONE[notification.priorityKey];
@@ -34,13 +38,13 @@ function NotificationItem({ notification, language, now, onOpen, full = false })
     <button
       type="button"
       onClick={() => onOpen(notification)}
-      className="group relative flex w-full gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-[#f6f5f3]"
+      className="group relative flex w-full gap-3 rounded-lg px-3 py-2.5 text-start transition-colors hover:bg-[#f6f5f3]"
       style={{ backgroundColor: unread ? '#fbfaf9' : 'transparent' }}
     >
       {/* Priority on the leading edge — only for High and above. */}
       {tone && (
         <span
-          className="absolute inset-y-2 left-0 w-0.5 rounded-full"
+          className="absolute inset-y-2 inset-s-0 w-0.5 rounded-full"
           style={{ backgroundColor: tone }}
           aria-hidden="true"
         />
@@ -57,14 +61,14 @@ function NotificationItem({ notification, language, now, onOpen, full = false })
             className={`min-w-0 text-[13px] leading-snug ${unread ? 'font-semibold' : 'font-medium'} ${full ? '' : 'line-clamp-1'}`}
             style={{ color: unread ? CHROME.textPrimary : CHROME.textSecondary }}
           >
-            {subject || 'Notification'}
+            {subject || t('untitled')}
           </span>
           <span
             className="shrink-0 whitespace-nowrap pt-0.5 text-[11px] tabular-nums"
             style={{ color: CHROME.textMuted }}
             title={formatDateTime(notification.createdOn)}
           >
-            {relativeTime(notification.createdOn, now)}
+            {relativeTime(notification.createdOn, now, locale)}
           </span>
         </span>
 
@@ -85,7 +89,7 @@ function NotificationItem({ notification, language, now, onOpen, full = false })
                 className="rounded-full px-1.5 py-0.5 font-medium"
                 style={{ backgroundColor: withAlpha(tone, 0.12), color: CHROME.textSecondary }}
               >
-                {PRIORITY_LABEL[notification.priorityKey]}
+                {t(`priority.${PRIORITY_LABEL_KEY[notification.priorityKey]}`)}
               </span>
             )}
             {notification.actionUrl && (
@@ -93,7 +97,7 @@ function NotificationItem({ notification, language, now, onOpen, full = false })
                 className="inline-flex items-center gap-0.5 opacity-70 transition-opacity group-hover:opacity-100"
                 style={{ color: STATUS.info }}
               >
-                Open <ArrowUpRight size={11} aria-hidden="true" />
+                {tc('open')} <ArrowUpRight size={11} className="rtl:-scale-x-100" aria-hidden="true" />
               </span>
             )}
           </span>

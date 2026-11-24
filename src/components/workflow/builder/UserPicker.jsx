@@ -2,6 +2,7 @@
 
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Search, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
@@ -13,8 +14,9 @@ const TAKE = 20;
 const NO_USERS = {};
 
 function UserPicker({
-  selectedIds, resolvedById = NO_USERS, onChange, single = false, placeholder = 'Search people by name or username…',
+  selectedIds, resolvedById = NO_USERS, onChange, single = false, placeholder = null,
 }) {
+    const t = useTranslations('tasks.people');
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [results, setResults] = useState({ query: null, users: [] });
@@ -80,25 +82,25 @@ function UserPicker({
             return (
               <li key={user.id}>
                 <span
-                  className="inline-flex items-center gap-1 rounded-full py-1 pl-2.5 pr-1 text-[11px] font-medium"
+                  className="inline-flex items-center gap-1 rounded-full py-1 ps-2.5 pe-1 text-[11px] font-medium"
                   style={{
                     backgroundColor: known && !inactive ? withAlpha(STATUS.info, 0.14) : withAlpha(STATUS.warning, 0.14),
                     color: known && !inactive ? STATUS.info : STATUS.warning,
                   }}
                   title={
                     !known
-                      ? 'This id is not in the directory any more'
+                      ? t('notInDirectory')
                       : inactive
-                        ? `${user.username} — deactivated, so they cannot answer a task`
+                        ? t('deactivated', { name: user.username })
                         : user.username
                   }
                 >
-                  {user.displayName ?? `Unknown (${String(user.id).slice(0, 8)}…)`}
-                  {inactive && ' · inactive'}
+                  {user.displayName ?? t('unknown', { id: String(user.id).slice(0, 8) })}
+                  {inactive && ` · ${t('inactive')}`}
                   <button
                     type="button"
                     onClick={() => onChange(selectedIds.filter((id) => id !== user.id))}
-                    aria-label={`Remove ${user.displayName ?? 'user'}`}
+                    aria-label={t('remove', { name: user.displayName ?? t('user') })}
                     className="rounded-full p-0.5 hover:bg-black/10"
                   >
                     <X size={11} aria-hidden="true" />
@@ -114,7 +116,7 @@ function UserPicker({
         <div className="relative">
           <Search
             size={13}
-            className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2"
+            className="pointer-events-none absolute inset-s-2 top-1/2 -translate-y-1/2"
             style={{ color: CHROME.textMuted }}
             aria-hidden="true"
           />
@@ -125,18 +127,18 @@ function UserPicker({
               setOpen(true);
             }}
             onFocus={() => setOpen(true)}
-            placeholder={placeholder}
-            aria-label="Search people"
-            className="w-full rounded-md border border-gray-200 bg-white py-1.5 pl-7 pr-2 text-xs outline-none focus:border-primary"
+            placeholder={placeholder ?? t('searchPlaceholder')}
+            aria-label={t('searchLabel')}
+            className="w-full rounded-md border border-gray-200 bg-white py-1.5 ps-7 pe-2 text-xs outline-none focus:border-primary"
           />
   
           {open && (
             <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-[#e1e0d9] bg-white shadow-lg">
               {searching && suggestions.length === 0 ? (
-                <p className="px-3 py-2 text-[11px]" style={{ color: CHROME.textMuted }}>Searching…</p>
+                <p className="px-3 py-2 text-[11px]" style={{ color: CHROME.textMuted }}>{t('searching')}</p>
               ) : suggestions.length === 0 ? (
                 <p className="px-3 py-2 text-[11px]" style={{ color: CHROME.textMuted }}>
-                  {query.trim() ? `Nobody active matches “${query.trim()}”.` : 'No active users found.'}
+                  {query.trim() ? t('noMatch', { query: query.trim() }) : t('noActive')}
                 </p>
               ) : (
                 <ul className="max-h-56 overflow-auto" data-motion>
@@ -145,7 +147,7 @@ function UserPicker({
                       <button
                         type="button"
                         onClick={() => add(user)}
-                        className="flex w-full flex-col items-start px-3 py-1.5 text-left transition-colors hover:bg-[#fbfaf9]"
+                        className="flex w-full flex-col items-start px-3 py-1.5 text-start transition-colors hover:bg-[#fbfaf9]"
                       >
                         <span className="text-xs font-medium" style={{ color: CHROME.textPrimary }}>
                           {user.displayName || user.username}

@@ -1,13 +1,35 @@
 import { Currencies_LIST } from "@/constants";
 
 /**
- * @param {number} amount
+ * @param {number} amount in BASE_CURRENCY (USD), as the backend sends it
+ * @param {string} currency the currency to show it in
+ * @returns {number}
+ */
+export function convertFromBase(amount, currency) {
+  const rate = Currencies_LIST.find((c) => c.Key === currency)?.rate ?? 1;
+  return Number(amount) * rate;
+}
+
+/**
+ * @param {number} amount in BASE_CURRENCY (USD), as the backend sends it
+ * @param {string} currency the currency to show it in; the amount is converted
+ * @param {string} locale
+ * @returns {string}
+ */
+export function formatCurrency(amount, currency = 'USD', locale = 'en-SA') {
+  const missing = amount === null || amount === undefined || isNaN(Number(amount));
+  return formatCurrencyAs(missing ? amount : convertFromBase(amount, currency), currency, locale);
+}
+
+/**
+ * @param {number} amount already in `currency`; no conversion
  * @param {string} currency
  * @param {string} locale
  * @returns {string}
  */
-export function formatCurrency(amount,currency ='USD',locale = 'en-SA') {
-  const currencySymbol = Currencies_LIST.find(c => c.Key === currency)?.symbol || '';
+export function formatCurrencyAs(amount, currency = 'USD', locale = 'en-SA') {
+  // A leading left-to-right mark keeps symbol, sign and digits together inside Arabic text.
+  const currencySymbol = `‎${Currencies_LIST.find(c => c.Key === currency)?.symbol || ''}`;
   if (amount === null || amount === undefined || isNaN(Number(amount))) {
     return `${currencySymbol}0.00`;
   }
@@ -127,7 +149,8 @@ export function formatFileSize(bytes) {
     size /= 1024;
     unitIndex++;
   }
-  return `${size.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+  // A leading left-to-right mark keeps the number before its unit inside Arabic text.
+  return `‎${size.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
 }
 
 /**

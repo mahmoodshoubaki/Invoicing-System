@@ -2,6 +2,8 @@
 
 import { useSelector } from 'react-redux';
 import { CheckSquare, Square } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useLookupLabel } from '@/hooks/useLookupLabel';
 
 import { Input } from '@/components/forms/FormField';
 import { StatusBadge } from '@/components/common/Badge';
@@ -15,6 +17,8 @@ import {
  * @param {{ boq: Object, line: { quantity: string } | undefined, qtyError: string|undefined, currency: string, onToggle: (id) => void, onQuantity: (id, qty) => void, }} props
  */
 export default function BoqItemRow({ boq, line, qtyError, currency, onToggle, onQuantity }) {
+  const t = useTranslations('invoices.picker');
+  const frequencyLabel = useLookupLabel('billingFrequency');
   const billingFrequenciesMap = useSelector(selectBillingFrequenciesMap);
   const trackerCycleStatusesMap = useSelector(selectTrackerCycleStatusesMap);
   const trackerCycleStatusColorsMap = useSelector(selectTrackerCycleStatusColorsMap);
@@ -32,7 +36,7 @@ export default function BoqItemRow({ boq, line, qtyError, currency, onToggle, on
         type="button"
         onClick={() => !fullyCommitted && onToggle(boq.id)}
         disabled={fullyCommitted}
-        className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors
+        className={`w-full flex items-center gap-3 px-4 py-3 text-start transition-colors
           ${fullyCommitted
             ? 'opacity-50 cursor-not-allowed'
             : isSelected
@@ -51,10 +55,10 @@ export default function BoqItemRow({ boq, line, qtyError, currency, onToggle, on
         </div>
         <div className="shrink-0 flex items-center gap-2">
           {fullyCommitted && (
-            <span className="text-xs text-amber-600 font-medium whitespace-nowrap">Fully committed</span>
+            <span className="text-xs text-amber-600 font-medium whitespace-nowrap">{t('fullyCommitted')}</span>
           )}
           {boq.trackerCycleNumber != null && (
-            <span className="hidden md:flex items-center gap-1.5" title={`Next cycle: ${boq.trackerCycleNumber}`}>
+            <span className="hidden md:flex items-center gap-1.5" title={t('nextCycleTitle', { number: boq.trackerCycleNumber })}>
               <StatusBadge
                 status={trackerCycleStatusesMap[boq.trackerCycleStatusId] ?? '—'}
                 colors={trackerCycleStatusColorsMap[boq.trackerCycleStatusId]}
@@ -64,10 +68,10 @@ export default function BoqItemRow({ boq, line, qtyError, currency, onToggle, on
             </span>
           )}
           <span className="text-xs text-gray-400 whitespace-nowrap hidden sm:inline">
-            {billingFrequenciesMap[boq.billingFrequencyId] ?? '—'}
+            {frequencyLabel(billingFrequenciesMap[boq.billingFrequencyId]) ?? '—'}
           </span>
           <span className="text-sm font-semibold text-gray-700 whitespace-nowrap">
-            {formatCurrency(boq.unitCost, currency)}/unit
+            {t.rich('perUnit', { value: formatCurrency(boq.unitCost, currency), amount: (chunks) => <span dir="ltr">{chunks}</span> })}
           </span>
         </div>
       </button>
@@ -78,30 +82,30 @@ export default function BoqItemRow({ boq, line, qtyError, currency, onToggle, on
           {/* Item stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 py-3 text-xs">
             <div>
-              <p className="text-gray-400 uppercase tracking-wide">Total Qty</p>
-              <p className="font-semibold text-gray-700 mt-0.5">{boq.quantity} units</p>
+              <p className="text-gray-400 uppercase tracking-wide">{t('totalQty')}</p>
+              <p className="font-semibold text-gray-700 mt-0.5">{t('units', { value: boq.quantity })}</p>
             </div>
             <div>
-              <p className="text-gray-400 uppercase tracking-wide">Unit Cost</p>
+              <p className="text-gray-400 uppercase tracking-wide">{t('unitCost')}</p>
               <p className="font-semibold text-gray-700 mt-0.5">{formatCurrency(boq.unitCost, currency)}</p>
             </div>
             <div>
-              <p className="text-gray-400 uppercase tracking-wide">Committed</p>
+              <p className="text-gray-400 uppercase tracking-wide">{t('committed')}</p>
               <p className={`font-semibold mt-0.5 ${boq.committedQuantity > 0 ? 'text-amber-600' : 'text-gray-700'}`}>
-                {boq.committedQuantity} units
+                {t('units', { value: boq.committedQuantity })}
               </p>
             </div>
             <div>
-              <p className="text-gray-400 uppercase tracking-wide">Available</p>
+              <p className="text-gray-400 uppercase tracking-wide">{t('available')}</p>
               <p className={`font-semibold mt-0.5 ${available <= 0 ? 'text-red-500' : 'text-green-600'}`}>
-                {available} units
+                {t('units', { value: available })}
               </p>
             </div>
             {boq.trackerCycleNumber != null && (
               <div className="col-span-2">
-                <p className="text-gray-400 uppercase tracking-wide">Next Invoicing Cycle</p>
+                <p className="text-gray-400 uppercase tracking-wide">{t('nextCycle')}</p>
                 <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                  <span className="font-semibold text-gray-700">Cycle {boq.trackerCycleNumber}</span>
+                  <span className="font-semibold text-gray-700">{t('cycle', { number: boq.trackerCycleNumber })}</span>
                   <StatusBadge
                     status={trackerCycleStatusesMap[boq.trackerCycleStatusId] ?? '—'}
                     colors={trackerCycleStatusColorsMap[boq.trackerCycleStatusId]}
@@ -117,7 +121,7 @@ export default function BoqItemRow({ boq, line, qtyError, currency, onToggle, on
           <div className="flex items-start gap-4">
             <div className="w-2xs">
               <Input
-                label={`Invoice Quantity (max ${available})`}
+                label={t('invoiceQuantity', { max: available })}
                 type="number"
                 min="1"
                 max={available}
@@ -131,10 +135,10 @@ export default function BoqItemRow({ boq, line, qtyError, currency, onToggle, on
             </div>
             {lineQty > 0 && (
               <div className="mt-6 flex flex-col gap-0.5">
-                <p className="text-xs text-gray-400">Line Total</p>
+                <p className="text-xs text-gray-400">{t('lineTotal')}</p>
                 <p className="text-base font-bold text-primary">{formatCurrency(lineTotal, currency)}</p>
                 <p className="text-xs text-gray-400">
-                  {lineQty} × {formatCurrency(boq.unitCost, currency)}
+                  <span dir="ltr">{lineQty} × {formatCurrency(boq.unitCost, currency)}</span>
                 </p>
               </div>
             )}

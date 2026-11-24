@@ -2,9 +2,11 @@
 
 import { useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { decodeRouteParam } from '@/lib/routeParam';
 import Link from 'next/link';
 import { MotionConfig } from 'motion/react';
 import { ChevronLeft, PencilLine } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import SubPageHeader from '@/components/common/SubPageHeader';
 import Button from '@/components/common/Button';
@@ -24,7 +26,8 @@ import { CHROME } from '@/theme/vizPalette';
 
 export default function EditChangeRequestPage() {
   const { id: rawId, crId } = useParams();
-  const projectCode = decodeURIComponent(rawId);
+  const t = useTranslations('changeRequests.page');
+  const projectCode = decodeRouteParam(rawId);
   const encoded = encodeURIComponent(projectCode);
   const router = useRouter();
   const toast = useToast();
@@ -39,9 +42,9 @@ export default function EditChangeRequestPage() {
       { changeRequestId: Number(crId), ...body, attachmentIdsToDelete: files.deleteIds },
       files.added
     );
-    toast.success(`${sent.number || 'Change request'} sent again`, 'It now waits on the approver again.');
+    toast.success(t('sentAgain', { name: sent.number || t('eyebrow') }), t('sentAgainBody'));
     router.push(viewHref);
-  }, [crId, router, toast, viewHref]);
+  }, [crId, router, toast, viewHref, t]);
 
   let body;
   if (returned.error) {
@@ -53,8 +56,8 @@ export default function EditChangeRequestPage() {
   } else if (!cr.canEdit) {
     body = (
       <p className="rounded-xl border border-gray-100 bg-white px-4 py-4 text-sm" style={{ color: CHROME.textSecondary }}>
-        {cr.number} can&rsquo;t be edited — only its requester can edit it, once the approver has sent it back.{' '}
-        <Link href={viewHref} className="font-semibold underline-offset-2 hover:underline">Open it</Link>
+        {t('cantEdit', { number: cr.number })}{' '}
+        <Link href={viewHref} className="font-semibold underline-offset-2 hover:underline">{t('openIt')}</Link>
       </p>
     );
   } else {
@@ -67,7 +70,7 @@ export default function EditChangeRequestPage() {
         initial={returned.initial}
         onSubmit={submit}
         cancelHref={viewHref}
-        submitLabel="Resubmit for approval"
+        submitLabel={t('resubmit')}
         changeRequestId={Number(crId)}
       />
     );
@@ -77,20 +80,20 @@ export default function EditChangeRequestPage() {
     <MotionConfig reducedMotion="user">
       <div className="mx-auto max-w-7xl">
         <SubPageHeader
-          eyebrow="Change request"
-          title={cr ? `Edit ${cr.number}` : 'Edit change request'}
+          eyebrow={t('eyebrow')}
+          title={cr ? t('editNumber', { number: cr.number }) : t('editTitle')}
           icon={PencilLine}
           breadcrumbs={[
-            { label: 'Home', href: '/' },
-            { label: 'Projects', href: '/projects' },
+            { label: t('home'), href: '/' },
+            { label: t('projects'), href: '/projects' },
             { label: readiness.header?.contractName ?? projectCode, href: ROUTES.PROJECT_DETAIL(encoded) },
-            { label: 'Change requests', href: ROUTES.PROJECT_CHANGE_REQUESTS(encoded) },
+            { label: t('changeRequests'), href: ROUTES.PROJECT_CHANGE_REQUESTS(encoded) },
             { label: cr?.number ?? '…', href: viewHref },
-            { label: 'Edit' },
+            { label: t('edit') },
           ]}
           actions={
             <Link href={viewHref}>
-              <Button variant="ghost" icon={ChevronLeft} size="sm">Back</Button>
+              <Button variant="ghost" icon={ChevronLeft} iconClassName="rtl:-scale-x-100" size="sm">{t('back')}</Button>
             </Link>
           }
         />

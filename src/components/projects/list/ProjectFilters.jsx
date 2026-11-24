@@ -2,14 +2,18 @@
 
 import { motion } from 'motion/react';
 import { Search, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import Button from '@/components/common/Button';
+import { useProjectStatusLabel } from '@/hooks/useProjectStatusLabel';
 
 /**
  * @param {{ search: string, onSearch: (text: string) => void, status: string, onStatus: (status: string) => void, statuses: string[], filtered: boolean, onClear: () => void, }} props
  */
 export default function ProjectFilters({ search, onSearch, status, onStatus, statuses, filtered, onClear }) {
-  const options = [{ label: 'All statuses', value: '' }, ...statuses.map((s) => ({ label: s, value: s }))];
+  const t = useTranslations('projects.list');
+  const statusLabel = useProjectStatusLabel();
+  const options = [{ label: t('allStatuses'), value: '' }, ...statuses.map((s) => ({ label: statusLabel(s), value: s }))];
 
   return (
     <motion.section
@@ -22,20 +26,20 @@ export default function ProjectFilters({ search, onSearch, status, onStatus, sta
         <div className="group relative min-w-[240px] flex-1">
           <Search
             size={15}
-            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a1a1a0] transition-colors group-focus-within:text-[#f8485e]"
+            className="pointer-events-none absolute inset-s-3.5 top-1/2 -translate-y-1/2 text-[#a1a1a0] transition-colors group-focus-within:text-[#f8485e]"
           />
           <input
             type="text"
-            placeholder="Search code, project, contract or client…"
-            aria-label="Search projects"
+            placeholder={t('searchPlaceholder')}
+            aria-label={t('searchLabel')}
             value={search}
             onChange={(e) => onSearch(e.target.value)}
-            className="w-full rounded-xl border border-[#e4e2e2] bg-white py-2.5 pl-10 pr-4 text-sm transition-colors focus:border-[#f8485e]"
+            className="w-full rounded-xl border border-[#e4e2e2] bg-white py-2.5 ps-10 pe-4 text-sm transition-colors focus:border-[#f8485e]"
           />
         </div>
         {filtered && (
           <Button variant="ghost" size="sm" icon={X} onClick={onClear}>
-            Clear
+            {t('clear')}
           </Button>
         )}
       </div>

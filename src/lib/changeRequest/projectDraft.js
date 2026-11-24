@@ -120,8 +120,6 @@ export function contractWindow(subProjects) {
 
 export const projectValueTotal = (subProjects) => subProjects.reduce((sum, p) => sum + (Number(p.values.projectValue) || 0), 0);
 
-export const hasProjectValue = (subProjects) => subProjects.some((p) => !blank(p.values.projectValue));
-
 export function changedProjectFields(originals, edits) {
   return originals.flatMap((o) => PROJECT_FIELDS
     .filter((field) => edits[o.uid] && field.key in edits[o.uid])

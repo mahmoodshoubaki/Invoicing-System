@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { workflowRepository } from '@/repositories/workflowRepository';
 import { boqRepository } from '@/repositories/boqRepository';
@@ -24,6 +25,7 @@ const PLAN_ANCHORS = ['billingFrequencyId', 'expectedInvoicingDate'];
  * @param {{ boqItemId, contractStartDate, contractFinishDate, expectedInvoicingDate, billingFrequencyId }|null} [context]
  */
 export function useTaskForm(task, onCompleted, context = null) {
+  const t = useTranslations('tasks.errors');
   const fields = task?.fields ?? NO_FIELDS;
   const requestParts = useMemo(() => changeRequestTaskParts(task), [task]);
   const ownFields = useMemo(() => {
@@ -65,9 +67,9 @@ export function useTaskForm(task, onCompleted, context = null) {
       setRebuild({ busy: false, error: null });
     } catch (err) {
       if (mine !== rebuildSeq.current) return;
-      setRebuild({ busy: false, error: err?.message || 'Could not rebuild the invoicing plan.' });
+      setRebuild({ busy: false, error: err?.message || t('rebuildFailed') });
     }
-  }, [context, planField]);
+  }, [context, planField, t]);
 
   const setValue = useCallback((name, value) => {
     setValues((prev) => ({ ...prev, [name]: typeof value === 'function' ? value(prev[name]) : value }));
@@ -87,15 +89,15 @@ export function useTaskForm(task, onCompleted, context = null) {
   }, []);
 
   const press = useCallback(async (button, reason = null) => {
-    const checked = checkBeforeSubmit(ownFields, values, button, comment);
+    const checked = checkBeforeSubmit(ownFields, values, button, comment, t);
     setFieldErrors(checked.fieldErrors);
     setCommentError(checked.commentError);
-    const reasonError = reasonProblem(button, reason ?? undefined);
+    const reasonError = reasonProblem(button, reason ?? undefined, t);
     setErrors(reasonError ? [reasonError] : []);
     if (reasonError) return;
     const request = button.requiresFields && asksForRequest ? requestRef.current : null;
     if (button.requiresFields && asksForRequest && !request) {
-      setErrors(['The change request above is not loaded yet — wait for it, or press Retry.']);
+      setErrors([t('requestNotLoaded')]);
       return;
     }
     const requestReady = request ? request.check() : true;
@@ -122,12 +124,12 @@ export function useTaskForm(task, onCompleted, context = null) {
       setFieldErrors(split.fieldErrors);
       const general = [...refusal.general, ...split.other];
       const placed = refusal.placed || Object.keys(split.fieldErrors).length > 0 || general.length > 0;
-      if (!placed || err?.code === MANY_RECORDS) general.unshift(err?.message || 'Could not answer this task.');
+      if (!placed || err?.code === MANY_RECORDS) general.unshift(err?.message || t('answerFailed'));
       setErrors(general);
     } finally {
       setPressing(null);
     }
-  }, [asksForRequest, comment, onCompleted, ownFields, task, values]);
+  }, [asksForRequest, comment, onCompleted, ownFields, task, values, t]);
 
   return {
     fields,

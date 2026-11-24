@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { decodeRouteParam } from '@/lib/routeParam';
 import { useDispatch, useSelector } from 'react-redux';
 import Link from 'next/link';
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import {
   Banknote, CheckCircle, ChevronLeft, Edit2, Eye, FileDiff, History, LayoutList, Plus, Trash2, X,
 } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 
 import SubPageHeader from '@/components/common/SubPageHeader';
 import TabToolbar from '@/components/projects/TabToolbar';
@@ -19,7 +21,9 @@ import BOQItemHistoryModal from '@/components/boq/BOQItemHistoryModal';
 import BoqFilesPanel from '@/components/boq/BoqFilesPanel';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { CHROME, SERIES_ROLE, STATUS } from '@/theme/vizPalette';
-import { formatCurrency, formatDate } from '@/utils/formatters';
+import { formatCurrency } from '@/utils/formatters';
+import { useLocaleFormat } from '@/hooks/useLocaleFormat';
+import { useLookupLabel } from '@/hooks/useLookupLabel';
 import { waitingOnText } from '@/lib/waitingOn';
 import { usePermission } from '@/hooks/usePermission';
 import { ROUTES } from '@/constants/routes';
@@ -36,9 +40,19 @@ import {
 } from '@/store/slices/lookupsSlice';
 import { useToast } from '@/hooks/useToast';
 
+const ltr = (chunks) => <span dir="ltr">{chunks}</span>;
+
 export default function ProjectBOQPage() {
+  const t = useTranslations('boq');
+  const tn = useTranslations('nav');
+  const th = useTranslations('projects');
+  const tp = useTranslations('workflowProgress');
+  const tf = useTranslations('files');
+  const locale = useLocale();
+  const format = useLocaleFormat();
+  const frequencyLabel = useLookupLabel('billingFrequency');
   const { id: rawId } = useParams();
-  const projectCode = decodeURIComponent(rawId);
+  const projectCode = decodeRouteParam(rawId);
   const encoded = encodeURIComponent(projectCode);
   const { can } = usePermission();
   const toast = useToast();
@@ -94,9 +108,9 @@ export default function ProjectBOQPage() {
       await dispatch(removeBOQItem({ id: deletingId, boqId: currentBOQ?.id })).unwrap();
       setDeleteModal(false);
       setDeletingId(null);
-      toast.success('BOQ item deleted', 'The item was deleted successfully.');
+      toast.success(t('toasts.deleted'), t('toasts.deletedBody'));
     } catch (err) {
-      toast.error('Failed to delete BOQ item', err ?? 'Please try again.');
+      toast.error(t('toasts.deleteFailed'), err ?? tf('pleaseTryAgain'));
     } finally {
       setSaving(false);
     }
@@ -109,9 +123,9 @@ export default function ProjectBOQPage() {
       await dispatch(bulkRemoveBOQItems({ ids: Array.from(selected), boqId: currentBOQ?.id })).unwrap();
       setSelected(new Set());
       setBulkDeleteModal(false);
-      toast.success('BOQ items deleted', `${count} item(s) were deleted successfully.`);
+      toast.success(t('toasts.manyDeleted'), t('toasts.manyDeletedBody', { count }));
     } catch (err) {
-      toast.error('Failed to delete BOQ items', err ?? 'Please try again.');
+      toast.error(t('toasts.manyFailed'), err ?? tf('pleaseTryAgain'));
     } finally {
       setSaving(false);
     }
@@ -120,23 +134,23 @@ export default function ProjectBOQPage() {
   const totalCost = boqItems.reduce((s, i) => s + (i.totalCost || 0), 0);
 
   const stats = useMemo(() => [
-    { label: 'BOQ items', value: boqItems.length, icon: LayoutList, accent: SERIES_ROLE.wip },
-    { label: 'Total value', value: money(totalCost), icon: Banknote, accent: SERIES_ROLE.revenue },
+    { label: t('stats.items'), value: boqItems.length, icon: LayoutList, accent: SERIES_ROLE.wip },
+    { label: t('stats.totalValue'), value: money(totalCost), icon: Banknote, accent: SERIES_ROLE.revenue },
     {
-      label: 'Selected',
-      value: `${selected.size} / ${boqItems.length}`,
+      label: t('stats.selected'),
+      value: t('fraction', { done: selected.size, total: boqItems.length }),
       icon: CheckCircle,
       accent: selected.size > 0 ? STATUS.good : STATUS.neutral,
     },
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [boqItems.length, totalCost, selected.size, currency]);
+  ], [boqItems.length, totalCost, selected.size, currency, t]);
 
   const breadcrumbs = useMemo(() => [
-    { label: 'Home', href: '/' },
-    { label: 'Projects', href: '/projects' },
+    { label: th('home'), href: '/' },
+    { label: tn('projects'), href: '/projects' },
     { label: project?.contractName ?? projectCode, href: `/projects/${encoded}` },
-    { label: 'BOQ' },
-  ], [project?.contractName, projectCode, encoded]);
+    { label: t('breadcrumb') },
+  ], [project?.contractName, projectCode, encoded, t, th, tn]);
 
   const columns = useMemo(() => [
     {
@@ -148,7 +162,7 @@ export default function ProjectBOQPage() {
           onChange={toggleSelectAll}
           onClick={(e) => e.stopPropagation()}
           className="accent-[#f8485e]"
-          aria-label="Select all BOQ items"
+          aria-label={t('selectAll')}
         />
       ),
       sortable: false,
@@ -160,13 +174,13 @@ export default function ProjectBOQPage() {
           onChange={() => toggleSelect(row.id)}
           onClick={(e) => e.stopPropagation()}
           className="accent-[#f8485e]"
-          aria-label={`Select ${row.englishName}`}
+          aria-label={t('selectOne', { name: row.englishName })}
         />
       ),
     },
     {
       key: 'englishName',
-      label: 'Item',
+      label: t('columns.item'),
       render: (val, row) => (
         <div className="min-w-0 max-w-xs">
           <Link
@@ -186,16 +200,16 @@ export default function ProjectBOQPage() {
         </div>
       ),
     },
-    { key: 'quantity', label: 'Qty', align: 'center' },
+    { key: 'quantity', label: t('columns.qty'), align: 'center' },
     {
       key: 'unitCost',
-      label: 'Unit Cost',
+      label: t('columns.unitCost'),
       align: 'right',
       render: (val) => <span className="text-sm tabular-nums">{money(val)}</span>,
     },
     {
       key: 'totalCost',
-      label: 'Total Cost',
+      label: t('columns.totalCost'),
       align: 'right',
       render: (val) => (
         <span className="text-sm font-semibold tabular-nums" style={{ color: CHROME.textPrimary }}>{money(val)}</span>
@@ -203,16 +217,16 @@ export default function ProjectBOQPage() {
     },
     {
       key: 'statusId',
-      label: 'Status',
+      label: t('columns.status'),
       sortable: false,
       render: (val, row) => {
-        const waiting = waitingOnText(row.waitingOn);
+        const waiting = waitingOnText(row.waitingOn, tp, locale);
         return (
           <div className="flex min-w-0 flex-col items-start gap-1">
             <StatusBadge status={boqStatusesMap[val] ?? String(val)} colors={boqStatusColorsMap[val]} />
             {waiting && (
-              <span className="max-w-[14rem] truncate text-[11px]" style={{ color: CHROME.textMuted }} title={`Waiting on: ${waiting}`}>
-                Waiting on: {waiting}
+              <span className="max-w-[14rem] truncate text-[11px]" style={{ color: CHROME.textMuted }} title={tp('waitingOnValue', { names: waiting })}>
+                {tp('waitingOn')} <bdi>{waiting}</bdi>
               </span>
             )}
           </div>
@@ -221,16 +235,16 @@ export default function ProjectBOQPage() {
     },
     {
       key: 'expectedInvoicingDate',
-      label: 'Expected Date',
+      label: t('columns.expectedDate'),
       render: (val) => (
-        <span className="text-sm" style={{ color: CHROME.textSecondary }}>{formatDate(val) || '—'}</span>
+        <span className="text-sm" style={{ color: CHROME.textSecondary }}>{format.date(val) || '—'}</span>
       ),
     },
     {
       key: 'billingFrequencyId',
-      label: 'Billing',
+      label: t('columns.billing'),
       render: (val) => (
-        <span className="text-sm" style={{ color: CHROME.textSecondary }}>{billingFrequenciesMap[val] ?? '—'}</span>
+        <span className="text-sm" style={{ color: CHROME.textSecondary }}>{frequencyLabel(billingFrequenciesMap[val]) ?? '—'}</span>
       ),
     },
     {
@@ -241,12 +255,12 @@ export default function ProjectBOQPage() {
       render: (_, row) => (
         <div className="flex items-center justify-end gap-0.5" onClick={(e) => e.stopPropagation()}>
           <Link href={ROUTES.PROJECT_BOQ_ITEM(encoded, row.id)}>
-            <Button variant="ghost" size="xs" icon={Eye} title="View" />
+            <Button variant="ghost" size="xs" icon={Eye} title={t('actions.view')} />
           </Link>
-          <Button variant="ghost" size="xs" icon={History} onClick={() => setHistoryItemId(row.id)} title="History" />
+          <Button variant="ghost" size="xs" icon={History} onClick={() => setHistoryItemId(row.id)} title={t('actions.history')} />
           {canEditItem && (
             <Link href={`/projects/${encoded}/boq/${row.id}/edit`}>
-              <Button variant="ghost" size="xs" icon={Edit2} title="Edit" />
+              <Button variant="ghost" size="xs" icon={Edit2} title={t('actions.edit')} />
             </Link>
           )}
           {canDelete && (
@@ -254,14 +268,14 @@ export default function ProjectBOQPage() {
               variant="ghost" size="xs" icon={Trash2}
               className="text-red-500 hover:bg-red-50"
               onClick={() => { setDeletingId(row.id); setDeleteModal(true); }}
-              title="Delete"
+              title={t('actions.delete')}
             />
           )}
         </div>
       ),
     },
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [selected, boqItems.length, currency, boqStatusesMap, boqStatusColorsMap, billingFrequenciesMap, canEditItem, canDelete, encoded]);
+  ], [selected, boqItems.length, currency, boqStatusesMap, boqStatusColorsMap, billingFrequenciesMap, canEditItem, canDelete, encoded, t, tp, locale, format, frequencyLabel]);
 
   if (projectLoading || boqLoading) {
     return (
@@ -274,9 +288,9 @@ export default function ProjectBOQPage() {
   if (!project) {
     return (
       <div className="py-20 text-center">
-        <p style={{ color: CHROME.textMuted }}>Project not found.</p>
+        <p style={{ color: CHROME.textMuted }}>{t('projectNotFound')}</p>
         <Link href="/projects">
-          <Button variant="outline" className="mt-4">Back to Projects</Button>
+          <Button variant="outline" className="mt-4">{t('backToProjects')}</Button>
         </Link>
       </div>
     );
@@ -289,9 +303,9 @@ export default function ProjectBOQPage() {
           open={deleteModal}
           onClose={() => { setDeleteModal(false); setDeletingId(null); }}
           onConfirm={handleDelete}
-          title="Delete BOQ Item"
-          message="Are you sure you want to delete this BOQ item? This action cannot be undone. An item that any invoice points at, or that is waiting for approval, cannot be deleted."
-          confirmLabel="Delete Item"
+          title={t('deleteOne.title')}
+          message={t('deleteOne.message')}
+          confirmLabel={t('deleteOne.confirm')}
           loading={saving}
         />
 
@@ -299,9 +313,9 @@ export default function ProjectBOQPage() {
           open={bulkDeleteModal}
           onClose={() => setBulkDeleteModal(false)}
           onConfirm={handleBulkDelete}
-          title="Delete Selected Items"
-          message={`Are you sure you want to delete ${selected.size} selected item(s)? This action cannot be undone. It is all or nothing: if any item has an invoice or is waiting for approval, none are deleted and the message names them.`}
-          confirmLabel={`Delete ${selected.size} Items`}
+          title={t('deleteMany.title')}
+          message={t('deleteMany.message', { count: selected.size })}
+          confirmLabel={t('deleteMany.confirm', { count: selected.size })}
           loading={saving}
         />
 
@@ -312,24 +326,24 @@ export default function ProjectBOQPage() {
         />
 
         <SubPageHeader
-          eyebrow="Bill of Quantities"
+          eyebrow={t('eyebrow')}
           title={project.contractName ?? projectCode}
-          subtitle={`Project code ${projectCode}`}
+          subtitle={t.rich('projectCode', { value: projectCode, code: ltr })}
           icon={LayoutList}
           breadcrumbs={breadcrumbs}
           actions={
             <>
               <Link href={`/projects/${encoded}`}>
-                <Button variant="ghost" icon={ChevronLeft} size="sm">Back</Button>
+                <Button variant="ghost" icon={ChevronLeft} iconClassName="rtl:-scale-x-100" size="sm">{t('actions.back')}</Button>
               </Link>
               {can('ChangeRequests', 'Create') && hasMainProject(subProjects) && (
                 <Link href={ROUTES.PROJECT_CHANGE_REQUEST_NEW(encoded)}>
-                  <Button variant="outline" icon={FileDiff} size="sm">New change request</Button>
+                  <Button variant="outline" icon={FileDiff} size="sm">{t('actions.newChangeRequest')}</Button>
                 </Link>
               )}
               {canCreate && (
                 <Link href={`/projects/${encoded}/boq/new`}>
-                  <Button icon={Plus} size="sm">Add item</Button>
+                  <Button icon={Plus} size="sm">{t('actions.addItem')}</Button>
                 </Link>
               )}
             </>
@@ -350,16 +364,16 @@ export default function ProjectBOQPage() {
             >
               <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#f8485e]/25 bg-[#f8485e]/6 px-4 py-3">
                 <span className="text-sm font-semibold text-[#d9304a]">
-                  {selected.size} item{selected.size !== 1 ? 's' : ''} selected
+                  {t('selectedCount', { count: selected.size })}
                 </span>
-                <div className="ml-auto flex items-center gap-2">
+                <div className="ms-auto flex items-center gap-2">
                   {canDelete && (
                     <Button variant="danger" size="sm" icon={Trash2} onClick={() => setBulkDeleteModal(true)}>
-                      Delete selected
+                      {t('actions.deleteSelected')}
                     </Button>
                   )}
                   <Button variant="ghost" size="sm" icon={X} onClick={() => setSelected(new Set())}>
-                    Clear
+                    {t('actions.clear')}
                   </Button>
                 </div>
               </div>
@@ -372,7 +386,7 @@ export default function ProjectBOQPage() {
           data={boqItems}
           rowKey="id"
           isLoading={boqLoading}
-          emptyMessage="No BOQ items yet — use “Add item” to get started."
+          emptyMessage={t('pageEmpty')}
           sortable
         />
 

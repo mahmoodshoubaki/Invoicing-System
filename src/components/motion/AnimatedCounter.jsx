@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { animate, useInView, useReducedMotion } from 'motion/react';
+import { formatNumber } from '@/utils/formatters';
 
 export default function AnimatedCounter({
   value,
-  format = (v) => Math.round(v).toLocaleString(),
+  format = (v) => formatNumber(Math.round(v)),
   duration = 1.2,
   className = '',
 }) {

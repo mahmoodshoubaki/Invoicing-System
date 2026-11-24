@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useDispatch, useSelector } from 'react-redux';
 import { Bell, BellOff, CheckCheck } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import NotificationItem from './NotificationItem';
 import PillTabs from '@/components/ui/PillTabs';
@@ -20,6 +21,7 @@ const PANEL_TAKE = 15;
 const EMPTY = { items: [], total: 0, unreadCount: 0 };
 
 export default function NotificationBell() {
+  const t = useTranslations('notifications');
   const dispatch = useDispatch();
   const unseen = useSelector(selectUnseenCount);
   const language = useSelector((s) => s.ui.language);
@@ -112,14 +114,14 @@ export default function NotificationBell() {
       <button
         type="button"
         onClick={toggle}
-        aria-label={unseen > 0 ? `Notifications, ${unseen} new` : 'Notifications'}
+        aria-label={t('bellLabel', { count: unseen })}
         aria-expanded={open}
         aria-haspopup="dialog"
         className="relative rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100"
       >
         <Bell size={20} />
         {unseen > 0 && (
-          <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-white">
+          <span className="absolute inset-e-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-white">
             {badge}
           </span>
         )}
@@ -128,12 +130,12 @@ export default function NotificationBell() {
       {open && (
         <div
           role="dialog"
-          aria-label="Notifications"
-          className="absolute right-0 top-full z-40 mt-2 flex w-[380px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-xl border border-[#eceae4] bg-white shadow-xl"
+          aria-label={t('title')}
+          className="absolute inset-e-0 top-full z-40 mt-2 flex w-[380px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-xl border border-[#eceae4] bg-white shadow-xl"
           style={{ maxHeight: 'min(70vh, 560px)' }}
         >
           <div className="flex items-center justify-between gap-2 border-b border-[#f1f0ee] px-3.5 py-2.5">
-            <p className="text-sm font-semibold" style={{ color: CHROME.textPrimary }}>Notifications</p>
+            <p className="text-sm font-semibold" style={{ color: CHROME.textPrimary }}>{t('title')}</p>
             <button
               type="button"
               onClick={markAllRead}
@@ -142,15 +144,15 @@ export default function NotificationBell() {
               style={{ color: CHROME.textSecondary }}
             >
               <CheckCheck size={12} aria-hidden="true" />
-              Mark all as read
+              {t('markAllRead')}
             </button>
           </div>
 
           <div className="px-3.5 pt-2.5">
             <PillTabs
               tabs={[
-                { key: 'all', label: 'All' },
-                { key: 'unread', label: 'Unread', count: data.unreadCount },
+                { key: 'all', label: t('all') },
+                { key: 'unread', label: t('unread'), count: data.unreadCount },
               ]}
               value={tab}
               onChange={changeTab}
@@ -166,7 +168,7 @@ export default function NotificationBell() {
               <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
                 <BellOff size={22} style={{ color: CHROME.textMuted }} aria-hidden="true" />
                 <p className="text-xs" style={{ color: CHROME.textMuted }}>
-                  {tab === 'unread' ? 'Nothing unread. You are all caught up.' : 'No notifications yet.'}
+                  {tab === 'unread' ? t('emptyUnread') : t('empty')}
                 </p>
               </div>
             ) : (
@@ -186,8 +188,7 @@ export default function NotificationBell() {
             className="border-t border-[#f1f0ee] px-3.5 py-2.5 text-center text-xs font-medium transition-colors hover:bg-[#fbfaf9]"
             style={{ color: CHROME.textSecondary }}
           >
-            See all notifications
-            {data.total > data.items.length ? ` (${data.total})` : ''}
+            {data.total > data.items.length ? t('seeAllWithCount', { count: data.total }) : t('seeAll')}
           </Link>
         </div>
       )}

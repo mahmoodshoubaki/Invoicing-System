@@ -83,7 +83,7 @@ function Badge({
 
 export default memo(Badge);
 
-function StatusBadgeImpl({ status, size = 'md', colors }) {
+function StatusBadgeImpl({ status, size = 'md', colors, label }) {
   if (colors) {
     const rgb = hexToRgbTriplet(colors);
     return (
@@ -96,14 +96,14 @@ function StatusBadgeImpl({ status, size = 'md', colors }) {
         }}
       >
         <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: colors }} />
-        {status}
+        {label ?? status}
       </span>
     );
   }
 
   return (
     <Badge variant={getBadgeVariant(status)} size={size} dot>
-      {status}
+      {label ?? status}
     </Badge>
   );
 }

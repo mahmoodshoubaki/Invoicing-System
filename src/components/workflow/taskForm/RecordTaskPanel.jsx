@@ -1,6 +1,8 @@
 'use client';
 
 import { ClipboardCheck } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useLocaleFormat } from '@/hooks/useLocaleFormat';
 
 import Card from '@/components/common/Card';
 import TaskForm from '@/components/workflow/taskForm/TaskForm';
@@ -11,12 +13,13 @@ import { allow, WORKFLOW_TASK_PERMISSIONS } from '@/constants/workflowPermission
 import { faultAfterCompleting } from '@/store/slices/workflowTasksSlice';
 import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
-import { formatDateTime } from '@/utils/formatters';
 
 /**
  * @param {{ instanceIds: string|string[]|null, context?: Object|null, what the form knows of the record (see TaskForm) onAnswered?: () => void, reloads the record — the task's fields are now on it }} props
  */
 export default function RecordTaskPanel({ instanceIds, context = null, onAnswered }) {
+  const t = useTranslations('tasks.form');
+  const format = useLocaleFormat();
   const { can } = usePermission();
   const toast = useToast();
   const { tasks, reload } = useRunTasks(instanceIds, allow(can, WORKFLOW_TASK_PERMISSIONS.VIEW));
@@ -25,8 +28,8 @@ export default function RecordTaskPanel({ instanceIds, context = null, onAnswere
 
   const completed = ({ task, instance }) => {
     const fault = faultAfterCompleting(instance);
-    if (fault) toast.error('Your answer was saved, but the run stopped', fault.message);
-    else toast.success('Task completed', task.title ?? undefined);
+    if (fault) toast.error(t('savedButStopped'), fault.message);
+    else toast.success(t('completed'), task.title ?? undefined);
     reload();
     onAnswered?.();
   };
@@ -41,11 +44,11 @@ export default function RecordTaskPanel({ instanceIds, context = null, onAnswere
           <ClipboardCheck size={15} aria-hidden="true" />
         </div>
         <div className="min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: STATUS.info }}>Your task</p>
+          <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: STATUS.info }}>{t('yourTask')}</p>
           <h3 className="text-sm font-semibold" style={{ color: CHROME.textPrimary }}>{task.title}</h3>
           {task.dueOn && (
             <p className="text-xs" style={{ color: task.isOverdue ? STATUS.critical : CHROME.textMuted }}>
-              {task.isOverdue ? 'Overdue — was due ' : 'Due '}{formatDateTime(task.dueOn)}
+              {t(task.isOverdue ? 'overdueWas' : 'dueOn', { date: format.dateTime(task.dueOn) })}
             </p>
           )}
         </div>

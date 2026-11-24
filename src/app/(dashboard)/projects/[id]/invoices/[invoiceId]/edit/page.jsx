@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { decodeRouteParam } from '@/lib/routeParam';
 import { useDispatch, useSelector } from 'react-redux';
 import Link from 'next/link';
 import {
@@ -9,6 +10,8 @@ import {
   ListChecks, Paperclip, PencilLine, Save, Upload,
 } from 'lucide-react';
 import { MotionConfig } from 'motion/react';
+import { useTranslations } from 'next-intl';
+import { useLocaleFormat } from '@/hooks/useLocaleFormat';
 
 import SubPageHeader from '@/components/common/SubPageHeader';
 import FormSection from '@/components/common/FormSection';
@@ -18,9 +21,12 @@ import { StatusBadge } from '@/components/common/Badge';
 import VarianceBadge from '@/components/common/VarianceBadge';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { DatePicker, Textarea } from '@/components/forms/FormField';
+import ClaimReferenceInput from '@/components/invoices/ClaimReferenceInput';
+import { claimReferenceText } from '@/lib/claimReference';
+import { invoiceChanges, invoiceFormProblems, toDateInput } from '@/lib/invoiceUpdate';
 import AttachmentUploader from '@/components/invoices/AttachmentUploader';
 import InvoiceHistoryModal from '@/components/invoices/InvoiceHistoryModal';
-import { formatCurrency, formatDate, formatDateTime, formatPercentage, formatFileSize } from '@/utils/formatters';
+import { formatCurrency, formatPercentage, formatFileSize } from '@/utils/formatters';
 import { baselineDateOrPending, invoiceNumberOrPending } from '@/utils/invoiceDisplay';
 import { iconForFileName } from '@/utils/attachmentIcon';
 import { saveBlob } from '@/utils/saveBlob';
@@ -30,11 +36,6 @@ import { fetchMainProjectDetails, selectMainProjectDetails } from '@/store/slice
 import { invoiceRepository } from '@/repositories/invoiceRepository';
 import { useToast } from '@/hooks/useToast';
 
-function toDateInput(iso) {
-  if (!iso) return '';
-  return iso.split('T')[0];
-}
-
 const InfoItem = ({ icon: Icon, label, value, valueClass = '' }) => (
   <div className="flex items-start gap-3">
     <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center shrink-0 mt-0.5">
@@ -42,14 +43,16 @@ const InfoItem = ({ icon: Icon, label, value, valueClass = '' }) => (
     </div>
     <div>
       <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">{label}</p>
-      <p className={`text-sm text-gray-800 mt-0.5 ${valueClass}`}>{value || '—'}</p>
+      <p className={`text-sm text-gray-800 mt-0.5 ${valueClass}`}><span dir="auto">{value || '—'}</span></p>
     </div>
   </div>
 );
 
 export default function EditInvoicePage() {
   const { id: rawId, invoiceId } = useParams();
-  const projectCode = decodeURIComponent(rawId);
+  const t = useTranslations('invoices.form');
+  const format = useLocaleFormat();
+  const projectCode = decodeRouteParam(rawId);
   const router = useRouter();
   const dispatch = useDispatch();
   const toast = useToast();
@@ -62,7 +65,8 @@ export default function EditInvoicePage() {
   const invoiceStatusColorsMap = useSelector(selectInvoiceStatusColorsMap);
 
   const [reasonsForUpdate, setReasonsForUpdate] = useState('');
-  const [expectedCollectionDate, setexpectedCollectionDate] = useState('');
+  const [dateDraft, setDateDraft] = useState(null);
+  const [claimDraft, setClaimDraft] = useState(null);
   const [attachmentIdsToDelete, setAttachmentIdsToDelete] = useState(new Set());
   const [attachmentsToAdd, setAttachmentsToAdd] = useState([]);
   const [errors, setErrors] = useState({});
@@ -77,12 +81,6 @@ export default function EditInvoicePage() {
   useEffect(() => {
     dispatch(fetchInvoiceById(invoiceId));
   }, [dispatch, invoiceId]);
-
-  useEffect(() => {
-    if (invoice?.id === invoiceId) {
-      setexpectedCollectionDate(toDateInput(invoice.expectedCollectionDate));
-    }
-  }, [invoice, invoiceId]);
 
   const toggleDeleteAttachment = (attachmentId) => {
     setAttachmentIdsToDelete((prev) => {
@@ -100,7 +98,7 @@ export default function EditInvoicePage() {
       );
       saveBlob(blob, fileName);
     } catch (err) {
-      toast.error('Download failed', err?.message ?? 'Please try again.');
+      toast.error(t('downloadFailed'), err?.message ?? t('tryAgain'));
     } finally {
       setDownloadingIds((prev) => {
         const next = new Set(prev);
@@ -112,34 +110,33 @@ export default function EditInvoicePage() {
 
   const viewInvoiceHref = `/invoices/${invoiceId}?projectCode=${encodeURIComponent(projectCode)}`;
   const attachmentsUploading = attachmentsToAdd.some((a) => a.status === 'uploading');
-
-  const validate = () => {
-    const e = {};
-    if (!reasonsForUpdate.trim()) e.reasonsForUpdate = 'A reason for this update is required';
-    if (!expectedCollectionDate) e.expectedCollectionDate = 'Expected Collection date is required';
-    return e;
+  const showsThisInvoice = invoice?.id === invoiceId;
+  const expectedCollectionDate = dateDraft ?? (showsThisInvoice ? toDateInput(invoice.expectedCollectionDate) : '');
+  const claimReference = claimDraft ?? (showsThisInvoice ? claimReferenceText(invoice.financialClaimReference) : '');
+  const form = {
+    expectedCollectionDate,
+    claimReference,
+    reasonsForUpdate,
+    attachmentIdsToDelete: Array.from(attachmentIdsToDelete),
+    attachmentsToAdd,
   };
+  const changes = showsThisInvoice ? invoiceChanges(invoice, form) : {};
+  const hasChanges = Object.keys(changes).length > 0;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const errs = validate();
+    const errs = invoiceFormProblems(invoice, form, t);
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+    if (!hasChanges) return;
     setSaving(true);
     try {
-      await dispatch(updateInvoice({
-        invoiceId,
-        reasonsForUpdate,
-        expectedCollectionDate,
-        financialClaimReference: invoice.financialClaimReference,
-        attachmentIdsToDelete: Array.from(attachmentIdsToDelete),
-        attachmentsToAdd,
-      })).unwrap();
+      await dispatch(updateInvoice({ invoiceId, ...changes })).unwrap();
 
-      toast.success('Invoice updated', 'The invoice was updated successfully.');
+      toast.success(t('updated'), t('updatedBody'));
       await dispatch(fetchInvoiceById(invoiceId));
       router.push(viewInvoiceHref);
     } catch (err) {
-      toast.error('Failed to update invoice', err ?? 'Please try again.');
+      toast.error(t('updateFailed'), err ?? t('tryAgain'));
     } finally {
       setSaving(false);
     }
@@ -156,9 +153,9 @@ export default function EditInvoicePage() {
   if (!invoice) {
     return (
       <div className="text-center py-20">
-        <p className="text-gray-500">Invoice not found.</p>
+        <p className="text-gray-500">{t('notFound')}</p>
         <Link href={`/projects/${encodeURIComponent(projectCode)}`}>
-          <Button variant="outline" className="mt-4">Back to Project</Button>
+          <Button variant="outline" className="mt-4">{t('backToProject')}</Button>
         </Link>
       </div>
     );
@@ -175,24 +172,24 @@ export default function EditInvoicePage() {
       />
 
       <SubPageHeader
-        eyebrow="Invoicing"
-        title={`Edit ${invoiceNumberOrPending(invoice)}`}
+        eyebrow={t('eyebrow')}
+        title={t('editInvoice', { number: invoiceNumberOrPending(invoice, t('pendingNumber')) })}
         subtitle={project?.contractName ?? projectCode}
         icon={PencilLine}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Projects', href: '/projects' },
+          { label: t('home'), href: '/' },
+          { label: t('projects'), href: '/projects' },
           { label: project?.contractName ?? projectCode, href: `/projects/${encodeURIComponent(projectCode)}` },
-          { label: invoiceNumberOrPending(invoice), href: viewInvoiceHref },
-          { label: 'Edit' },
+          { label: invoiceNumberOrPending(invoice, t('pendingNumber')), href: viewInvoiceHref },
+          { label: t('edit') },
         ]}
         actions={
           <>
             <Button variant="ghost" icon={History} size="sm" onClick={() => setHistoryOpen(true)}>
-              History
+              {t('history')}
             </Button>
             <Link href="" onClick={() => router.back()}>
-              <Button variant="ghost" icon={ChevronLeft} size="sm">Back</Button>
+              <Button variant="ghost" icon={ChevronLeft} iconClassName="rtl:-scale-x-100" size="sm">{t('back')}</Button>
             </Link>
           </>
         }
@@ -201,8 +198,8 @@ export default function EditInvoicePage() {
       <form onSubmit={handleSubmit}>
        <Reveal className="flex flex-col gap-5">
         <FormSection
-          title="Invoice Information"
-          subtitle="Read-only — set when the request was submitted"
+          title={t('invoiceInfo')}
+          subtitle={t('readOnlyHint')}
           icon={FileText}
           tone="muted"
           actions={
@@ -213,26 +210,26 @@ export default function EditInvoicePage() {
           }
         >
           <div className="grid grid-cols-2 gap-4">
-            <InfoItem icon={FileText} label="Invoice Number" value={invoiceNumberOrPending(invoice)} valueClass="font-mono font-semibold" />
-            <InfoItem icon={DollarSign} label="Total Amount" value={formatCurrency(invoice.totalAmount, currency)} valueClass="font-semibold text-primary" />
-            <InfoItem icon={DollarSign} label="Revenue" value={formatCurrency(invoice.revenue, currency)} />
-            <InfoItem icon={DollarSign} label="WIP" value={formatCurrency(invoice.wip, currency)} />
-            <InfoItem icon={Percent} label="VAT Rate" value={formatPercentage(invoice.vat)} />
-            <InfoItem icon={User} label="Submitted By" value={invoice.submittedByName} />
-            <InfoItem icon={Calendar} label="Submission Date" value={formatDateTime(invoice.submissionDate)} />
-            <InfoItem icon={Calendar} label="Baseline Expected Collection Date" value={baselineDateOrPending(invoice)} />
-            <InfoItem icon={Calendar} label="Updated Expected Collection Date" value={formatDate(invoice.expectedCollectionDate)} />
+            <InfoItem icon={FileText} label={t('invoiceNumber')} value={invoiceNumberOrPending(invoice, t('pendingNumber'))} valueClass="font-mono font-semibold" />
+            <InfoItem icon={DollarSign} label={t('totalAmount')} value={formatCurrency(invoice.totalAmount, currency)} valueClass="font-semibold text-primary" />
+            <InfoItem icon={DollarSign} label={t('revenue')} value={formatCurrency(invoice.revenue, currency)} />
+            <InfoItem icon={DollarSign} label={t('wip')} value={formatCurrency(invoice.wip, currency)} />
+            <InfoItem icon={Percent} label={t('vatRate')} value={formatPercentage(invoice.vat)} />
+            <InfoItem icon={User} label={t('submittedBy')} value={invoice.submittedByName} />
+            <InfoItem icon={Calendar} label={t('submissionDate')} value={format.dateTime(invoice.submissionDate)} />
+            <InfoItem icon={Calendar} label={t('baselineCollection')} value={baselineDateOrPending(invoice, t('pendingDate'), format.date)} />
+            <InfoItem icon={Calendar} label={t('updatedCollection')} value={format.date(invoice.expectedCollectionDate)} />
           </div>
         </FormSection>
 
         <FormSection
-          title={`BOQ Line Items (${invoice.lines.length})`}
-          subtitle="Line items are fixed once the invoice is raised"
+          title={t('lineItems', { count: invoice.lines.length })}
+          subtitle={t('linesFixedHint')}
           icon={ListChecks}
           tone="muted"
         >
           {invoice.lines.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-6">No line items on this invoice.</p>
+            <p className="text-sm text-gray-400 text-center py-6">{t('noLines')}</p>
           ) : (
             <div className="flex flex-col gap-3">
               {invoice.lines.map((line) => (
@@ -240,19 +237,19 @@ export default function EditInvoicePage() {
                   <p className="text-sm font-semibold text-gray-800">{line.itemTitleEnSnapshot}</p>
                   <div className="mt-2 pt-2 border-t border-gray-200 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                     <div>
-                      <p className="text-gray-400">Quantity</p>
+                      <p className="text-gray-400">{t('quantity')}</p>
                       <p className="font-semibold text-gray-700">{line.quantity}</p>
                     </div>
                     <div>
-                      <p className="text-gray-400">Billed Unit Price</p>
+                      <p className="text-gray-400">{t('billedUnitPrice')}</p>
                       <p className="font-semibold text-gray-700">{formatCurrency(line.billedUnitPrice, currency)}</p>
                     </div>
                     <div>
-                      <p className="text-gray-400">Line Total</p>
+                      <p className="text-gray-400">{t('lineTotal')}</p>
                       <p className="font-semibold text-primary">{formatCurrency(line.billedUnitPrice * line.quantity, currency)}</p>
                     </div>
                     <div>
-                      <p className="text-gray-400">Submission Variance</p>
+                      <p className="text-gray-400">{t('submissionVariance')}</p>
                       <div className="mt-0.5"><VarianceBadge days={line.varianceDays} size="sm" /></div>
                     </div>
                   </div>
@@ -264,24 +261,28 @@ export default function EditInvoicePage() {
 
         {/* Editable: update details */}
         <FormSection
-          title="Update Details"
-          subtitle="The only fields this request can change"
+          title={t('updateDetails')}
+          subtitle={t('updateDetailsHint')}
           icon={PencilLine}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <DatePicker
-              label="Updated Expected Collection Date"
-              required
+              label={t('updatedCollection')}
               value={expectedCollectionDate}
-              onChange={(e) => { setexpectedCollectionDate(e.target.value); setErrors((p) => ({ ...p, expectedCollectionDate: undefined })); }}
+              onChange={(e) => { setDateDraft(e.target.value); setErrors((p) => ({ ...p, expectedCollectionDate: undefined })); }}
               error={errors.expectedCollectionDate}
+            />
+            <ClaimReferenceInput
+              value={claimReference}
+              onChange={(text) => { setClaimDraft(text); setErrors((p) => ({ ...p, financialClaimReference: undefined })); }}
+              error={errors.financialClaimReference}
+              disabled={saving}
             />
             <div className="md:col-span-2">
               <Textarea
-                label="Reason for Update"
-                required
+                label={t('reasonForUpdate')}
                 rows={3}
-                placeholder="Explain why this invoice is being updated..."
+                placeholder={t('reasonPlaceholder')}
                 value={reasonsForUpdate}
                 onChange={(e) => { setReasonsForUpdate(e.target.value); setErrors((p) => ({ ...p, reasonsForUpdate: undefined })); }}
                 error={errors.reasonsForUpdate}
@@ -292,12 +293,12 @@ export default function EditInvoicePage() {
 
         {/* Editable: existing attachments — mark for deletion */}
         <FormSection
-          title={`Existing Attachments (${invoice.attachments.length})`}
-          subtitle="Download, or mark for removal on save"
+          title={t('existingAttachments', { count: invoice.attachments.length })}
+          subtitle={t('attachmentsActionsHint')}
           icon={Paperclip}
         >
           {invoice.attachments.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-6">No existing attachments.</p>
+            <p className="text-sm text-gray-400 text-center py-6">{t('noExisting')}</p>
           ) : (
             <div className="flex flex-col gap-2">
               {invoice.attachments.map((attachment) => {
@@ -318,8 +319,8 @@ export default function EditInvoicePage() {
                       </p>
                       <p className="text-xs text-gray-400 mt-0.5">
                         {formatFileSize(attachment.fileSize)}
-                        {attachment.uploadedBy && ` · Uploaded by ${attachment.uploadedBy}`}
-                        {markedForDeletion && ' · Will be removed'}
+                        {attachment.uploadedBy && ` · ${t('uploadedBy', { name: attachment.uploadedBy })}`}
+                        {markedForDeletion && ` · ${t('willBeRemoved')}`}
                       </p>
                     </div>
                     <Button
@@ -329,7 +330,7 @@ export default function EditInvoicePage() {
                       icon={Download}
                       loading={downloadingIds.has(attachment.id)}
                       onClick={() => handleDownload(attachment)}
-                      title="Download"
+                      title={t('download')}
                     />
                     <Button
                       type="button"
@@ -338,7 +339,7 @@ export default function EditInvoicePage() {
                       icon={markedForDeletion ? RotateCcw : Trash2}
                       className={markedForDeletion ? '' : 'text-red-500 hover:bg-red-50'}
                       onClick={() => toggleDeleteAttachment(attachment.id)}
-                      title={markedForDeletion ? 'Keep this attachment' : 'Remove this attachment'}
+                      title={markedForDeletion ? t('keepAttachment') : t('removeAttachment')}
                     />
                   </div>
                 );
@@ -349,8 +350,8 @@ export default function EditInvoicePage() {
 
         {/* Editable: add new attachments */}
         <FormSection
-          title="Add Attachments"
-          subtitle="New files are uploaded when you save"
+          title={t('addAttachments')}
+          subtitle={t('addAttachmentsHint')}
           icon={Upload}
         >
           <AttachmentUploader
@@ -359,7 +360,7 @@ export default function EditInvoicePage() {
             disabled={saving}
             onRejected={(rejected) => {
               rejected.forEach(({ file, reason }) => {
-                toast.error('Attachment not added', `${file.name}: ${reason}`);
+                toast.error(t('attachmentNotAdded'), `${file.name}: ${reason}`);
               });
             }}
           />
@@ -368,11 +369,14 @@ export default function EditInvoicePage() {
 
         {/* Actions */}
         <div className="sticky bottom-0 z-10 mt-5 flex items-center justify-end gap-3 rounded-2xl border border-[#e9e7e5] bg-white/95 px-4 py-3 shadow-[0_-4px_16px_-8px_rgb(60_60_58/0.18)]">
+          {!hasChanges && !attachmentsUploading && (
+            <p className="me-auto text-sm text-gray-500">{t('nothingToSave')}</p>
+          )}
           <Link href="" onClick={() => router.back()}>
-            <Button variant="ghost">Cancel</Button>
+            <Button variant="ghost">{t('cancel')}</Button>
           </Link>
-          <Button type="submit" icon={Save} loading={saving} disabled={attachmentsUploading}>
-            {attachmentsUploading ? 'Uploading attachments…' : 'Save changes'}
+          <Button type="submit" icon={Save} loading={saving} disabled={attachmentsUploading || !hasChanges}>
+            {attachmentsUploading ? t('uploadingAttachments') : t('saveChanges')}
           </Button>
         </div>
       </form>

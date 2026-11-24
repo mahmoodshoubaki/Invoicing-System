@@ -2,18 +2,19 @@
 
 import { useState } from 'react';
 import { AlertTriangle, Plus } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import Button from '@/components/common/Button';
 import { controlClass } from '@/components/ui/kit';
 import { STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
 
-const nameOf = (item) => item.englishName ?? `Item ${item.id}`;
-
 /**
  * @param {{ form: ReturnType<import('./useChangeRequestForm').useChangeRequestForm>, choices: Array<{ item: Object, blocker: { reason: string, short: string }|null }>, }} props
  */
 export default function AddItemPicker({ form, choices }) {
+  const t = useTranslations('changeRequests.form');
+  const nameOf = (item) => item.englishName ?? t('itemFallback', { id: item.id });
   const [picked, setPicked] = useState('');
   const busy = form.adding.itemId != null;
   const open = choices.filter((c) => !c.blocker);
@@ -33,14 +34,14 @@ export default function AddItemPicker({ form, choices }) {
         <select
           value={picked}
           onChange={(e) => setPicked(e.target.value)}
-          aria-label="Item to change"
+          aria-label={t('itemToChange')}
           disabled={busy || choices.length === 0}
           className={`${controlClass} min-w-0 flex-1 sm:max-w-md`}
         >
-          <option value="">{choices.length ? 'Choose an item…' : 'No item left to add'}</option>
+          <option value="">{choices.length ? t('chooseItem') : t('noItemLeft')}</option>
           {open.map(({ item }) => <option key={item.id} value={item.id}>{nameOf(item)}</option>)}
           {closed.length > 0 && (
-            <optgroup label="Can't be changed">
+            <optgroup label={t('cantBeChanged')}>
               {closed.map(({ item, blocker: b }) => (
                 <option key={item.id} value={item.id}>{nameOf(item)} — {b.short}</option>
               ))}
@@ -48,7 +49,7 @@ export default function AddItemPicker({ form, choices }) {
           )}
         </select>
         <Button size="sm" variant="outline" icon={Plus} onClick={add} loading={busy} disabled={!picked || Boolean(blocker)}>
-          Add to the request
+          {t('addToRequest')}
         </Button>
       </div>
       {blocker && (
@@ -58,7 +59,7 @@ export default function AddItemPicker({ form, choices }) {
           style={{ backgroundColor: withAlpha(STATUS.critical, 0.07), color: STATUS.critical }}
         >
           <AlertTriangle size={12} className="mt-0.5 shrink-0" aria-hidden="true" />
-          {nameOf(chosen.item)} can’t be changed. {blocker.reason}
+          {t('cantChange', { name: nameOf(chosen.item), reason: blocker.reason })}
         </p>
       )}
       {form.adding.error && <p className="mt-1 text-xs" style={{ color: STATUS.critical }}>{form.adding.error}</p>}

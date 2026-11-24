@@ -30,6 +30,7 @@ function Button({
   disabled = false,
   icon: Icon,
   iconRight: IconRight,
+  iconClassName = '',
   fullWidth = false,
   className = '',
   type = 'button',
@@ -53,11 +54,11 @@ function Button({
       {loading ? (
         <Loader2 size={14} className="animate-spin shrink-0" />
       ) : Icon ? (
-        <Icon size={size === 'xs' ? 12 : size === 'sm' ? 14 : 16} className="shrink-0" />
+        <Icon size={size === 'xs' ? 12 : size === 'sm' ? 14 : 16} className={`shrink-0 ${iconClassName}`} />
       ) : null}
       {children}
       {!loading && IconRight && (
-        <IconRight size={size === 'xs' ? 12 : size === 'sm' ? 14 : 16} className="shrink-0" />
+        <IconRight size={size === 'xs' ? 12 : size === 'sm' ? 14 : 16} className={`shrink-0 ${iconClassName}`} />
       )}
     </button>
   );

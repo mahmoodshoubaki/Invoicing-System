@@ -26,7 +26,7 @@ export default function Switch({ checked, onChange, disabled = false, label, tit
         aria-hidden="true"
       />
       <span
-        className={`absolute left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-4' : ''}`}
+        className={`absolute inset-s-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-4 rtl:-translate-x-4' : ''}`}
         aria-hidden="true"
       />
     </label>

@@ -2,14 +2,15 @@
 
 import { useSelector } from 'react-redux';
 import { Plus, Trash2, Lock } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Button from '@/components/common/Button';
 import { DatePicker } from '@/components/forms/FormField';
 import { StatusBadge } from '@/components/common/Badge';
 import VarianceBadge from '@/components/common/VarianceBadge';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
-import { formatDate } from '@/utils/formatters';
+import { useLocaleFormat } from '@/hooks/useLocaleFormat';
 import { selectTrackerCycleStatusesMap, selectTrackerCycleStatusColorsMap } from '@/store/slices/lookupsSlice';
-import { TRACKER_CYCLE_STATUS } from '@/constants/statuses';
+import { TRACKER_CYCLE_STATUS_ID } from '@/constants/statuses';
 
 function recalculate(cycles) {
   const total = cycles.length;
@@ -55,23 +56,19 @@ function lastWorkingDayOnOrBefore(dateStr) {
  */
 export default function InvoicingPlanTracker({
   cycles, onChange, minDate, maxDate, loading = false, error = null, ready = false, disabled = false,
-  anchorDateLabel = 'Baseline Invoicing Date',
+  anchorDateLabel,
 }) {
+  const t = useTranslations('tracker');
+  const format = useLocaleFormat();
   const statusesMap = useSelector(selectTrackerCycleStatusesMap);
   const statusColorsMap = useSelector(selectTrackerCycleStatusColorsMap);
 
   const effectiveMaxDate = maxDate ? lastWorkingDayOnOrBefore(maxDate) : maxDate;
 
-  const scheduledStatusId = (() => {
-    const entry = Object.entries(statusesMap).find(([, label]) => label === TRACKER_CYCLE_STATUS.SCHEDULED);
-    return entry ? Number(entry[0]) : null;
-  })();
-
   const statusLabel = (cycle) => statusesMap[cycle.statusId] ?? null;
   const isLocked = (cycle) => {
     if (cycle.isCommitted) return true;
-    const label = statusLabel(cycle);
-    return label ? label !== TRACKER_CYCLE_STATUS.SCHEDULED : false;
+    return statusLabel(cycle) ? Number(cycle.statusId) !== TRACKER_CYCLE_STATUS_ID.SCHEDULED : false;
   };
 
   const rowMinDate = (index) => {
@@ -90,7 +87,7 @@ export default function InvoicingPlanTracker({
   const addRow = () => {
     onChange(recalculate([
       ...cycles,
-      { id: null, cycleNumber: 0, totalCycles: 0, plannedDate: '', isCommitted: false, statusId: scheduledStatusId },
+      { id: null, cycleNumber: 0, totalCycles: 0, plannedDate: '', isCommitted: false, statusId: TRACKER_CYCLE_STATUS_ID.SCHEDULED },
     ]));
   };
 
@@ -114,7 +111,7 @@ export default function InvoicingPlanTracker({
   if (!ready && cycles.length === 0) {
     return (
       <p className="text-sm text-gray-400 text-center py-8">
-        Fill in the {anchorDateLabel} and Billing Frequency above to generate the invoicing plan.
+        {t('fillPrompt', { anchor: anchorDateLabel ?? t('defaultAnchor') })}
       </p>
     );
   }
@@ -124,21 +121,21 @@ export default function InvoicingPlanTracker({
       <div className="relative">
         {loading && (
           <div className="absolute inset-0 z-10 bg-white/75 backdrop-blur-[1px] flex items-center justify-center rounded-xl">
-            <LoadingSpinner size="sm" message="Regenerating invoicing plan…" />
+            <LoadingSpinner size="sm" message={t('regenerating')} />
           </div>
         )}
         {cycles.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-8">No cycles generated yet.</p>
+          <p className="text-sm text-gray-400 text-center py-8">{t('empty')}</p>
         ) : (
           <div className="overflow-x-auto rounded-xl border border-gray-100">
             <table className="w-full text-sm border-collapse">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Cycle</th>
-                <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Planned Date</th>
-                <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
-                <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Variance</th>
-                <th className="px-3 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
+                <th className="px-3 py-2.5 text-start text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">{t('cycle')}</th>
+                <th className="px-3 py-2.5 text-start text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('plannedDate')}</th>
+                <th className="px-3 py-2.5 text-start text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('status')}</th>
+                <th className="px-3 py-2.5 text-start text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('variance')}</th>
+                <th className="px-3 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -148,11 +145,11 @@ export default function InvoicingPlanTracker({
                 return (
                   <tr key={cycle.id ?? `new-${index}`} className={locked ? 'bg-gray-50/70' : ''}>
                     <td className={`px-3 py-2.5 font-medium whitespace-nowrap ${locked ? 'text-gray-400' : 'text-gray-700'}`}>
-                      {cycle.cycleNumber} / {cycle.totalCycles}
+                      {t('cycleOf', { number: cycle.cycleNumber, total: cycle.totalCycles })}
                     </td>
                     <td className="px-3 py-2.5">
                       {locked ? (
-                        <span className="text-gray-400">{formatDate(cycle.plannedDate)}</span>
+                        <span className="text-gray-400">{format.date(cycle.plannedDate)}</span>
                       ) : (
                         <DatePicker
                           value={cycle.plannedDate ? String(cycle.plannedDate).slice(0, 10) : ''}
@@ -176,7 +173,7 @@ export default function InvoicingPlanTracker({
                     </td>
                     <td className="px-3 py-2.5 text-center">
                       {locked ? (
-                        <span className="inline-flex items-center justify-center text-gray-300" title="Locked">
+                        <span className="inline-flex items-center justify-center text-gray-300" title={t('locked')}>
                           <Lock size={13} />
                         </span>
                       ) : (
@@ -188,7 +185,7 @@ export default function InvoicingPlanTracker({
                           className="text-red-500 hover:bg-red-50"
                           disabled={disabled}
                           onClick={() => removeRow(index)}
-                          title="Delete cycle"
+                          title={t('deleteCycle')}
                         />
                       )}
                     </td>
@@ -205,8 +202,8 @@ export default function InvoicingPlanTracker({
         {!canAddRow && cycles.length > 0 && (
           <span className="text-xs text-gray-400">
             {lastCycle?.plannedDate
-              ? "The last cycle is already on the contract finish date — no room for another."
-              : 'Set a date for the last cycle to add another.'}
+              ? t('noRoom')
+              : t('setLast')}
           </span>
         )}
         {canAddRow && (
@@ -218,7 +215,7 @@ export default function InvoicingPlanTracker({
             disabled={disabled || loading}
             onClick={addRow}
           >
-            Add Cycle
+            {t('addCycle')}
           </Button>
         )}
       </div>

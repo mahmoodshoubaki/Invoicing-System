@@ -1,6 +1,7 @@
 'use client';
 
 import { memo } from 'react';
+import { useTranslations } from 'next-intl';
 
 import CheckboxDropdown from '@/components/ui/CheckboxDropdown';
 import { CHROME } from '@/theme/vizPalette';
@@ -9,11 +10,12 @@ import { CHROME } from '@/theme/vizPalette';
  * @param {{ groups: Array<{ id: string, name: string }>, loading?: boolean, selectedIds: string[], onChange: (ids: string[]) => void }} props
  */
 function GroupChips({ groups, loading = false, selectedIds, onChange }) {
+  const t = useTranslations('tasks.people');
   if (loading && groups.length === 0) {
-    return <p className="text-[11px]" style={{ color: CHROME.textMuted }}>Loading groups…</p>;
+    return <p className="text-[11px]" style={{ color: CHROME.textMuted }}>{t('loadingGroups')}</p>;
   }
   if (groups.length === 0) {
-    return <p className="text-[11px]" style={{ color: CHROME.textMuted }}>No groups available.</p>;
+    return <p className="text-[11px]" style={{ color: CHROME.textMuted }}>{t('noGroups')}</p>;
   }
 
   const toggle = (id) =>
@@ -22,11 +24,11 @@ function GroupChips({ groups, loading = false, selectedIds, onChange }) {
   return (
     <CheckboxDropdown
       compact
-      label="Groups"
+      label={t('groups')}
       options={groups.map((group) => ({ value: group.id, label: group.name }))}
       selected={selectedIds}
       onToggle={toggle}
-      placeholder="Choose groups…"
+      placeholder={t('chooseGroups')}
     />
   );
 }

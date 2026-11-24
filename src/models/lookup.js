@@ -5,6 +5,14 @@
  */
 
 /**
+ * @typedef {Object} StatusLookup
+ * @property {number} id
+ * @property {string|null} labelEn
+ * @property {string|null} labelAr
+ * @property {string} colorHex
+ */
+
+/**
  * @param {Object} raw
  * @returns {LookupItem}
  */
@@ -18,36 +26,17 @@ export function createLookupItem(raw) {
 
 /**
  * @param {Object} raw
- * @returns {LookupItem & { colorHex: string }}
+ * @returns {StatusLookup}
  */
-export function createInvoiceStatus(raw) {
+function createStatusLookup(raw) {
   return {
     id:       raw.key,
-    label:    raw.value ?? '',
+    labelEn:  raw.valueEN ?? null,
+    labelAr:  raw.valueAR ?? null,
     colorHex: raw.colorHex ?? '#6b7280',
   };
 }
 
-/**
- * @param {Object} raw
- * @returns {LookupItem & { colorHex: string }}
- */
-export function createBoqItemStatus(raw) {
-  return {
-    id:       raw.key,
-    label:    raw.value ?? '',
-    colorHex: raw.colorHex ?? '#6b7280',
-  };
-}
-
-/**
- * @param {Object} raw
- * @returns {LookupItem & { colorHex: string }}
- */
-export function createTrackerCycleStatus(raw) {
-  return {
-    id:       raw.key,
-    label:    raw.value ?? '',
-    colorHex: raw.colorHex ?? '#6b7280',
-  };
-}
+export const createInvoiceStatus = createStatusLookup;
+export const createBoqItemStatus = createStatusLookup;
+export const createTrackerCycleStatus = createStatusLookup;

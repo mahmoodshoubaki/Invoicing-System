@@ -1,6 +1,7 @@
 'use client';
 
 import { memo, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { labelClass } from '@/components/ui/kit';
 import { CHROME } from '@/theme/vizPalette';
@@ -24,6 +25,7 @@ function parseRows(text) {
  * @param {{ field: Object, value: string }} props
  */
 function TaskListField({ field, value }) {
+  const t = useTranslations('tasks.form');
   const rows = useMemo(() => parseRows(value), [value]);
   const keys = useMemo(() => [...new Set(rows.flatMap((r) => Object.keys(r)))], [rows]);
 
@@ -31,14 +33,14 @@ function TaskListField({ field, value }) {
     <div>
       <p className={labelClass} style={{ color: CHROME.textSecondary }}>{field.label || field.name}</p>
       {rows.length === 0 ? (
-        <p className="text-xs" style={{ color: CHROME.textMuted }}>None.</p>
+        <p className="text-xs" style={{ color: CHROME.textMuted }}>{t('none')}</p>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-gray-100">
           <table className="w-full border-collapse text-xs">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
                 {keys.map((k) => (
-                  <th key={k} className="whitespace-nowrap px-3 py-2 text-left font-semibold uppercase tracking-wide text-gray-500">
+                  <th key={k} className="whitespace-nowrap px-3 py-2 text-start font-semibold uppercase tracking-wide text-gray-500">
                     {headingOf(k)}
                   </th>
                 ))}

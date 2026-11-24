@@ -2,12 +2,16 @@
 
 import { memo } from 'react';
 import { Activity, Banknote, CheckCircle2, Clock, FileText } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import KpiTile from '@/components/dashboard/KpiTile';
 import Reveal from '@/components/motion/Reveal';
 import { SERIES_ROLE, STATUS } from '@/theme/vizPalette';
 import { formatCurrency } from '@/utils/formatters';
 
+const ltr = (chunks) => <span dir="ltr">{chunks}</span>;
+
 function ProjectStatCards({ totals, currency }) {
+  const t = useTranslations('projects.stats');
   const money = (v) => formatCurrency(v, currency);
   const collectionRate = totals.totalInvoicesValue > 0
     ? Math.round((totals.collectedValue / totals.totalInvoicesValue) * 100)
@@ -15,55 +19,60 @@ function ProjectStatCards({ totals, currency }) {
 
   const tiles = [
     {
-      label: 'Project Value',
+      id: 'projectValue',
+      label: t('projectValue'),
       value: totals.projectValue,
       format: money,
       icon: Banknote,
       accent: SERIES_ROLE.revenue,
-      footnote: 'Contracted total',
+      footnote: t('projectValueNote'),
     },
     {
-      label: 'Total Revenue',
+      id: 'totalRevenue',
+      label: t('totalRevenue'),
       value: totals.totalRevenue,
       format: money,
       icon: Activity,
       accent: SERIES_ROLE.invoiced,
-      delta: `${money(totals.wip)} WIP`,
+      delta: t.rich('wipDelta', { value: money(totals.wip), amount: ltr }),
       deltaType: totals.wip <= 0 ? 'positive' : 'negative',
-      footnote: 'Recognised to date',
+      footnote: t('totalRevenueNote'),
     },
     {
-      label: 'Total Invoices',
+      id: 'totalInvoices',
+      label: t('totalInvoices'),
       value: totals.totalInvoicesValue,
       format: money,
       icon: FileText,
       accent: SERIES_ROLE.wip,
-      footnote: 'Excludes rejected and cancelled',
+      footnote: t('totalInvoicesNote'),
     },
     {
-      label: 'Collected',
+      id: 'collected',
+      label: t('collected'),
       value: totals.collectedValue,
       format: money,
       icon: CheckCircle2,
       accent: SERIES_ROLE.collected,
-      delta: `${collectionRate}% of invoices`,
+      delta: t('collectedDelta', { rate: collectionRate }),
       deltaType: collectionRate >= 50 ? 'positive' : 'neutral',
-      footnote: 'Cash received',
+      footnote: t('collectedNote'),
     },
     {
-      label: 'Non-Collected',
+      id: 'nonCollected',
+      label: t('nonCollected'),
       value: totals.nonCollectedValue,
       format: money,
       icon: Clock,
       accent: STATUS.warning,
-      footnote: 'Awaiting collection',
+      footnote: t('nonCollectedNote'),
     },
   ];
 
   return (
     <Reveal className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-      {tiles.map((tile) => (
-        <KpiTile key={tile.label} {...tile} />
+      {tiles.map(({ id, ...tile }) => (
+        <KpiTile key={id} {...tile} />
       ))}
     </Reveal>
   );

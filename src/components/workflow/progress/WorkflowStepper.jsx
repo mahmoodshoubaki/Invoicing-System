@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { AlertTriangle, ArrowRight, Check, CircleSlash, Hourglass, Pause, X } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 
 import { STEP, TONE } from '@/lib/workflowProgress';
 import { waitingOnText } from '@/lib/waitingOn';
@@ -46,7 +47,7 @@ function Marker({ step, number }) {
   if (step.state === STEP.NEXT) {
     return (
       <span className="grid h-8 w-8 place-items-center rounded-full border-2 border-dashed bg-white" style={{ borderColor: withAlpha(colors.primary, 0.6), color: colors.primary }}>
-        <ArrowRight size={14} aria-hidden="true" />
+        <ArrowRight size={14} className="rtl:-scale-x-100" aria-hidden="true" />
       </span>
     );
   }
@@ -59,10 +60,10 @@ function Marker({ step, number }) {
 
 function Connector({ done, index }) {
   return (
-    <span className="absolute left-[calc(50%+22px)] right-[calc(-50%+22px)] top-4 h-0.5 -translate-y-1/2 overflow-hidden rounded-full bg-[#ecebe6]" aria-hidden="true">
+    <span className="absolute inset-s-[calc(50%+22px)] inset-e-[calc(-50%+22px)] top-4 h-0.5 -translate-y-1/2 overflow-hidden rounded-full bg-[#ecebe6]" aria-hidden="true">
       {done && (
         <motion.span
-          className="block h-full origin-left rounded-full"
+          className="block h-full origin-left rounded-full rtl:origin-right"
           style={{ backgroundColor: colors.primary }}
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 1 }}
@@ -76,28 +77,32 @@ function Connector({ done, index }) {
 /**
  * @param {{ steps: Array, next: string|null, ready: boolean, waitingOn?: Array, the record's own hereLabel?: string, label: string, what the steps are of, for screen readers emptyMessage?: string|null, said instead of the steps — a record no workflow runs on }} props
  */
-export default function WorkflowStepper({ steps, next, ready, waitingOn = null, hereLabel = 'Now', label, emptyMessage = null }) {
+export default function WorkflowStepper({ steps, next, ready, waitingOn = null, hereLabel, label, emptyMessage = null }) {
+  const t = useTranslations('workflowProgress');
+  const locale = useLocale();
   const trackRef = useRef(null);
-  const waiting = waitingOnText(waitingOn);
+  const waiting = waitingOnText(waitingOn, t, locale);
 
   useEffect(() => {
     const track = trackRef.current;
     const here = track?.querySelector('[aria-current="step"]');
     if (!track || !here) return;
-    track.scrollLeft = Math.max(0, here.offsetLeft - (track.clientWidth - here.clientWidth) / 2);
+    const trackBox = track.getBoundingClientRect();
+    const hereBox = here.getBoundingClientRect();
+    track.scrollLeft += hereBox.left + hereBox.width / 2 - (trackBox.left + trackBox.width / 2);
   }, [steps]);
 
   return (
-    <section aria-label="Progress" className="mb-5 rounded-2xl border border-[#e9e7e5] bg-white px-5 py-4 shadow-[var(--shadow-card)]">
+    <section aria-label={t('progress')} className="mb-5 rounded-2xl border border-[#e9e7e5] bg-white px-5 py-4 shadow-[var(--shadow-card)]">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: CHROME.textMuted }}>Where it is</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: CHROME.textMuted }}>{t('whereItIs')}</p>
         {ready && next && !emptyMessage && (
           <p
             className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
             style={{ backgroundColor: withAlpha(colors.primary, 0.08), color: colors.primary }}
           >
-            <ArrowRight size={12} aria-hidden="true" />
-            Next: {next}
+            <ArrowRight size={12} className="rtl:-scale-x-100" aria-hidden="true" />
+            {t('nextStep', { step: next })}
           </p>
         )}
       </div>
@@ -139,7 +144,7 @@ export default function WorkflowStepper({ steps, next, ready, waitingOn = null, 
                       ? { backgroundColor: color, color: '#fff' }
                       : { backgroundColor: withAlpha(colors.primary, 0.1), color: colors.primary }}
                   >
-                    {current ? hereLabel : 'Next'}
+                    {current ? (hereLabel ?? t('now')) : t('next')}
                   </span>
                 )}
                 {step.note && (
@@ -159,7 +164,7 @@ export default function WorkflowStepper({ steps, next, ready, waitingOn = null, 
           style={{ backgroundColor: withAlpha(STATUS.info, 0.07), color: CHROME.textPrimary }}
         >
           <Hourglass size={13} className="mt-0.5 shrink-0" style={{ color: STATUS.info }} aria-hidden="true" />
-          <span><span className="font-semibold">Waiting on: </span>{waiting}</span>
+          <span><span className="font-semibold">{t('waitingOn')} </span><bdi>{waiting}</bdi></span>
         </p>
       )}
     </section>

@@ -10,6 +10,7 @@ export const COMPANY_SHORT_NAME = process.env.NEXT_PUBLIC_COMPANY_SHORT_NAME;
 export const DEFAULT_LANGUAGE = process.env.NEXT_PUBLIC_DEFAULT_LANGUAGE;
 export const DEFAULT_CURRENCY = process.env.NEXT_PUBLIC_DEFAULT_CURRENCY;
 export const VAT_RATE = Number(process.env.NEXT_PUBLIC_DEFAULT_VAT_PERCENT) / 100;
+export const USD_TO_SAR_RATE = Number(process.env.NEXT_PUBLIC_USD_TO_SAR_RATE);
 
 /** For addresses Next.js does not prefix itself: fetch, window.location, iframes and plain <a>. */
 export const withBasePath = (path) => `${BASE_PATH}${path}`;

@@ -1,34 +1,36 @@
 import Link from 'next/link';
 import { FolderKanban } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import FormSection from '@/components/common/FormSection';
 import Button from '@/components/common/Button';
 import { formatCurrency } from '@/utils/formatters';
 
 export default function ProjectSummarySection({ project, projectCode, projectFinancials, currency }) {
+  const t = useTranslations('invoices.form');
   return (
     <FormSection
-      title="Project"
+      title={t('project')}
       icon={FolderKanban}
       actions={
         <Link href={`/projects/${encodeURIComponent(projectCode)}`}>
-          <Button variant="ghost" size="xs">View project</Button>
+          <Button variant="ghost" size="xs">{t('viewProject')}</Button>
         </Link>
       }
     >
       <div>
         <p className="text-sm font-semibold text-[#0b0b0b]">{project.contractName}</p>
-        <p className="mt-0.5 font-mono text-xs text-[#898781]">{projectCode}</p>
+        <p className="mt-0.5 font-mono text-xs text-[#898781]"><bdi>{projectCode}</bdi></p>
       </div>
       <div className="mt-4 grid grid-cols-2 gap-4 border-t border-[#f1f0ee] pt-4">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-[#898781]">Project Revenue</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-[#898781]">{t('projectRevenue')}</p>
           <p className="mt-0.5 text-sm font-semibold text-[#0b0b0b]">
             {formatCurrency(projectFinancials.totalRevenue, currency)}
           </p>
         </div>
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-[#898781]">Project WIP</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-[#898781]">{t('projectWip')}</p>
           <p className="mt-0.5 text-sm font-semibold text-[#0b0b0b]">
             {formatCurrency(projectFinancials.wip, currency)}
           </p>

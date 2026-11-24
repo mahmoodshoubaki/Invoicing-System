@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 export default function LoadingSpinner({ size = 'md', center = false, message }) {
   const sizeMap = { sm: 'w-4 h-4', md: 'w-8 h-8', lg: 'w-12 h-12' };
 
@@ -17,12 +19,13 @@ export default function LoadingSpinner({ size = 'md', center = false, message })
   return Spinner;
 }
 
-export function PageLoader({ message = 'Loading...' }) {
+export function PageLoader({ message }) {
+  const t = useTranslations('common');
   return (
     <div className="fixed inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="flex flex-col items-center gap-4">
         <div className="w-12 h-12 border-4 border-gray-200 border-t-primary rounded-full animate-spin" />
-        <p className="text-sm font-medium text-gray-600">{message}</p>
+        <p className="text-sm font-medium text-gray-600">{message ?? t('loading')}</p>
       </div>
     </div>
   );

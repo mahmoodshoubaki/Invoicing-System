@@ -5,19 +5,20 @@ import Link from 'next/link';
 import {
   AlertTriangle, Calendar, CheckCircle2, Lock, MessageSquare, PauseCircle, TextCursorInput, UserPlus,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useLocaleFormat } from '@/hooks/useLocaleFormat';
 
 import Table from '@/components/common/Table';
 import EmptyState from '@/components/common/EmptyState';
 import AssigneeList from '@/components/workflow/AssigneeList';
 import ProjectLink from '@/components/workflow/ProjectLink';
 import TargetLinks from '@/components/workflow/TargetLinks';
-import { formatDate, formatDateTime } from '@/utils/formatters';
 import { pageInfo } from '@/lib/pageInfo';
 import { readableTextOn, withAlpha } from '@/utils/color';
 import { CHROME, STATUS } from '@/theme/vizPalette';
 import { ROUTES } from '@/constants/routes';
 import {
-  INSTANCE_STATUS, INSTANCE_STATUS_LABELS, TASK_STATUS, TASK_STATUS_COLORS, TASK_STATUS_LABELS,
+  INSTANCE_STATUS, TASK_STATUS, TASK_STATUS_COLORS,
 } from '@/constants/workflow';
 
 export const TASK_FILTERS = {
@@ -34,15 +35,30 @@ export const TASK_FILTER_STATUS = {
 
 export const TASK_PAGE_SIZE = 10;
 
-function dueLabel(dueOn, isOverdue) {
+const TASK_STATUS_KEYS = {
+  [TASK_STATUS.PENDING]: 'pending',
+  [TASK_STATUS.COMPLETED]: 'completed',
+  [TASK_STATUS.CANCELLED]: 'cancelled',
+  [TASK_STATUS.REASSIGNED]: 'reassigned',
+};
+
+const RUN_STATUS_KEYS = {
+  [INSTANCE_STATUS.RUNNING]: 'running',
+  [INSTANCE_STATUS.COMPLETED]: 'completed',
+  [INSTANCE_STATUS.CANCELLED]: 'cancelled',
+  [INSTANCE_STATUS.FAULTED]: 'faulted',
+  [INSTANCE_STATUS.PAUSED]: 'paused',
+};
+
+function dueLabel(dueOn, isOverdue, t, format) {
   if (!dueOn) return null;
-  if (isOverdue) return 'Overdue';
+  if (isOverdue) return t('due.overdue');
 
   const days = Math.ceil((new Date(dueOn) - Date.now()) / 86400000);
-  if (days <= 0) return 'Due today';
-  if (days === 1) return 'Due tomorrow';
-  if (days <= 14) return `Due in ${days} days`;
-  return `Due ${formatDate(dueOn)}`;
+  if (days <= 0) return t('due.today');
+  if (days === 1) return t('due.tomorrow');
+  if (days <= 14) return t('due.inDays', { days });
+  return t('due.on', { date: format.date(dueOn) });
 }
 
 function rowState(task, canAct) {
@@ -56,10 +72,12 @@ function TaskTable({
   tasks, filter = TASK_FILTERS.ALL, total = 0, page = 1, onPageChange, pageSize = TASK_PAGE_SIZE, onPageSizeChange = null, isLoading = false,
   onComplete, onAsk, onOpenForm, completingTaskId, canAct, canReassign, canViewRuns, onReassign,
 }) {
+    const t = useTranslations('tasks.table');
+  const format = useLocaleFormat();
   const columns = useMemo(() => [
     {
       key: 'title',
-      label: 'Task',
+      label: t('columns.task'),
       render: (_, task) => {
         const { settled } = rowState(task, canAct);
         const tone = TASK_STATUS_COLORS[task.statusKey];
@@ -72,11 +90,11 @@ function TaskTable({
                   className="text-xs font-semibold underline-offset-2 hover:underline"
                   style={{ color: CHROME.textPrimary }}
                 >
-                  {task.title ?? 'Untitled task'}
+                  {task.title ?? t('untitled')}
                 </Link>
               ) : (
                 <span className="text-xs font-semibold" style={{ color: CHROME.textPrimary }}>
-                  {task.title ?? 'Untitled task'}
+                  {task.title ?? t('untitled')}
                 </span>
               )}
               {settled && (
@@ -84,17 +102,17 @@ function TaskTable({
                   className="rounded-full px-1.5 py-0.5 text-[10px] font-semibold"
                   style={{ backgroundColor: withAlpha(tone ?? CHROME.textMuted, 0.12), color: tone ?? CHROME.textMuted }}
                 >
-                  {TASK_STATUS_LABELS[task.statusKey] ?? 'Settled'}
+                  {t(`status.${TASK_STATUS_KEYS[task.statusKey] ?? 'settled'}`)}
                 </span>
               )}
               {task.statusKey === TASK_STATUS.REASSIGNED && task.reassignedToName && (
                 <span className="text-[11px]" style={{ color: CHROME.textSecondary }}>
-                  to {task.reassignedToName}
+                  {t('reassignedTo', { name: task.reassignedToName })}
                 </span>
               )}
             </div>
             <p className="mt-0.5 text-[11px]" style={{ color: CHROME.textMuted }}>
-              <span className="font-mono">{task.definitionName}</span> - v{task.definitionVersion}
+              <bdi className="font-mono">{task.definitionName}</bdi> - <span dir="ltr">v{task.definitionVersion}</span>
               {task.currentStageTitle && ` · ${task.currentStageTitle}`}
             </p>
           </div>
@@ -103,7 +121,7 @@ function TaskTable({
     },
     {
       key: 'projectCode',
-      label: 'Request / Project',
+      label: t('columns.request'),
       render: (code, task) => (
         <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <TargetLinks targetTypeKey={task.targetTypeKey} targetIds={task.targetIds} projectCode={code} size="xs" />
@@ -113,7 +131,7 @@ function TaskTable({
     },
     {
       key: 'assignees',
-      label: 'Assigned to',
+      label: t('columns.assignedTo'),
       sortable: false,
       render: (_, task) => (
         <AssigneeList users={task.assignedUsers} roles={task.assignedRoles} groups={task.assignedGroups} compact />
@@ -121,11 +139,11 @@ function TaskTable({
     },
     {
       key: 'createdOn',
-      label: 'Created',
+      label: t('columns.created'),
       sortable: true,
       render: (createdOn) => (createdOn ? (
         <span className="whitespace-nowrap text-[11px]" style={{ color: CHROME.textSecondary }}>
-          {formatDateTime(createdOn)}
+          {format.dateTime(createdOn)}
         </span>
       ) : (
         <span className="text-[11px]" style={{ color: CHROME.textMuted }}>—</span>
@@ -133,9 +151,9 @@ function TaskTable({
     },
     {
       key: 'dueOn',
-      label: 'Due',
+      label: t('columns.due'),
       render: (dueOn, task) => {
-        const due = dueLabel(dueOn, task.isOverdue);
+        const due = dueLabel(dueOn, task.isOverdue, t, format);
         if (!due) return <span className="text-[11px]" style={{ color: CHROME.textMuted }}>—</span>;
         return (
           <span
@@ -145,7 +163,7 @@ function TaskTable({
                 ? { backgroundColor: withAlpha(STATUS.critical, 0.1), color: STATUS.critical }
                 : { backgroundColor: '#f6f5f3', color: CHROME.textSecondary }
             }
-            title={formatDateTime(dueOn)}
+            title={format.dateTime(dueOn)}
           >
             {task.isOverdue ? <AlertTriangle size={10} aria-hidden="true" /> : <Calendar size={10} aria-hidden="true" />}
             {due}
@@ -167,7 +185,7 @@ function TaskTable({
           answer = (
             <span className="inline-flex items-center gap-1 text-[11px]" style={{ color: CHROME.textMuted }}>
               <CheckCircle2 size={11} aria-hidden="true" />
-              Nothing left to answer
+              {t('nothingLeft')}
             </span>
           );
         } else if (runStopped) {
@@ -175,10 +193,10 @@ function TaskTable({
             <span
               className="inline-flex items-center gap-1 text-[11px]"
               style={{ color: CHROME.textMuted }}
-              title="The run is not going, so this cannot be answered until it is resumed."
+              title={t('runStoppedHint')}
             >
               <PauseCircle size={11} aria-hidden="true" />
-              Run {(INSTANCE_STATUS_LABELS[task.runStatusKey] ?? 'stopped').toLowerCase()}
+              {t(`run.${RUN_STATUS_KEYS[task.runStatusKey] ?? 'stopped'}`)}
             </span>
           );
         } else if (readOnly) {
@@ -186,14 +204,14 @@ function TaskTable({
             <span
               className="inline-flex items-center gap-1 text-[11px]"
               style={{ color: CHROME.textMuted }}
-              title="You can follow this task but are not able to answer it."
+              title={t('readOnlyHint')}
             >
               <Lock size={11} aria-hidden="true" />
-              Read-only
+              {t('readOnly')}
             </span>
           );
         } else if (task.buttons.length === 0) {
-          answer = <span className="text-[11px]" style={{ color: CHROME.textMuted }}>No outcomes defined</span>;
+          answer = <span className="text-[11px]" style={{ color: CHROME.textMuted }}>{t('noOutcomes')}</span>;
         } else if ((task.fields?.length ?? 0) > 0) {
           answer = (
             <button
@@ -201,10 +219,10 @@ function TaskTable({
               disabled={busy}
               onClick={() => onOpenForm?.(task)}
               className="inline-flex items-center gap-1 whitespace-nowrap rounded-md bg-primary px-2.5 py-1 text-[11px] font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
-              title={`Fill in ${task.fields.length} field${task.fields.length === 1 ? '' : 's'} and answer`}
+              title={t('fillTitle', { count: task.fields.length })}
             >
               <TextCursorInput size={11} aria-hidden="true" />
-              Fill in &amp; answer
+              {t('fillIn')}
             </button>
           );
         } else {
@@ -223,7 +241,7 @@ function TaskTable({
                     backgroundColor: button.colorHex ?? '#f1f0ee',
                     color: readableTextOn(button.colorHex, CHROME.textPrimary),
                   }}
-                  title={button.reasons ? `${button.label} — asks for a reason` : button.requiresComment ? `${button.label} — asks for a comment` : button.label}
+                  title={button.reasons ? t('asksReason', { label: button.label }) : button.requiresComment ? t('asksComment', { label: button.label }) : button.label}
                 >
                   {(button.requiresComment || button.reasons) && <MessageSquare size={10} aria-hidden="true" />}
                   {button.label}
@@ -243,27 +261,27 @@ function TaskTable({
                 onClick={() => onReassign?.(task)}
                 className="inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-1 text-[11px] font-medium transition-colors hover:bg-[#f1f0ee] disabled:cursor-not-allowed disabled:opacity-50"
                 style={{ color: CHROME.textSecondary }}
-                title="Hand this task to somebody else"
+                title={t('handHint')}
               >
                 <UserPlus size={11} aria-hidden="true" />
-                Hand on
+                {t('handOn')}
               </button>
             )}
           </div>
         );
       },
     },
-  ], [canAct, canReassign, canViewRuns, completingTaskId, onAsk, onComplete, onOpenForm, onReassign]);
+  ], [canAct, canReassign, canViewRuns, completingTaskId, onAsk, onComplete, onOpenForm, onReassign, t, format]);
 
   if (!isLoading && total === 0) {
     const empty = {
       [TASK_FILTERS.COMPLETED]: {
-        title: 'No completed tasks',
-        message: 'Tasks you have answered appear here.',
+        title: t('noCompleted'),
+        message: t('noCompletedBody'),
       },
     }[filter] ?? {
-      title: 'Nothing waiting on you',
-      message: 'When a workflow reaches a step assigned to you or your role, it appears here.',
+      title: t('nothingWaiting'),
+      message: t('nothingWaitingBody'),
     };
     return <EmptyState icon={CheckCircle2} title={empty.title} message={empty.message} />;
   }
@@ -276,7 +294,7 @@ function TaskTable({
       rowKey="taskId"
       compact
       isLoading={isLoading}
-      emptyMessage="Nothing on this page."
+      emptyMessage={t('emptyPage')}
       pagination={pageInfo(page, pageSize, total, onPageChange, onPageSizeChange)}
     />
   );

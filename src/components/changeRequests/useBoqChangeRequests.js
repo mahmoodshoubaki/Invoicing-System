@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { changeRequestRepository } from '@/repositories/changeRequestRepository';
 import { isOpenChangeRequest } from '@/constants/changeRequests';
@@ -12,6 +13,7 @@ const NONE = [];
  * @param {boolean} enabled
  */
 export function useBoqChangeRequests(boqId, enabled) {
+  const t = useTranslations('changeRequests.page');
   const [loaded, setLoaded] = useState({ boqId: null, rows: NONE, error: null });
   const [token, setToken] = useState(0);
 
@@ -20,7 +22,7 @@ export function useBoqChangeRequests(boqId, enabled) {
     let cancelled = false;
     changeRequestRepository.getChangeRequestsByBoqId(boqId)
       .then((rows) => { if (!cancelled) setLoaded({ boqId, rows, error: null }); })
-      .catch((err) => { if (!cancelled) setLoaded({ boqId, rows: NONE, error: err?.message || 'Could not load the change requests.' }); });
+      .catch((err) => { if (!cancelled) setLoaded({ boqId, rows: NONE, error: err?.message || t('loadFailed') }); });
     return () => { cancelled = true; };
   }, [boqId, enabled, token]);
 

@@ -3,15 +3,19 @@
 import { memo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { ChevronDown, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useLookupLabel } from '@/hooks/useLookupLabel';
+import { useLocaleFormat } from '@/hooks/useLocaleFormat';
 
 import Button from '@/components/common/Button';
 import { DatePicker, Input, NumberInput, Select, Textarea } from '@/components/forms/FormField';
 import InvoicingPlanTracker from '@/components/boq/InvoicingPlanTracker';
 import { changedItemFields, itemTotal, planChanged } from '@/lib/changeRequest/itemDraft';
 import { selectBillingFrequencies } from '@/store/slices/lookupsSlice';
+import { BASE_CURRENCY } from '@/constants/currencies';
 import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
-import { formatCurrency, formatDate } from '@/utils';
+import { formatCurrency } from '@/utils';
 
 /**
  * @param {{ draft: Object, problems: Object|null, plan: { busy?: boolean, error?: string|null }|undefined, window: { start: string, end: string }, the contract dates the request leaves onField: (itemId, key, value) => void, onCycles: (itemId, cycles) => void, onRemove: (itemId) => void, revealToken: number, ticks on each refused Submit — a folded card with a problem opens lockFields?: boolean, lockPlan?: boolean, canRemove?: boolean, }} props
@@ -20,12 +24,20 @@ function ItemChangeCard({
   draft, problems, plan, window, onField, onCycles, onRemove, revealToken = 0,
   lockFields = false, lockPlan = false, canRemove = true,
 }) {
-  const currency = useSelector((s) => s.ui.currency);
+  const currency = BASE_CURRENCY;
+  const displayCurrency = useSelector((s) => s.ui.currency);
+  const tc = useTranslations('common');
+  const t = useTranslations('changeRequests.item');
+  const format = useLocaleFormat();
+  const billingLabel = useLookupLabel('billingFrequency');
   const frequencies = useSelector(selectBillingFrequencies);
   const errors = problems ?? {};
   const changed = new Set(changedItemFields(draft).map((c) => c.key));
-  const frequencyName = (id) => frequencies.find((f) => String(f.id) === String(id))?.label ?? '—';
-  const was = (key, text) => (changed.has(key) ? `was ${text || '—'}` : undefined);
+  const frequencyName = (id) => {
+    const name = frequencies.find((f) => String(f.id) === String(id))?.label;
+    return name ? billingLabel(name) : '—';
+  };
+  const was = (key, text) => (changed.has(key) ? t('was', { value: text || '—' }) : undefined);
   const set = (key) => (e) => onField(draft.itemId, key, e.target.value);
   const o = draft.original;
   const v = draft.values;
@@ -45,7 +57,7 @@ function ItemChangeCard({
       >
         <ChevronDown
           size={16}
-          className={`mt-0.5 shrink-0 transition-transform ${open ? "" : "-rotate-90"}`}
+          className={`mt-0.5 shrink-0 transition-transform ${open ? "" : "-rotate-90 rtl:rotate-90"}`}
           style={{ color: CHROME.textMuted, cursor: "pointer" }}
           aria-hidden="true"
           onClick={() => setOpen((v) => !v)}
@@ -54,7 +66,7 @@ function ItemChangeCard({
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          className="flex min-w-0 flex-1 items-start gap-2 text-left"
+          className="flex min-w-0 flex-1 items-start gap-2 text-start"
         >
           <span className="min-w-0">
             <span
@@ -68,12 +80,12 @@ function ItemChangeCard({
               style={{ color: count ? STATUS.info : CHROME.textMuted }}
             >
               {count
-                ? `${count} change${count === 1 ? "" : "s"}`
-                : "Nothing changed yet"}
+                ? t('changes', { count })
+                : t('nothingChanged')}
               {problemCount > 0 && (
                 <span style={{ color: STATUS.critical }}>
                   {" "}
-                  · {problemCount} to fix
+                  · {t('toFix', { count: problemCount })}
                 </span>
               )}
             </span>
@@ -86,7 +98,7 @@ function ItemChangeCard({
             icon={X}
             onClick={() => onRemove(draft.itemId)}
           >
-            Take out
+            {t('takeOut')}
           </Button>
         )}
       </div>
@@ -95,7 +107,8 @@ function ItemChangeCard({
         <>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Input
-              label="English Description"
+              label={t('englishDescription')}
+              dir="ltr"
               required
               value={v.englishName}
               onChange={set("englishName")}
@@ -104,7 +117,7 @@ function ItemChangeCard({
               error={errors.englishName}
             />
             <Input
-              label="Arabic Description"
+              label={t('arabicDescription')}
               required
               dir="rtl"
               value={v.arabicName}
@@ -114,7 +127,7 @@ function ItemChangeCard({
               error={errors.arabicName}
             />
             <Input
-              label="Quantity"
+              label={t('quantity')}
               required
               type="number"
               min="0"
@@ -125,39 +138,50 @@ function ItemChangeCard({
               hint={was("quantity", o.quantity)}
               error={errors.quantity}
             />
-            <NumberInput
-              label={`Unit Cost (${currency})`}
-              required
-              value={v.unitCost}
-              onChange={set("unitCost")}
-              disabled={lockFields}
-              hint={was(
-                "unitCost",
-                formatCurrency(Number(o.unitCost) || 0, currency),
-              )}
-              error={errors.unitCost}
-            />
+            {lockFields ? (
+              <Input
+                label={t('unitCostIn', { currency: displayCurrency })}
+                readOnly
+                value={formatCurrency(Number(v.unitCost) || 0, displayCurrency)}
+                hint={was("unitCost", formatCurrency(Number(o.unitCost) || 0, displayCurrency))}
+                error={errors.unitCost}
+                className="cursor-not-allowed bg-gray-50"
+              />
+            ) : (
+              <NumberInput
+                label={t('unitCostIn', { currency })}
+                required
+                value={v.unitCost}
+                onChange={set("unitCost")}
+                hint={
+                  changed.has("unitCost")
+                    ? <>{was("unitCost", formatCurrency(Number(o.unitCost) || 0, currency))}<br />{tc('amountsInUsd')}</>
+                    : tc('amountsInUsd')
+                }
+                error={errors.unitCost}
+              />
+            )}
             <Input
-              label="Total Cost"
+              label={t('totalCost') + " (" + displayCurrency + ")"}
               readOnly
-              value={formatCurrency(itemTotal(v), currency)}
+              value={formatCurrency(itemTotal(v), displayCurrency)}
               hint={
                 itemTotal(v) !== itemTotal(o)
-                  ? `was ${formatCurrency(itemTotal(o), currency)}`
-                  : "Quantity × unit cost"
+                  ? t('was', { value: formatCurrency(itemTotal(o), displayCurrency) })
+                  : t('totalHint')
               }
               className="cursor-not-allowed bg-gray-50"
             />
             <Select
-              label="Billing Frequency"
+              label={t('billingFrequency')}
               required
               value={v.billingFrequencyId}
               onChange={set("billingFrequencyId")}
               disabled={lockFields}
-              placeholder="Select frequency"
+              placeholder={t('selectFrequency')}
               options={frequencies.map((f) => ({
                 value: String(f.id),
-                label: f.label,
+                label: billingLabel(f.label),
               }))}
               hint={was(
                 "billingFrequencyId",
@@ -166,28 +190,28 @@ function ItemChangeCard({
               error={errors.billingFrequencyId}
             />
             <Input
-              label="Baseline Expected Invoicing Date"
+              label={t('baselineDate')}
               type="text"
               readOnly
-              value={formatDate(draft.baselineInvoicingDate) || "—"}
-              hint="Set when the item was created — a request never changes it"
+              value={format.date(draft.baselineInvoicingDate) || "—"}
+              hint={t('baselineHint')}
               className="cursor-not-allowed bg-gray-50"
             />
             <DatePicker
-              label="Updated Expected Invoicing Date"
+              label={t('updatedDate')}
               required
               value={v.expectedInvoicingDate}
               onChange={set("expectedInvoicingDate")}
               disabled={lockFields}
               hint={was(
                 "expectedInvoicingDate",
-                formatDate(o.expectedInvoicingDate),
+                format.date(o.expectedInvoicingDate),
               )}
               error={errors.expectedInvoicingDate}
             />
             <div className="md:col-span-2">
               <Textarea
-                label="Notes"
+                label={t('notes')}
                 rows={2}
                 value={v.notes}
                 onChange={set("notes")}
@@ -202,16 +226,16 @@ function ItemChangeCard({
               className="mb-2 text-xs font-semibold"
               style={{ color: CHROME.textSecondary }}
             >
-              Invoicing plan
+              {t('invoicingPlan')}
               {planChanged(draft) && (
                 <span
-                  className="ml-2 rounded-full px-1.5 py-px text-[10px] font-medium"
+                  className="ms-2 rounded-full px-1.5 py-px text-[10px] font-medium"
                   style={{
                     backgroundColor: withAlpha(STATUS.info, 0.12),
                     color: STATUS.info,
                   }}
                 >
-                  changed
+                  {t('changedBadge')}
                 </span>
               )}
             </p>
@@ -221,8 +245,8 @@ function ItemChangeCard({
                 style={{ color: STATUS.critical }}
               >
                 {window.start
-                  ? "The project has no contract end date, so this plan can’t be generated. Set a contract duration under Project changes — the end date follows from it."
-                  : "The project has no contract start date, so this plan can’t be generated. Set one under Project changes."}
+                  ? t('noEndDate')
+                  : t('noStartDate')}
               </p>
             )}
             <InvoicingPlanTracker
@@ -241,7 +265,7 @@ function ItemChangeCard({
                 ) || draft.cycles.length > 0
               }
               disabled={lockPlan}
-              anchorDateLabel="Updated Expected Invoicing Date"
+              anchorDateLabel={t('updatedDate')}
             />
             {errors.cycles && (
               <p

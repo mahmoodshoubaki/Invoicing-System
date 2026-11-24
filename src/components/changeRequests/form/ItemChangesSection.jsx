@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { LayoutList, Plus } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import FormSection from '@/components/common/FormSection';
 import Button from '@/components/common/Button';
@@ -16,33 +17,35 @@ import NewItemCard from './NewItemCard';
  * @param {{ form: ReturnType<import('./useChangeRequestForm').useChangeRequestForm>, boqItems: Array, statusNameOf: (statusId) => string|null, }} props
  */
 export default function ItemChangesSection({ form, boqItems, statusNameOf }) {
+  const t = useTranslations('changeRequests.items');
+  const tb = useTranslations('changeRequests.blocker');
   const inRequest = useMemo(() => new Set(form.items.map((d) => String(d.itemId))), [form.items]);
   const choices = useMemo(() => boqItems
     .filter((item) => !inRequest.has(String(item.id)))
     .sort((a, b) => String(a.englishName ?? '').localeCompare(String(b.englishName ?? '')))
-    .map((item) => ({ item, blocker: itemBlocker(item, statusNameOf(item.statusId)) })),
-  [boqItems, inRequest, statusNameOf]);
+    .map((item) => ({ item, blocker: itemBlocker(item, statusNameOf(item.statusId), tb) })),
+  [boqItems, inRequest, statusNameOf, tb]);
   const canPickItems = form.asks.fieldChanges || form.asks.cycleChanges;
   const canAddNew = form.asks.newItems;
   const empty = form.items.length === 0 && form.newItems.length === 0;
 
   return (
     <FormSection
-      title="BOQ Changes"
-      subtitle="Change approved items without an invoice, or add new items"
+      title={t('title')}
+      subtitle={t('subtitle')}
       icon={LayoutList}
     >
       <div className="flex flex-wrap items-start gap-2">
         {canPickItems && <div className="min-w-0 flex-1"><AddItemPicker form={form} choices={choices} /></div>}
         {canAddNew && (
-          <Button size="sm" variant="outline" icon={Plus} onClick={form.addNewItem}>Add new BOQ item</Button>
+          <Button size="sm" variant="outline" icon={Plus} onClick={form.addNewItem}>{t('addNew')}</Button>
         )}
       </div>
 
       <div className="mt-4 flex flex-col gap-4">
         {empty && (
           <p className="rounded-xl border border-dashed border-[#e1e0d9] px-4 py-6 text-center text-xs" style={{ color: CHROME.textMuted }}>
-            No BOQ changes in this request. A request can change only the contract dates, too.
+            {t('empty')}
           </p>
         )}
         {form.items.map((draft) => (

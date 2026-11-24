@@ -9,7 +9,7 @@ import {
   personNames, withLookupOptions, withPersonNames, withPersonNamesByType,
 } from '@/lib/workflowFieldOptions';
 import {
-  selectBillingFrequencies, selectBoqItemStatuses, selectChangeRequestProjectEffects,
+  selectBillingFrequencies, selectBoqItemStatusesEnglish, selectChangeRequestProjectEffectsEnglish,
 } from '@/store/slices/lookupsSlice';
 import { fetchFields, selectFieldsByTargetType } from '@/store/slices/workflowSlice';
 
@@ -46,9 +46,9 @@ export function useBuilderCatalogs({ state, resolvedById }) {
   }, [queriedTypesKey, dispatchRedux]);
 
   const rawFieldsByTargetType = useSelector(selectFieldsByTargetType);
-  const boqItemStatuses = useSelector(selectBoqItemStatuses);
+  const boqItemStatuses = useSelector(selectBoqItemStatusesEnglish);
   const billingFrequencies = useSelector(selectBillingFrequencies);
-  const projectEffects = useSelector(selectChangeRequestProjectEffects);
+  const projectEffects = useSelector(selectChangeRequestProjectEffectsEnglish);
   const changeRequestProjectEffects = useMemo(
     () => projectEffects.map((e) => ({ id: e.key, label: e.label })),
     [projectEffects]

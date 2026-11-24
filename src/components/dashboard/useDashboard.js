@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import { useLocale } from 'next-intl';
 
-import { clampPeriod, lastMonthOf, yearOptions } from '@/lib/dashboardPeriod';
+import { clampPeriod, lastMonthOf, previousMonth, yearOptions } from '@/lib/dashboardPeriod';
 import { dashboardRepository } from '@/repositories/dashboardRepository';
 import { useDashboardQuery } from './useDashboardQuery';
 import { useProjectStatuses } from './useProjectStatuses';
@@ -11,13 +12,14 @@ const LIST_SHOWN = 5;
 export const TREND_MONTHS = 12;
 
 export function useDashboardFilters() {
+  const locale = useLocale();
   const now = new Date();
-  const [period, setPeriodState] = useState({ month: now.getMonth() + 1, year: now.getFullYear() });
+  const [period, setPeriodState] = useState(() => previousMonth());
   const [projectStatus, setProjectStatus] = useState('');
   const statuses = useProjectStatuses();
 
   const setPeriod = useCallback((next) => setPeriodState(clampPeriod(next)), []);
-  const periodLabel = new Date(period.year, period.month - 1, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+  const periodLabel = new Date(period.year, period.month - 1, 1).toLocaleDateString(locale, { month: 'long', year: 'numeric' });
   return {
     ...period,
     setPeriod,

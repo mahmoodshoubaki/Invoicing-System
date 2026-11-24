@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Paperclip, Upload } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import Button from '@/components/common/Button';
 import { ConfirmModal } from '@/components/common/Modal';
@@ -19,6 +20,8 @@ const firstMessage = (err) => Object.values(err?.errors ?? {}).flat().filter(Boo
  * @param {{ boq: { id: string, attachments: Array }, canUpdate: boolean, onChanged: () => void }} props
  */
 export default function BoqFilesPanel({ boq, canUpdate, onChanged }) {
+  const t = useTranslations('boq.files');
+  const tf = useTranslations('files');
   const toast = useToast();
   const [added, setAdded] = useState(NONE);
   const [uploading, setUploading] = useState(false);
@@ -32,11 +35,11 @@ export default function BoqFilesPanel({ boq, canUpdate, onChanged }) {
     setUploading(true);
     try {
       const ids = await boqRepository.addBoqAttachments(boq.id, added);
-      toast.success(`${ids.length || added.length} file${(ids.length || added.length) === 1 ? '' : 's'} added`);
+      toast.success(t('added', { count: ids.length || added.length }));
       setAdded(NONE);
       onChanged();
     } catch (err) {
-      toast.error('Files not added', firstMessage(err) ?? 'Please try again.');
+      toast.error(t('notAdded'), firstMessage(err) ?? tf('pleaseTryAgain'));
     } finally {
       setUploading(false);
     }
@@ -46,9 +49,9 @@ export default function BoqFilesPanel({ boq, canUpdate, onChanged }) {
     setDeleteBusy(true);
     try {
       await boqRepository.deleteBoqAttachment(boq.id, deleting.id);
-      toast.success('File deleted', deleting.fileName);
+      toast.success(t('deleted'), deleting.fileName);
     } catch (err) {
-      toast.error(err?.code === FILE_NOT_FOUND ? 'That file no longer exists' : 'Could not delete the file', err?.message ?? undefined);
+      toast.error(err?.code === FILE_NOT_FOUND ? t('gone') : t('deleteFailed'), err?.message ?? undefined);
     } finally {
       setDeleteBusy(false);
       setDeleting(null);
@@ -60,7 +63,7 @@ export default function BoqFilesPanel({ boq, canUpdate, onChanged }) {
     <section className="mt-5 rounded-2xl border border-[#e9e7e5] bg-white p-5 shadow-[var(--shadow-card)]">
       <p className="mb-3 flex items-center gap-2 text-sm font-semibold" style={{ color: CHROME.textPrimary }}>
         <Paperclip size={15} style={{ color: CHROME.textMuted }} aria-hidden="true" />
-        Files
+        {t('title')}
         <span className="font-normal" style={{ color: CHROME.textMuted }}>({files.length})</span>
       </p>
 
@@ -68,7 +71,7 @@ export default function BoqFilesPanel({ boq, canUpdate, onChanged }) {
         files={files}
         download={(file) => boqRepository.downloadBoqAttachment(boq.id, file.contentId, file.fileName)}
         onDelete={canUpdate ? setDeleting : null}
-        emptyText="No files on this BOQ."
+        emptyText={t('empty')}
       />
 
       {canUpdate && (
@@ -79,12 +82,12 @@ export default function BoqFilesPanel({ boq, canUpdate, onChanged }) {
             limits={BOQ_FILE_LIMITS}
             existing={existing}
             disabled={uploading}
-            onRejected={(rejected) => rejected.forEach(({ file, reason }) => toast.error('File not added', `${file.name}: ${reason}`))}
+            onRejected={(rejected) => rejected.forEach(({ file, reason }) => toast.error(t('fileNotAdded'), `${file.name}: ${reason}`))}
           />
           {added.length > 0 && (
             <div className="mt-3 flex justify-end">
               <Button size="sm" icon={Upload} loading={uploading} disabled={!ready} onClick={upload}>
-                Upload {added.length} file{added.length === 1 ? '' : 's'}
+                {t('upload', { count: added.length })}
               </Button>
             </div>
           )}
@@ -96,9 +99,9 @@ export default function BoqFilesPanel({ boq, canUpdate, onChanged }) {
         onClose={() => setDeleting(null)}
         onConfirm={confirmDelete}
         loading={deleteBusy}
-        title="Delete file?"
-        message={deleting ? `"${deleting.fileName}" will be deleted from this BOQ.` : ''}
-        confirmLabel="Delete file"
+        title={t('deleteTitle')}
+        message={deleting ? t('deleteMessage', { name: deleting.fileName }) : ''}
+        confirmLabel={t('deleteConfirm')}
       />
     </section>
   );

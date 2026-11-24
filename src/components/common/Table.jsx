@@ -2,9 +2,12 @@
 
 import { memo, useLayoutEffect, useRef, useState } from 'react';
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import TablePagination from './TablePagination';
 
 const MIN_COL_WIDTH = 60;
+
+const ALIGN_CLASS = { right: 'text-end', center: 'text-center', left: 'text-start' };
 
 export function sortRows(data, col, dir) {
   if (!col) return data;
@@ -30,7 +33,7 @@ function Table({
   columns,
   data,
   isLoading = false,
-  emptyMessage = 'No records found',
+  emptyMessage,
   onRowClick,
   sortable = true,
   pagination,
@@ -41,6 +44,7 @@ function Table({
   sort: sortProp,
   onSortChange,
 }) {
+  const t = useTranslations('table');
   const [internalSort, setSort] = useState({ col: null, dir: 'asc' });
 
   const controlled = typeof onSortChange === 'function';
@@ -67,7 +71,7 @@ function Table({
   const handleResizeMove = (e) => {
     const st = resizeState.current;
     if (!st) return;
-    const next = Math.max(MIN_COL_WIDTH, st.startWidth + (e.clientX - st.startX));
+    const next = Math.max(MIN_COL_WIDTH, st.startWidth + st.direction * (e.clientX - st.startX));
     setColWidths((prev) => ({ ...prev, [st.key]: next }));
   };
 
@@ -83,7 +87,8 @@ function Table({
     e.preventDefault();
     e.stopPropagation();
     const th = e.currentTarget.closest('th');
-    resizeState.current = { key, startX: e.clientX, startWidth: th.offsetWidth };
+    const direction = getComputedStyle(th).direction === 'rtl' ? -1 : 1;
+    resizeState.current = { key, startX: e.clientX, startWidth: th.offsetWidth, direction };
     document.addEventListener('mousemove', handleResizeMove);
     document.addEventListener('mouseup', handleResizeEnd);
     document.body.style.cursor = 'col-resize';
@@ -127,9 +132,9 @@ function Table({
                   ref={(el) => { if (el) thRefs.current[col.key] = el; }}
                   style={getColStyle(col)}
                   className={`
-                    ${cellPad} border-r-2 border-r-gray-300 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis
+                    ${cellPad} border-e-2 border-e-gray-300 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis
                     ${(sortable || col.sortable) && col.sortable !== false ? 'cursor-pointer hover:text-gray-700 select-none' : ''}
-                    ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'}
+                    ${ALIGN_CLASS[col.align] ?? 'text-start'}
                     ${resizable ? 'relative' : ''}
                   `}
                   onClick={() => (col.sortable !== false) && handleSort(col)}
@@ -142,7 +147,7 @@ function Table({
                     <span
                       onMouseDown={(e) => handleResizeStart(e, col.key)}
                       onClick={(e) => e.stopPropagation()}
-                      className="absolute top-0 right-0 h-full w-1.5 cursor-col-resize select-none hover:bg-primary/40 active:bg-primary/60"
+                      className="absolute top-0 inset-e-0 h-full w-1.5 cursor-col-resize select-none hover:bg-primary/40 active:bg-primary/60"
                     />
                   )}
                 </th>
@@ -163,7 +168,7 @@ function Table({
             ) : sortedData.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="text-center py-12 text-gray-400">
-                  {emptyMessage}
+                  {emptyMessage ?? t('empty')}
                 </td>
               </tr>
             ) : (
@@ -182,7 +187,7 @@ function Table({
                       style={getColStyle(col)}
                       className={`
                         ${cellPad} text-gray-700
-                        ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : ''}
+                        ${ALIGN_CLASS[col.align] ?? ''}
                         ${col.className || ''}
                       `}
                     >

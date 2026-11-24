@@ -4,7 +4,7 @@ export const BOQ_FILE_LIMITS = {
   maxCount: 10,
   accept: '.pdf,.docx,.xlsx,.jpg,.jpeg,.png',
   extensions: ['pdf', 'docx', 'xlsx', 'jpg', 'jpeg', 'png'],
-  label: 'PDF, Word (.docx), Excel (.xlsx) or image',
+  typesKey: 'boq',
 };
 
 export const FILE_REFUSED = 'BOQ-020';

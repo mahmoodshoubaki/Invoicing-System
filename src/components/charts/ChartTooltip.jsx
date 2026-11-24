@@ -1,9 +1,11 @@
 'use client';
 
 import { motion } from 'motion/react';
+import { useTranslations } from 'next-intl';
 import { CHROME } from '@/theme/vizPalette';
 
 export default function ChartTooltip({ active, payload, label, format = (v) => v, total = false }) {
+  const t = useTranslations('common');
   if (!active || !payload?.length) return null;
 
   const sum = payload.reduce((acc, p) => acc + (Number(p.value) || 0), 0);
@@ -40,7 +42,7 @@ export default function ChartTooltip({ active, payload, label, format = (v) => v
       </div>
       {total && payload.length > 1 && (
         <div className="mt-2 flex items-center justify-between border-t border-[#e1e0d9] pt-2 text-xs">
-          <span style={{ color: CHROME.textMuted }}>Total</span>
+          <span style={{ color: CHROME.textMuted }}>{t('total')}</span>
           <span className="font-bold tabular-nums" style={{ color: CHROME.textPrimary }}>
             {format(sum)}
           </span>

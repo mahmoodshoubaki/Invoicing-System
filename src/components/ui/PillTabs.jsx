@@ -29,7 +29,7 @@ function PillTabs({ tabs, value, onChange }) {
           >
             {tab.label}
             {tab.count != null && (
-              <span className="ml-1 tabular-nums" style={{ opacity: tab.count === 0 ? 0.5 : 1 }}>{tab.count}</span>
+              <span className="ms-1 tabular-nums" style={{ opacity: tab.count === 0 ? 0.5 : 1 }}>{tab.count}</span>
             )}
           </button>
         );

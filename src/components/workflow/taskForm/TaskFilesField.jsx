@@ -2,13 +2,15 @@
 
 import { memo, useState } from 'react';
 import { Download, FileText, Info, Undo2, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useLocaleFormat } from '@/hooks/useLocaleFormat';
 
 import AttachmentUploader from '@/components/invoices/AttachmentUploader';
 import { labelClass } from '@/components/ui/kit';
 import { invoiceRepository } from '@/repositories/invoiceRepository';
 import { useToast } from '@/hooks/useToast';
 import { CHROME, STATUS } from '@/theme/vizPalette';
-import { formatDate, formatFileSize } from '@/utils/formatters';
+import { formatFileSize } from '@/utils/formatters';
 import { saveBlob } from '@/utils/saveBlob';
 import { toggleRemoval } from '@/lib/taskFileValue';
 
@@ -16,6 +18,8 @@ import { toggleRemoval } from '@/lib/taskFileValue';
  * @param {{ field: Object, value: { existing: Array, deleteIds: string[], added: Array }, onChange: (next: Object | ((prev: Object) => Object)) => void, error?: string|null, disabled?: boolean, context?: { invoiceId?: string }|null, }} props
  */
 function TaskFilesField({ field, value, onChange, error = null, disabled = false, context = null }) {
+  const t = useTranslations('tasks.files');
+  const format = useLocaleFormat();
   const toast = useToast();
   const [rejected, setRejected] = useState([]);
   const [downloading, setDownloading] = useState(null);
@@ -27,7 +31,7 @@ function TaskFilesField({ field, value, onChange, error = null, disabled = false
       const { blob, fileName } = await invoiceRepository.downloadAttachment(invoiceId, file.contentId, file.fileName);
       saveBlob(blob, fileName);
     } catch (err) {
-      toast.error('Download failed', err?.message ?? 'Please try again.');
+      toast.error(t('downloadFailed'), err?.message ?? t('tryAgain'));
     } finally {
       setDownloading(null);
     }
@@ -59,12 +63,12 @@ function TaskFilesField({ field, value, onChange, error = null, disabled = false
                     style={{ color: removed ? CHROME.textMuted : CHROME.textPrimary }}
                     title={file.fileName}
                   >
-                    {file.fileName}
+                    <bdi>{file.fileName}</bdi>
                   </p>
                   <p className="text-[11px]" style={{ color: CHROME.textMuted }}>
                     {file.fileSize != null && formatFileSize(file.fileSize)}
-                    {file.uploadedOn && ` · ${formatDate(file.uploadedOn)}`}
-                    {removed && ' · removed when saved'}
+                    {file.uploadedOn && ` · ${format.date(file.uploadedOn)}`}
+                    {removed && ` · ${t('removedOnSave')}`}
                   </p>
                 </div>
                 {invoiceId && file.contentId && (
@@ -73,8 +77,8 @@ function TaskFilesField({ field, value, onChange, error = null, disabled = false
                     onClick={() => download(file)}
                     disabled={downloading === file.id}
                     className="rounded-md p-1.5 transition-colors hover:bg-[#f1f0ee] disabled:opacity-40"
-                    aria-label={`Download ${file.fileName}`}
-                    title="Download"
+                    aria-label={t('downloadFile', { name: file.fileName })}
+                    title={t('download')}
                     style={{ color: CHROME.textMuted }}
                   >
                     <Download size={13} aria-hidden="true" />
@@ -85,8 +89,8 @@ function TaskFilesField({ field, value, onChange, error = null, disabled = false
                   onClick={() => onChange((prev) => toggleRemoval(prev, file.id))}
                   disabled={disabled}
                   className="rounded-md p-1.5 transition-colors hover:bg-[#f1f0ee] disabled:opacity-40"
-                  aria-label={removed ? `Keep ${file.fileName}` : `Remove ${file.fileName}`}
-                  title={removed ? 'Keep it' : 'Remove it'}
+                  aria-label={removed ? t('keepFile', { name: file.fileName }) : t('removeFile', { name: file.fileName })}
+                  title={removed ? t('keepIt') : t('removeIt')}
                   style={{ color: removed ? STATUS.info : CHROME.textMuted }}
                 >
                   {removed ? <Undo2 size={13} aria-hidden="true" /> : <X size={13} aria-hidden="true" />}
@@ -103,7 +107,7 @@ function TaskFilesField({ field, value, onChange, error = null, disabled = false
         <ul className="mt-1.5 flex flex-col gap-0.5">
           {rejected.map(({ file, reason }) => (
             <li key={`${file.name}-${reason}`} className="text-[11px]" style={{ color: STATUS.critical }}>
-              {file.name}: {reason}
+              <bdi>{file.name}</bdi>: {reason}
             </li>
           ))}
         </ul>
@@ -111,7 +115,7 @@ function TaskFilesField({ field, value, onChange, error = null, disabled = false
       {!invoiceId && value.existing.length > 0 && (
         <p className="mt-1.5 flex items-start gap-1.5 text-[11px]" style={{ color: CHROME.textMuted }}>
           <Info size={11} className="mt-0.5 shrink-0" aria-hidden="true" />
-          To download a file, answer this task from the invoice&rsquo;s own page.
+          {t('ownPage')}
         </p>
       )}
       {error && <p className="mt-1 text-[11px]" style={{ color: STATUS.critical }}>{error}</p>}

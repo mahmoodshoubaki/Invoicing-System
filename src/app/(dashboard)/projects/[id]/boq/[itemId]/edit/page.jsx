@@ -2,10 +2,14 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { decodeRouteParam } from '@/lib/routeParam';
 import { useDispatch, useSelector } from 'react-redux';
 import Link from 'next/link';
 import { MotionConfig } from 'motion/react';
+import { useTranslations } from 'next-intl';
 import { CalendarRange, ChevronLeft, PencilLine, Save } from 'lucide-react';
+import { useLookupLabel } from '@/hooks/useLookupLabel';
+import { useLocaleFormat } from '@/hooks/useLocaleFormat';
 
 import SubPageHeader from '@/components/common/SubPageHeader';
 import FormSection from '@/components/common/FormSection';
@@ -14,7 +18,8 @@ import Button from '@/components/common/Button';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { Input, NumberInput, DatePicker, Select, Textarea } from '@/components/forms/FormField';
 import InvoicingPlanTracker from '@/components/boq/InvoicingPlanTracker';
-import { formatCurrency, formatDate } from '@/utils';
+import { formatCurrency } from '@/utils';
+import { BASE_CURRENCY } from '@/constants/currencies';
 import { selectBillingFrequencies } from '@/store/slices/lookupsSlice';
 import { boqRepository } from '@/repositories/boqRepository';
 import {
@@ -40,7 +45,7 @@ function toDateInput(iso) {
 
 export default function EditBOQItemPage() {
   const { id: rawId, itemId } = useParams();
-  const projectCode = decodeURIComponent(rawId);
+  const projectCode = decodeRouteParam(rawId);
   const router = useRouter();
   const dispatch = useDispatch();
   const toast = useToast();
@@ -53,7 +58,12 @@ export default function EditBOQItemPage() {
   const boqLoading = useSelector(selectBOQLoading);
   const subProjects = useSelector(selectSubProjects);
   const subProjectsLoading = useSelector(selectSubProjectsLoading);
-  const currency = useSelector((s) => s.ui.currency);
+  const currency = BASE_CURRENCY;
+  const displayCurrency = useSelector((s) => s.ui.currency);
+  const tc = useTranslations('common');
+  const t = useTranslations('boqForm');
+  const format = useLocaleFormat();
+  const frequencyLabel = useLookupLabel('billingFrequency');
   const trackerCyclesLoading = useSelector(selectTrackerCyclesLoading);
 
   const item = boqItems.find((i) => String(i.id) === String(itemId));
@@ -97,7 +107,7 @@ export default function EditBOQItemPage() {
     let cancelled = false;
     dispatch(fetchTrackerCycles(itemId)).unwrap()
       .then((result) => { if (!cancelled) setCycles(result); })
-      .catch((err) => { if (!cancelled) toast.error('Failed to load the invoicing plan', err ?? 'Please try again.'); });
+      .catch((err) => { if (!cancelled) toast.error(t('loadPlanFailed'), err ?? t('tryAgain')); });
     return () => {
       cancelled = true;
       dispatch(clearTrackerCycles());
@@ -150,7 +160,7 @@ export default function EditBOQItemPage() {
         setCycles(result);
         setPreviewLoading(false);
       } catch (err) {
-        setPreviewError(err.message || 'Failed to generate the invoicing plan.');
+        setPreviewError(err.message || t('generatePlanFailed'));
         setPreviewLoading(false);
       }
     }, 500);
@@ -174,21 +184,21 @@ export default function EditBOQItemPage() {
 
   const validate = () => {
     const e = {};
-    if (!form.englishName.trim())                           e.englishName        = 'English description is required';
-    if (!form.arabicName.trim())                            e.arabicName         = 'Arabic description is required';
-    if (!form.quantity || Number(form.quantity) <= 0)       e.quantity           = 'Valid quantity is required';
-    if (form.unitCost === '' || Number(form.unitCost) < 0)  e.unitCost           = 'Valid unit cost is required';
-    if (!form.billingFrequencyId)                           e.billingFrequencyId = 'Billing frequency is required';
-    if (!form.expectedInvoicingDate)                        e.expectedInvoicingDate = 'Expected invoicing date is required';
+    if (!form.englishName.trim())                           e.englishName        = t('errors.english');
+    if (!form.arabicName.trim())                            e.arabicName         = t('errors.arabic');
+    if (!form.quantity || Number(form.quantity) <= 0)       e.quantity           = t('errors.quantity');
+    if (form.unitCost === '' || Number(form.unitCost) < 0)  e.unitCost           = t('errors.unitCost');
+    if (!form.billingFrequencyId)                           e.billingFrequencyId = t('errors.frequency');
+    if (!form.expectedInvoicingDate)                        e.expectedInvoicingDate = t('errors.expected');
     if (!contractStartDate || !contractFinishDate) {
-      e.trackerCycles = 'Contract start/finish dates are not available for this project yet — cycles cannot be generated.';
+      e.trackerCycles = t('errors.noContractDates');
     }
 
     const outOfRange = cycles.some((c) => !c.isCommitted && (
       !c.plannedDate || c.plannedDate < contractStartDate || c.plannedDate > contractFinishDate
     ));
     if (outOfRange) {
-      e.trackerCycles = 'Every cycle needs a planned date between the contract start and finish dates';
+      e.trackerCycles = t('errors.cycleRange');
     }
 
     return e;
@@ -218,10 +228,10 @@ export default function EditBOQItemPage() {
         },
         cycles,
       })).unwrap();
-      toast.success('BOQ item updated', 'The item was updated successfully.');
+      toast.success(t('updated'), t('updatedBody'));
       router.push(`/projects/${encodeURIComponent(projectCode)}/boq`);
     } catch (err) {
-      toast.error('Failed to update BOQ item', err ?? 'Please try again.');
+      toast.error(t('updateFailed'), err ?? t('tryAgain'));
     } finally {
       setSaving(false);
     }
@@ -238,9 +248,9 @@ export default function EditBOQItemPage() {
   if (!item) {
     return (
       <div className="text-center py-20">
-        <p className="text-gray-500">BOQ item not found.</p>
+        <p className="text-gray-500">{t('notFound')}</p>
         <Link href={`/projects/${encodeURIComponent(projectCode)}/boq`}>
-          <Button variant="outline" className="mt-4">Back to BOQ</Button>
+          <Button variant="outline" className="mt-4">{t('backToBoq')}</Button>
         </Link>
       </div>
     );
@@ -250,20 +260,20 @@ export default function EditBOQItemPage() {
     <MotionConfig reducedMotion="user">
     <div className="mx-auto max-w-4xl">
       <SubPageHeader
-        eyebrow="Bill of Quantities"
-        title="Edit BOQ Item"
+        eyebrow={t('eyebrow')}
+        title={t('editTitle')}
         subtitle={item.englishName ?? currentProject?.contractName ?? projectCode}
         icon={PencilLine}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Projects', href: '/projects' },
+          { label: t('home'), href: '/' },
+          { label: t('projects'), href: '/projects' },
           { label: currentProject?.contractName, href: `/projects/${encodeURIComponent(projectCode)}` },
-          { label: 'BOQ', href: `/projects/${encodeURIComponent(projectCode)}/boq` },
-          { label: 'Edit Item' },
+          { label: t('boq'), href: `/projects/${encodeURIComponent(projectCode)}/boq` },
+          { label: t('editItem') },
         ]}
         actions={
           <Link href={`/projects/${encodeURIComponent(projectCode)}/boq`}>
-            <Button variant="ghost" icon={ChevronLeft} size="sm">Back</Button>
+            <Button variant="ghost" icon={ChevronLeft} iconClassName="rtl:-scale-x-100" size="sm">{t('back')}</Button>
           </Link>
         }
       />
@@ -271,27 +281,29 @@ export default function EditBOQItemPage() {
       <form onSubmit={handleSubmit}>
        <Reveal className="flex flex-col gap-5">
         <FormSection
-          title="Item Details"
-          subtitle="Baseline date and contract window are fixed after creation"
+          title={t('itemDetails')}
+          subtitle={t('editSubtitle')}
           icon={PencilLine}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="English Description"
+              label={t('englishDescription')}
+              dir="ltr"
               required
               value={form.englishName}
               onChange={set('englishName')}
               error={errors.englishName}
             />
             <Input
-              label="Arabic Description"
+              label={t('arabicDescription')}
+              dir="rtl"
               required
               value={form.arabicName}
               onChange={set('arabicName')}
               error={errors.arabicName}
             />
             <Input
-              label="Quantity"
+              label={t('quantity')}
               required
               type="number"
               min="0"
@@ -301,64 +313,65 @@ export default function EditBOQItemPage() {
               error={errors.quantity}
             />
             <NumberInput
-              label={`Unit Cost (${currency})`}
+              label={t('unitCostIn', { currency })}
               required
               placeholder="0.00"
               value={form.unitCost}
               onChange={set('unitCost')}
               error={errors.unitCost}
+              hint={tc('amountsInUsd')}
             />
             <Input
-              label="Total Cost"
+              label={t('totalCost')}
               type="text"
               readOnly
-              value={formatCurrency(form.totalCost, currency)}
-              hint="Auto-calculated from quantity × unit cost"
+              value={formatCurrency(form.totalCost, displayCurrency)}
+              hint={t('totalHint')}
               className="bg-gray-50 cursor-not-allowed"
             />
             <Select
-              label="Billing Frequency"
+              label={t('billingFrequency')}
               required
               value={form.billingFrequencyId}
               onChange={set('billingFrequencyId')}
-              placeholder="Select frequency"
-              options={billingFrequencies.map((f) => ({ value: String(f.id), label: f.label }))}
+              placeholder={t('selectFrequency')}
+              options={billingFrequencies.map((f) => ({ value: String(f.id), label: frequencyLabel(f.label) }))}
               error={errors.billingFrequencyId}
             />
             <Input
-              label="Baseline Expected Invoicing Date"
+              label={t('baselineDate')}
               type="text"
               readOnly
-              value={formatDate(form.baselineInvoicingDate) || '—'}
-              hint="Set once at creation — can't be changed on update"
+              value={format.date(form.baselineInvoicingDate) || '—'}
+              hint={t('baselineFixedHint')}
               className="bg-gray-50 cursor-not-allowed"
             />
             <DatePicker
-              label="Updated Expected Invoicing Date"
+              label={t('updatedDate')}
               required
               value={form.expectedInvoicingDate}
               onChange={set('expectedInvoicingDate')}
               error={errors.expectedInvoicingDate}
             />
             <Input
-              label="Contract Start Date"
+              label={t('contractStart')}
               type="text"
               readOnly
-              value={subProjectsLoading ? 'Loading…' : (formatDate(contractStartDate) || '—')}
-              hint="minimum allowed date for invoicing cycles"
+              value={subProjectsLoading ? t('loading') : (format.date(contractStartDate) || '—')}
+              hint={t('minDateHint')}
               className="bg-gray-50 cursor-not-allowed"
             />
             <Input
-              label="Contract Finish Date"
+              label={t('contractFinish')}
               type="text"
               readOnly
-              value={subProjectsLoading ? 'Loading…' : (formatDate(contractFinishDate) || '—')}
-              hint="maximum allowed date for invoicing cycles"
+              value={subProjectsLoading ? t('loading') : (format.date(contractFinishDate) || '—')}
+              hint={t('maxDateHint')}
               className="bg-gray-50 cursor-not-allowed"
             />
             <div className="md:col-span-2">
               <Textarea
-                label="Notes"
+                label={t('notes')}
                 rows={3}
                 value={form.notes}
                 onChange={set('notes')}
@@ -368,13 +381,13 @@ export default function EditBOQItemPage() {
         </FormSection>
 
         <FormSection
-          title="Invoicing Plan Tracker"
-          subtitle="Cycles already invoiced are locked. Changing the expected invoicing date or billing frequency regenerates the remaining ones"
+          title={t('planTitle')}
+          subtitle={t('editPlanSubtitle')}
           icon={CalendarRange}
         >
           {missingContractDates ? (
             <p className="py-8 text-center text-sm text-red-500">
-              This project has no start/finish dates set on its sub-projects yet — invoicing cycles can&apos;t be generated.
+              {t('noSubProjectDates')}
             </p>
           ) : (
             <InvoicingPlanTracker
@@ -386,7 +399,7 @@ export default function EditBOQItemPage() {
               error={previewError}
               ready={previewReady}
               disabled={saving}
-              anchorDateLabel="Expected Invoicing Date"
+              anchorDateLabel={t('anchorExpected')}
             />
           )}
           {errors.trackerCycles && (
@@ -397,10 +410,10 @@ export default function EditBOQItemPage() {
 
         <div className="sticky bottom-0 z-10 mt-5 flex items-center justify-end gap-3 rounded-2xl border border-[#e9e7e5] bg-white/95 px-4 py-3 shadow-[0_-4px_16px_-8px_rgb(60_60_58/0.18)]">
           <Link href={`/projects/${encodeURIComponent(projectCode)}/boq`}>
-            <Button variant="ghost">Cancel</Button>
+            <Button variant="ghost">{t('cancel')}</Button>
           </Link>
           <Button type="submit" icon={Save} loading={saving} disabled={subProjectsLoading || missingContractDates}>
-            Save changes
+            {t('saveChanges')}
           </Button>
         </div>
       </form>

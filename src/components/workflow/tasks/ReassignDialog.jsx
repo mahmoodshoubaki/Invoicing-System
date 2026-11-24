@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AlarmClock, Info, UserPlus } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useLocaleFormat } from '@/hooks/useLocaleFormat';
 
 import Modal from '@/components/common/Modal';
 import Button from '@/components/common/Button';
@@ -13,12 +15,13 @@ import AssigneeList from '@/components/workflow/AssigneeList';
 import ProjectLink from '@/components/workflow/ProjectLink';
 import { CHROME, STATUS } from '@/theme/vizPalette';
 import { withAlpha } from '@/utils/color';
-import { formatDateTime } from '@/utils/formatters';
 import { fetchAllRoles, selectRoles, selectRolesLoading } from '@/store/slices/rolesSlice';
 import { fetchGroups, selectGroups, selectGroupsLoading } from '@/store/slices/groupsSlice';
 import { resolveAssignees, selectAssigneesById } from '@/store/slices/workflowSlice';
 
 export default function ReassignDialog({ task, open, busy, onClose, onConfirm }) {
+  const t = useTranslations('tasks.reassign');
+  const format = useLocaleFormat();
   const dispatch = useDispatch();
 
   const roles = useSelector(selectRoles);
@@ -50,18 +53,18 @@ export default function ReassignDialog({ task, open, busy, onClose, onConfirm })
     <Modal
       open={open}
       onClose={onClose}
-      title="Hand this task to somebody else"
+      title={t('title')}
       size="md"
       footer={
         <>
-          <Button variant="outline" onClick={onClose} disabled={busy}>Cancel</Button>
+          <Button variant="outline" onClick={onClose} disabled={busy}>{t('cancel')}</Button>
           <Button
             icon={UserPlus}
             loading={busy}
             disabled={!ready}
             onClick={() => onConfirm({ toUserIds: userIds, toRoleIds: roleIds, toGroupIds: groupIds })}
           >
-            Hand it on
+            {t('handOn')}
           </Button>
         </>
       }
@@ -80,13 +83,13 @@ export default function ReassignDialog({ task, open, busy, onClose, onConfirm })
 
         <div>
           <p className="mb-1 text-[11px] font-medium" style={{ color: CHROME.textSecondary }}>
-            Currently assigned to
+            {t('currentlyAssigned')}
           </p>
           <AssigneeList
             users={task?.assignedUsers ?? []}
             roles={task?.assignedRoles ?? []}
             groups={task?.assignedGroups ?? []}
-            emptyText="Not reported for this to-do."
+            emptyText={t('notReported')}
           />
         </div>
 
@@ -97,24 +100,23 @@ export default function ReassignDialog({ task, open, busy, onClose, onConfirm })
           >
             <AlarmClock size={11} className="mt-0.5 shrink-0" style={{ color: STATUS.warning }} aria-hidden="true" />
             <span>
-              The due date stays <strong>{formatDateTime(task.dueOn)}</strong> — a handover is the
-              same piece of work, so its clock does not restart.
+              {t.rich('dueStays', { date: format.dateTime(task.dueOn), b: (chunks) => <strong>{chunks}</strong> })}
             </span>
           </p>
         )}
 
         <div>
-          <p className="mb-1 text-[11px] font-medium" style={{ color: CHROME.textSecondary }}>People</p>
+          <p className="mb-1 text-[11px] font-medium" style={{ color: CHROME.textSecondary }}>{t('people')}</p>
           <UserPicker selectedIds={userIds} resolvedById={resolvedById} onChange={setUserIds} />
         </div>
 
         <div>
-          <p className="mb-1 text-[11px] font-medium" style={{ color: CHROME.textSecondary }}>Roles</p>
+          <p className="mb-1 text-[11px] font-medium" style={{ color: CHROME.textSecondary }}>{t('roles')}</p>
           <RoleChips roles={roles} loading={rolesLoading} selectedIds={roleIds} onChange={setRoleIds} />
         </div>
 
         <div>
-          <p className="mb-1 text-[11px] font-medium" style={{ color: CHROME.textSecondary }}>Groups</p>
+          <p className="mb-1 text-[11px] font-medium" style={{ color: CHROME.textSecondary }}>{t('groups')}</p>
           <GroupChips groups={groups} loading={groupsLoading} selectedIds={groupIds} onChange={setGroupIds} />
         </div>
 
@@ -124,14 +126,13 @@ export default function ReassignDialog({ task, open, busy, onClose, onConfirm })
         >
           <Info size={11} className="mt-0.5 shrink-0" style={{ color: CHROME.textMuted }} aria-hidden="true" />
           <span>
-            This to-do closes as <strong>Reassigned</strong> — not Cancelled — and a replacement
-            appears in their list. Whoever answers first finishes it for everybody named.
+            {t.rich('closesAs', { b: (chunks) => <strong>{chunks}</strong> })}
           </span>
         </p>
 
         {!ready && (
           <p className="text-[11px]" style={{ color: CHROME.textMuted }}>
-            Name at least one person, role or group.
+            {t('nameOne')}
           </p>
         )}
       </div>

@@ -3,29 +3,29 @@ import { STEP, TONE, assembleSteps, workflowSteps } from '@/lib/workflowProgress
 import { formatDate } from '@/utils/formatters';
 
 const DECISION = {
-  [CR_STATUS.APPROVED]: { title: 'Approved', tone: TONE.GOOD },
-  [CR_STATUS.REJECTED]: { title: 'Rejected', tone: TONE.BAD },
-  [CR_STATUS.CANCELLED]: { title: 'Cancelled', tone: TONE.NEUTRAL },
+  [CR_STATUS.APPROVED]: { titleKey: 'steps.approved', tone: TONE.GOOD },
+  [CR_STATUS.REJECTED]: { titleKey: 'steps.rejected', tone: TONE.BAD },
+  [CR_STATUS.CANCELLED]: { titleKey: 'changeRequest.cancelled', tone: TONE.NEUTRAL },
 };
 
-function draftSteps() {
+function draftSteps(t) {
   return {
     steps: [
-      { key: 'write', title: 'Write the request', state: STEP.CURRENT, note: 'Reasons, details and changes' },
-      { key: 'submit', title: 'Submitted', state: STEP.NEXT, note: 'Its items are locked from then on' },
-      { key: 'approval', title: 'Approval', state: STEP.UPCOMING, note: 'By the workflow’s approvers' },
-      { key: 'decision', title: 'Decision', state: STEP.UPCOMING, note: 'Approved, rejected or cancelled' },
+      { key: 'write', title: t('changeRequest.write'), state: STEP.CURRENT, note: t('changeRequest.writeNote') },
+      { key: 'submit', title: t('steps.submitted'), state: STEP.NEXT, note: t('changeRequest.submitNote') },
+      { key: 'approval', title: t('changeRequest.approval'), state: STEP.UPCOMING, note: t('changeRequest.approvalNote') },
+      { key: 'decision', title: t('steps.decision'), state: STEP.UPCOMING, note: t('changeRequest.decisionNote') },
     ],
-    next: 'Submitted for approval',
+    next: t('changeRequest.submittedForApproval'),
   };
 }
 
 /**
- * @param {{ changeRequest: Object|null, mapChangeRequest's; null while it is being written run?: Object|null, history?: Array, graph?: Object|null, see useRecordProgress }} input
+ * @param {{ changeRequest: Object|null, run?: Object|null, history?: Array, graph?: Object|null, t: (key: string) => string, locale: string, formatDay?: (value) => string }} input changeRequest is null while it is being written; t is the `workflowProgress` translator
  * @returns {{ steps: Array, next: string|null }}
  */
-export function changeRequestSteps({ changeRequest, run = null, history = [], graph = null }) {
-  if (!changeRequest) return draftSteps();
+export function changeRequestSteps({ changeRequest, run = null, history = [], graph = null, t, locale, formatDay = formatDate }) {
+  if (!changeRequest) return draftSteps(t);
 
   const cr = changeRequest;
   const decided = DECISION[cr.statusId] ?? null;
@@ -36,20 +36,23 @@ export function changeRequestSteps({ changeRequest, run = null, history = [], gr
     graph,
     settled: Boolean(decided),
     fallback: returned
-      ? { title: 'Back with the requester', note: 'To change and send again', next: 'Sent again for approval' }
-      : { title: 'Approval', note: null },
+      ? { title: t('changeRequest.returned'), note: t('changeRequest.returnedNote'), next: t('changeRequest.sentAgain') }
+      : { title: t('changeRequest.approval'), note: null },
+    endName: t('theDecision'),
+    locale,
+    notes: { faulted: t('faulted'), paused: t('paused') },
   });
 
   return assembleSteps(
     {
       key: 'raised',
-      title: 'Raised',
+      title: t('changeRequest.raised'),
       state: STEP.DONE,
-      note: [cr.requestedByName, formatDate(cr.createdOn)].filter(Boolean).join(' · ') || null,
+      note: [cr.requestedByName, formatDay(cr.createdOn)].filter(Boolean).join(' · ') || null,
     },
     middle,
     decided
-      ? { key: 'decision', title: decided.title, tone: decided.tone, done: true }
-      : { key: 'decision', title: 'Decision', note: 'Approved, rejected or cancelled', done: false },
+      ? { key: 'decision', title: t(decided.titleKey), tone: decided.tone, done: true }
+      : { key: 'decision', title: t('steps.decision'), note: t('changeRequest.decisionNote'), done: false },
   );
 }

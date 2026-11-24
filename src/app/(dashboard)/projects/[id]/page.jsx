@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { decodeRouteParam } from '@/lib/routeParam';
 import { useDispatch, useSelector } from 'react-redux';
 import Link from 'next/link';
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
+import { useTranslations } from 'next-intl';
 
 import Button from '@/components/common/Button';
 import { ConfirmModal } from '@/components/common/Modal';
@@ -16,6 +18,8 @@ import OverviewTab from '@/components/projects/OverviewTab';
 import SubProjectsTab from '@/components/projects/SubProjectsTab';
 import BOQTab from '@/components/projects/BOQTab';
 import InvoicesTab from '@/components/projects/InvoicesTab';
+import FinancialClaimsTab from '@/components/projects/FinancialClaimsTab';
+import { useProjectFinancialClaims } from '@/components/projects/useProjectFinancialClaims';
 import ChangeRequestsTab from '@/components/projects/ChangeRequestsTab';
 import { hasMainProject } from '@/lib/changeRequest/projectDraft';
 import { usePermission } from '@/hooks/usePermission';
@@ -42,8 +46,9 @@ import {
 } from '@/store/slices/lookupsSlice';
 
 export default function ProjectDetailPage() {
+  const t = useTranslations('projects.page');
   const { id: rawId } = useParams();
-  const projectCode = decodeURIComponent(rawId);
+  const projectCode = decodeRouteParam(rawId);
   const router   = useRouter();
   const dispatch = useDispatch();
 
@@ -68,7 +73,14 @@ export default function ProjectDetailPage() {
   );
   const { can } = usePermission();
   const canViewChangeRequests = allow(can, CR_PERMISSIONS.VIEW);
-  const hiddenTabs = useMemo(() => (canViewChangeRequests ? [] : ['Change requests']), [canViewChangeRequests]);
+  const canViewClaims = can('Invoices', 'View');
+  const financialClaims = useProjectFinancialClaims(projectCode, canViewClaims);
+  const showClaims = canViewClaims && Boolean(financialClaims.data?.isEtimadContract || financialClaims.error);
+  const hiddenTabs = useMemo(() => [
+    ...(showClaims ? [] : ['Etimad Financial claims']),
+    ...(canViewChangeRequests ? [] : ['Change requests']),
+  ], [showClaims, canViewChangeRequests]);
+  const visibleTab = hiddenTabs.includes(activeTab) ? 'Overview' : activeTab;
   const [archiveModal, setArchiveModal] = useState(false);
   const [archiving, setArchiving]       = useState(false);
 
@@ -102,7 +114,8 @@ export default function ProjectDetailPage() {
     'EPM Sub-Projects': subProjects.length,
     BOQ: boqItems.length,
     Invoices: invoices.length,
-  }), [subProjects.length, boqItems.length, invoices.length]);
+    'Etimad Financial claims': financialClaims.data?.claims.length,
+  }), [subProjects.length, boqItems.length, invoices.length, financialClaims.data]);
 
   const handleArchive = () => {
     setArchiving(true);
@@ -124,9 +137,9 @@ export default function ProjectDetailPage() {
   if (!project) {
     return (
       <div className="text-center py-20">
-        <p className="text-gray-500">Project not found.</p>
+        <p className="text-gray-500">{t('notFound')}</p>
         <Link href="/projects">
-          <Button variant="outline" className="mt-4">Back to Projects</Button>
+          <Button variant="outline" className="mt-4">{t('backToProjects')}</Button>
         </Link>
       </div>
     );
@@ -139,9 +152,9 @@ export default function ProjectDetailPage() {
           open={archiveModal}
           onClose={() => setArchiveModal(false)}
           onConfirm={handleArchive}
-          title="Archive Project"
-          message={`Are you sure you want to archive "${project.contractName}"? This action will move the project to archived status.`}
-          confirmLabel="Archive Project"
+          title={t('archiveTitle')}
+          message={t('archiveMessage', { name: project.contractName })}
+          confirmLabel={t('archiveConfirm')}
           loading={archiving}
         />
 
@@ -149,17 +162,17 @@ export default function ProjectDetailPage() {
 
         <ProjectStatCards totals={totals} currency={currency} />
 
-        <ProjectTabs activeTab={activeTab} onChange={setActiveTab} counts={tabCounts} hidden={hiddenTabs} />
+        <ProjectTabs activeTab={visibleTab} onChange={setActiveTab} counts={tabCounts} hidden={hiddenTabs} />
 
         <AnimatePresence mode="wait">
           <motion.div
-            key={activeTab}
+            key={visibleTab}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
           >
-            {activeTab === 'Overview' && (
+            {visibleTab === 'Overview' && (
               <OverviewTab
                 project={project}
                 projectCode={projectCode}
@@ -169,7 +182,7 @@ export default function ProjectDetailPage() {
               />
             )}
 
-            {activeTab === 'EPM Sub-Projects' && (
+            {visibleTab === 'EPM Sub-Projects' && (
               <SubProjectsTab
                 subProjects={subProjects}
                 subProjectsLoading={subProjectsLoading}
@@ -177,7 +190,7 @@ export default function ProjectDetailPage() {
               />
             )}
 
-            {activeTab === 'BOQ' && (
+            {visibleTab === 'BOQ' && (
               <BOQTab
                 projectCode={projectCode}
                 boqItems={boqItems}
@@ -189,7 +202,7 @@ export default function ProjectDetailPage() {
               />
             )}
 
-            {activeTab === 'Invoices' && (
+            {visibleTab === 'Invoices' && (
               <InvoicesTab
                 projectCode={projectCode}
                 invoices={invoices}
@@ -201,7 +214,16 @@ export default function ProjectDetailPage() {
               />
             )}
 
-            {activeTab === 'Change requests' && canViewChangeRequests && (
+            {visibleTab === 'Etimad Financial claims' && (
+              <FinancialClaimsTab
+                data={financialClaims.data}
+                loading={financialClaims.loading}
+                error={financialClaims.error}
+                onRetry={financialClaims.reload}
+              />
+            )}
+
+            {visibleTab === 'Change requests' && canViewChangeRequests && (
               <ChangeRequestsTab
                 projectCode={projectCode}
                 boqId={currentBOQ?.id ?? null}

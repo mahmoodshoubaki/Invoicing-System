@@ -2,6 +2,7 @@
 
 import { memo, useMemo } from 'react';
 import { Info } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import InvoicingPlanTracker from '@/components/boq/InvoicingPlanTracker';
 import { labelClass } from '@/components/ui/kit';
@@ -12,6 +13,7 @@ import { parsePlanValue, planValueOf } from '@/lib/invoicingPlanValue';
  * @param {{ field: Object, value: string, onChange: (text: string) => void, error?: string|null, disabled?: boolean, context: Object|null, rebuilding?: boolean, rebuildError?: string|null, }} props
  */
 function InvoicingPlanTaskField({ field, value, onChange, error = null, disabled = false, context, rebuilding = false, rebuildError = null }) {
+  const t = useTranslations('tasks.form');
   const cycles = useMemo(() => parsePlanValue(value), [value]);
   const rebuilds = Boolean(context?.boqItemId);
 
@@ -30,13 +32,12 @@ function InvoicingPlanTaskField({ field, value, onChange, error = null, disabled
         error={rebuildError}
         ready
         disabled={disabled}
-        anchorDateLabel="Expected Invoicing Date"
+        anchorDateLabel={t('anchorExpected')}
       />
       {!rebuilds && (
         <p className="mt-1.5 flex items-start gap-1.5 text-[11px]" style={{ color: CHROME.textMuted }}>
           <Info size={11} className="mt-0.5 shrink-0" aria-hidden="true" />
-          Changing the billing frequency or the expected date here does not rebuild these cycles — adjust them by
-          hand, or answer this task from the BOQ item&rsquo;s own page, where they are rebuilt for you.
+          {t('planNote')}
         </p>
       )}
       {error && <p className="mt-1 text-[11px]" style={{ color: STATUS.critical }}>{error}</p>}

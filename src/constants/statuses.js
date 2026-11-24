@@ -7,21 +7,13 @@ export const BOQ_STATUS = {
   DELAYED: 'Delayed',
 };
 
-export const INVOICE_STATUS = {
-  DRAFT: 'Draft',
-  SUBMITTED: 'Submitted',
-  UNDER_REVIEW: 'Under Review',
-  APPROVED: 'Approved',
-  REJECTED: 'Rejected',
-  DELAYED: 'Delayed',
-};
-
 export const INVOICE_STATUS_ID = {
   INVOICED: 1,
   IN_PROGRESS: 2,
   REJECTED: 3,
   COLLECTED: 4,
   CANCELLED: 5,
+  PARTIALLY_COLLECTED: 6,
 };
 
 export const BOQ_ITEM_STATUS_ID = {
@@ -36,8 +28,10 @@ export const DELETABLE_INVOICE_STATUS_IDS = [
   INVOICE_STATUS_ID.CANCELLED,
 ];
 
-export const TRACKER_CYCLE_STATUS = {
-  SCHEDULED: 'Scheduled',
+export const TRACKER_CYCLE_STATUS_ID = {
+  SCHEDULED: 1,
+  COMPLETED: 2,
+  DELAYED: 3,
 };
 
 export const PROJECT_STATUS = {

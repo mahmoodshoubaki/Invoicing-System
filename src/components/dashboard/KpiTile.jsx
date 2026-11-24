@@ -26,7 +26,7 @@ function KpiTile({
     >
       {/* Accent wash shown on hover */}
       <div
-        className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full opacity-0 blur-2xl group-hover:opacity-100"
+        className="pointer-events-none absolute -inset-e-8 -top-8 h-28 w-28 rounded-full opacity-0 blur-2xl group-hover:opacity-100"
         style={{ backgroundColor: accent }}
         aria-hidden="true"
       />
@@ -53,7 +53,7 @@ function KpiTile({
         <div className="min-w-0">
           {delta && (
             <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${cls}`}>
-              <DeltaIcon size={11} />
+              <DeltaIcon size={11} className="rtl:-scale-x-100" />
               {delta}
             </span>
           )}
@@ -67,7 +67,7 @@ function KpiTile({
         {href && (
           <ChevronRight
             size={15}
-            className="shrink-0 transition-transform group-hover:translate-x-0.5"
+            className="shrink-0 transition-transform group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5"
             style={{ color: CHROME.textMuted }}
             aria-hidden="true"
           />

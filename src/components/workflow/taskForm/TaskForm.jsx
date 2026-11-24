@@ -3,6 +3,8 @@
 import { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AlertTriangle, MessageSquare } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useLookupLabel } from '@/hooks/useLookupLabel';
 
 import Button from '@/components/common/Button';
 import { controlClass, labelClass } from '@/components/ui/kit';
@@ -18,14 +20,16 @@ import { useTaskForm } from './useTaskForm';
  * @param {{ task: Object, onCompleted: (result: { task, button, instance }) => void, context?: Object|null }} props
  */
 export default function TaskForm({ task, onCompleted, context = null }) {
+  const t = useTranslations('tasks.form');
+  const frequencyLabel = useLookupLabel('billingFrequency');
   const form = useTaskForm(task, onCompleted, context);
   const billingFrequencies = useSelector(selectBillingFrequencies);
   // Fields whose numbers stand for names: offered as a list.
   const optionsByName = useMemo(() => ({
     billingFrequencyId: billingFrequencies.length
-      ? billingFrequencies.map((f) => ({ value: String(f.id), label: f.label }))
+      ? billingFrequencies.map((f) => ({ value: String(f.id), label: frequencyLabel(f.label) }))
       : null,
-  }), [billingFrequencies]);
+  }), [billingFrequencies, frequencyLabel]);
   const buttons = task.buttons ?? [];
   const busy = form.pressing !== null;
   // The button whose reason is being picked, before it is pressed.
@@ -54,10 +58,10 @@ export default function TaskForm({ task, onCompleted, context = null }) {
 
       <div>
         <label htmlFor={`comment-${task.taskId}`} className={labelClass} style={{ color: CHROME.textSecondary }}>
-          Comment
+          {t('comment')}
           {needsComment.length > 0 && (
-            <span className="ml-1 font-normal" style={{ color: CHROME.textMuted }}>
-              — needed for {needsComment.join(', ')}
+            <span className="ms-1 font-normal" style={{ color: CHROME.textMuted }}>
+              {t('neededFor', { names: needsComment.join(', ') })}
             </span>
           )}
         </label>
@@ -98,7 +102,7 @@ export default function TaskForm({ task, onCompleted, context = null }) {
                 backgroundColor: button.colorHex ?? '#f1f0ee',
                 color: readableTextOn(button.colorHex, CHROME.textPrimary),
               }}
-              title={button.requiresFields ? `${button.label} — saves the fields above` : button.label}
+              title={button.requiresFields ? t('savesFields', { label: button.label }) : button.label}
             >
               {(button.requiresComment || button.reasons) && <MessageSquare size={12} aria-hidden="true" />}
               {button.label}
@@ -107,7 +111,7 @@ export default function TaskForm({ task, onCompleted, context = null }) {
         </div>
         {ignoresFields.length > 0 && (
           <p className="mt-1.5 text-[11px]" style={{ color: CHROME.textMuted }}>
-            {ignoresFields.join(', ')} {ignoresFields.length === 1 ? 'does' : 'do'} not save what is typed above.
+            {t('ignoresFields', { count: ignoresFields.length, names: ignoresFields.join(', ') })}
           </p>
         )}
       </div>

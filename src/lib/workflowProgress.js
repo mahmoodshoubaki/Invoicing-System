@@ -52,9 +52,10 @@ export function flowOrder(graph) {
   return order;
 }
 
-function either(titles) {
-  if (titles.length <= 1) return titles.join('');
-  return `${titles.slice(0, -1).join(', ')} or ${titles.at(-1)}`;
+const DEFAULT_NOTES = { faulted: 'Stopped on an error — an admin can resume it', paused: 'Paused' };
+
+function either(titles, locale) {
+  return new Intl.ListFormat(locale, { type: 'disjunction' }).format(titles);
 }
 
 const capitalised = (text) => `${text.charAt(0).toUpperCase()}${text.slice(1)}`;
@@ -69,9 +70,9 @@ function visitedStages(history) {
   return seen;
 }
 
-function currentTone(run) {
-  if (run?.statusKey === INSTANCE_STATUS.FAULTED) return { tone: TONE.BAD, note: 'Stopped on an error — an admin can resume it' };
-  if (run?.statusKey === INSTANCE_STATUS.PAUSED) return { tone: TONE.WARNING, note: 'Paused' };
+function currentTone(run, notes) {
+  if (run?.statusKey === INSTANCE_STATUS.FAULTED) return { tone: TONE.BAD, note: notes.faulted };
+  if (run?.statusKey === INSTANCE_STATUS.PAUSED) return { tone: TONE.WARNING, note: notes.paused };
   return { tone: null, note: null };
 }
 
@@ -79,7 +80,7 @@ function currentTone(run) {
  * @param {{ run?: Object|null, history?: Array, graph?: Object|null, settled: boolean, the record has its outcome — only the path it took is shown fallback: { title: string, note?: string|null, next?: string|null }, the one step without the workflow endName?: string, what the run ending leads to, in "Next: … or the decision" }} input
  * @returns {{ steps: Array, next: string|null, endsNext: boolean }}
  */
-export function workflowSteps({ run = null, history = [], graph = null, settled, fallback, endName = 'the decision' }) {
+export function workflowSteps({ run = null, history = [], graph = null, settled, fallback, endName = 'the decision', locale = 'en-GB', notes = DEFAULT_NOTES }) {
   const steps = [];
   let next = null;
   let endsNext = false;
@@ -95,7 +96,7 @@ export function workflowSteps({ run = null, history = [], graph = null, settled,
     const currentId = run.currentStageId;
     const exits = currentId ? stageExits(graph, currentId) : null;
     const nextIds = new Set(exits?.stageIds ?? []);
-    const { tone, note } = currentTone(run);
+    const { tone, note } = currentTone(run, notes);
     const reachable = flowOrder(graph);
     const inFlow = new Set(reachable.map((s) => s.id));
     const extra = stages.filter((s) => !inFlow.has(s.id) && (visited.has(s.id) || s.id === currentId || nextIds.has(s.id)));
@@ -109,12 +110,12 @@ export function workflowSteps({ run = null, history = [], graph = null, settled,
     if (exits) {
       const titles = shown.filter((s) => nextIds.has(s.id)).map((s) => s.title || s.id);
       if (exits.ends) titles.push(endName);
-      next = titles.length ? capitalised(either(titles)) : null;
+      next = titles.length ? capitalised(either(titles, locale)) : null;
       endsNext = exits.ends;
     }
   } else if (run && (visited.size > 0 || run.currentStageTitle)) {
     const currentId = live ? run.currentStageId : null;
-    const { tone, note } = currentTone(run);
+    const { tone, note } = currentTone(run, notes);
     for (const [id, title] of visited) {
       if (id !== currentId) steps.push({ key: `stage:${id}`, title, state: STEP.DONE });
     }
